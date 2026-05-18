@@ -1,0 +1,208 @@
+<!-- Chargement -->
+@if (loading()) {
+  <div class="flex items-center justify-center py-16">
+    <svg class="animate-spin w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+    </svg>
+  </div>
+}
+
+<!-- ━━━━ DASHBOARD ADMIN ━━━━ -->
+@if (!loading() && auth.isAdmin() && admin()) {
+  <div class="space-y-4">
+
+    <!-- En-tête -->
+    <div>
+      <h1 class="text-xl font-bold text-gray-900">
+        Bonjour, {{ membre()?.nom ?? '' }} 👋
+      </h1>
+      <p class="text-sm text-gray-500 mt-0.5">{{ admin()!.tontineNom }}</p>
+    </div>
+
+    <!-- Alertes -->
+    @if (admin()!.aidesEnAttente > 0 || admin()!.pretsEnAttente > 0 || admin()!.cotisationsEnRetard > 0) {
+      <div class="card border-l-4 border-amber-400 bg-amber-50 space-y-2">
+        <p class="font-semibold text-sm text-amber-800">Actions requises</p>
+        @if (admin()!.aidesEnAttente > 0) {
+          <a routerLink="/aides" class="flex justify-between text-sm text-amber-700">
+            <span>🤝 {{ admin()!.aidesEnAttente }} aide(s) en attente</span><span>›</span>
+          </a>
+        }
+        @if (admin()!.pretsEnAttente > 0) {
+          <a routerLink="/prets" class="flex justify-between text-sm text-amber-700">
+            <span>📋 {{ admin()!.pretsEnAttente }} prêt(s) à valider</span><span>›</span>
+          </a>
+        }
+        @if (admin()!.cotisationsEnRetard > 0) {
+          <a routerLink="/cotisations" class="flex justify-between text-sm text-amber-700">
+            <span>💰 {{ admin()!.cotisationsEnRetard }} cotisation(s) en retard</span><span>›</span>
+          </a>
+        }
+      </div>
+    }
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="card">
+        <p class="text-xs text-gray-500">Membres actifs</p>
+        <p class="text-2xl font-bold text-gray-900 mt-1">{{ admin()!.membresActifs }}</p>
+        <p class="text-xs text-gray-400">/ {{ admin()!.membresTotal }} inscrits</p>
+      </div>
+      <div class="card">
+        <p class="text-xs text-gray-500">Épargne totale</p>
+        <p class="text-lg font-bold text-primary-600 mt-1">{{ fcfa(admin()!.totalEpargne) }}</p>
+      </div>
+      <div class="card">
+        <p class="text-xs text-gray-500">Prêts en cours</p>
+        <p class="text-2xl font-bold text-gray-900 mt-1">{{ admin()!.pretsEnCours }}</p>
+        <p class="text-xs text-gray-400">{{ fcfa(admin()!.encoursPrets) }}</p>
+      </div>
+      <div class="card">
+        <p class="text-xs text-gray-500">Fonds d'aide</p>
+        <p class="text-lg font-bold text-accent-600 mt-1">{{ fcfa(admin()!.fondsAideSolde) }}</p>
+      </div>
+    </div>
+
+    <!-- Cotisations du mois -->
+    <div class="card space-y-3">
+      <div class="flex items-center justify-between">
+        <p class="font-semibold text-sm text-gray-900">Cotisations du mois</p>
+        <a routerLink="/cotisations" class="text-xs text-primary-600 font-semibold">Voir tout ›</a>
+      </div>
+      <div>
+        <div class="flex justify-between text-xs text-gray-500 mb-1">
+          <span>{{ fcfa(admin()!.montantCollecte) }}</span>
+          <span>{{ tauxRecouvrement(admin()!) }}%</span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-2">
+          <div class="bg-primary-600 h-2 rounded-full transition-all"
+               [style.width.%]="tauxRecouvrement(admin()!)"></div>
+        </div>
+      </div>
+      <div class="flex gap-2 flex-wrap text-xs">
+        <span class="badge-success">{{ admin()!.cotisationsPayees }} payées</span>
+        <span class="badge-danger">{{ admin()!.cotisationsEnRetard }} en retard</span>
+        <span class="badge-warning">{{ admin()!.cotisationsEnAttente }} en attente</span>
+      </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="grid grid-cols-2 gap-2">
+      <a routerLink="/cotisations" class="btn-secondary text-sm py-2.5">💰 Cotisations</a>
+      <a routerLink="/aides"       class="btn-secondary text-sm py-2.5">🤝 Aides</a>
+      <a routerLink="/prets"       class="btn-secondary text-sm py-2.5">📋 Prêts</a>
+      <a routerLink="/epargne"     class="btn-secondary text-sm py-2.5">🏦 Épargne</a>
+    </div>
+
+  </div>
+}
+
+<!-- ━━━━ DASHBOARD MEMBRE ━━━━ -->
+@if (!loading() && !auth.isAdmin() && membre()) {
+  <div class="space-y-4">
+
+    <!-- Profil -->
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-2xl bg-primary-100 flex items-center justify-center flex-shrink-0">
+        <span class="text-primary-700 font-bold text-lg">
+          {{ membre()!.nom.charAt(0) }}{{ membre()!.prenom.charAt(0) }}
+        </span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h1 class="text-lg font-bold text-gray-900">Bonjour, {{ membre()!.prenom }} 👋</h1>
+        <p class="text-xs text-gray-500 truncate">
+          {{ membre()!.matricule }} · {{ membre()!.tontineNom }}
+        </p>
+      </div>
+      @if (membre()!.notificationsNonLues > 0) {
+        <a routerLink="/notifications"
+           class="flex items-center gap-1 text-xs text-red-600 font-semibold flex-shrink-0">
+          🔔 {{ membre()!.notificationsNonLues }}
+        </a>
+      }
+    </div>
+
+    <!-- Carte épargne -->
+    <div class="card bg-gradient-to-br from-primary-600 to-primary-700 text-white">
+      <p class="text-primary-200 text-xs font-medium">Mon épargne</p>
+      <p class="text-3xl font-bold mt-1">{{ fcfa(membre()!.soldeEpargne) }}</p>
+      <div class="flex gap-3 mt-4">
+        <a routerLink="/epargne"
+           class="flex-1 text-center py-2 rounded-xl bg-white/20 text-white
+                  text-sm font-semibold active:bg-white/30">+ Déposer</a>
+        <a routerLink="/epargne"
+           class="flex-1 text-center py-2 rounded-xl bg-white/20 text-white
+                  text-sm font-semibold active:bg-white/30">− Retirer</a>
+      </div>
+    </div>
+
+    <!-- Cotisation -->
+    <div class="card">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <p class="text-xs text-gray-500 font-medium">Dernière cotisation</p>
+          @if (membre()!.derniereCotisationMois) {
+            <p class="font-semibold text-gray-900 mt-1">
+              {{ moisNom(membre()!.derniereCotisationMois) }} {{ membre()!.derniereCotisationAnnee }}
+            </p>
+            <p class="text-sm text-gray-500">{{ fcfa(membre()!.montantCotisation) }}</p>
+          } @else {
+            <p class="text-sm text-gray-400 mt-1">Aucune cotisation enregistrée</p>
+          }
+        </div>
+        @if (membre()!.statutDerniereCotisation === 'PAYEE') {
+          <span class="badge-success">Payée</span>
+        } @else if (membre()!.statutDerniereCotisation === 'EN_RETARD') {
+          <span class="badge-danger">En retard</span>
+        } @else if (membre()!.statutDerniereCotisation) {
+          <span class="badge-warning">En attente</span>
+        }
+      </div>
+      <a routerLink="/cotisations" class="mt-3 block text-xs text-primary-600 font-semibold">
+        Voir mes cotisations ›
+      </a>
+    </div>
+
+    <!-- Prêt actif -->
+    @if (membre()!.pretActifId) {
+      <div class="card border-l-4 border-primary-400">
+        <p class="text-xs text-gray-500 font-medium">Prêt en cours</p>
+        <div class="flex items-center justify-between mt-1">
+          <p class="font-bold text-gray-900">{{ fcfa(membre()!.pretMontantPrincipal) }}</p>
+          <span class="badge-info">{{ membre()!.pretEcheancesRestantes }} éch. restantes</span>
+        </div>
+        <div class="mt-2">
+          <div class="flex justify-between text-xs text-gray-400 mb-1">
+            <span>Progression</span>
+            <span>{{ membre()!.pretDureeMois - membre()!.pretEcheancesRestantes }}/{{ membre()!.pretDureeMois }}</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-1.5">
+            <div class="bg-primary-600 h-1.5 rounded-full"
+                 [style.width.%]="((membre()!.pretDureeMois - membre()!.pretEcheancesRestantes) / membre()!.pretDureeMois) * 100">
+            </div>
+          </div>
+        </div>
+        <a routerLink="/prets" class="mt-3 block text-xs text-primary-600 font-semibold">
+          Voir le détail ›
+        </a>
+      </div>
+    }
+
+    <!-- Actions rapides -->
+    <div class="grid grid-cols-2 gap-2">
+      <a routerLink="/cotisations" class="btn-secondary text-sm py-2.5">💰 Cotisations</a>
+      <a routerLink="/epargne"     class="btn-secondary text-sm py-2.5">🏦 Épargne</a>
+      <a routerLink="/prets"       class="btn-secondary text-sm py-2.5">📋 Prêt</a>
+      <a routerLink="/aides"       class="btn-secondary text-sm py-2.5">🤝 Aide</a>
+    </div>
+
+  </div>
+}
+
+<!-- Erreur -->
+@if (!loading() && error()) {
+  <div class="card border border-red-200 bg-red-50 text-red-700 text-sm text-center py-6">
+    {{ error() }}
+  </div>
+}
