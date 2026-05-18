@@ -2,6 +2,7 @@ package com.tontinepro.tontinepro_backend.api.membre;
 
 import com.tontinepro.tontinepro_backend.api.membre.dto.CreateMembreRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
+import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreFonctionRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreStatutRequest;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,5 +65,15 @@ public class MembreController {
             @Valid @RequestBody UpdateMembreStatutRequest request
     ) {
         return membreService.updateStatut(id, request);
+    }
+
+    @PatchMapping("/{id}/fonction")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Modifier la fonction d'un membre dans le bureau")
+    public MembreResponse updateFonction(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateMembreFonctionRequest request
+    ) {
+        return membreService.updateFonction(id, request);
     }
 }

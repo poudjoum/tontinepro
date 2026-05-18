@@ -29,7 +29,9 @@ public class SecurityConfig {
         "/api/v1/auth/register",
         "/api/v1/auth/login",
         "/api/v1/auth/refresh",
-        "/api/v1/auth/2fa/valider",   // ticket-based, pas de JWT requis
+        "/api/v1/auth/2fa/valider",
+        "/api/v1/setup",
+        "/api/v1/setup/status",
         "/v3/api-docs/**",
         "/swagger-ui/**",
         "/swagger-ui.html"

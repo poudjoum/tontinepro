@@ -49,6 +49,11 @@ public class Membre {
     @Builder.Default
     private Statut statut = Statut.ACTIF;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    @Builder.Default
+    private Fonction fonction = Fonction.MEMBRE_ORDINAIRE;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();
@@ -59,5 +64,13 @@ public class Membre {
 
     public enum Statut {
         ACTIF, SUSPENDU, RETIRE
+    }
+
+    public enum Fonction {
+        PRESIDENT,
+        SECRETAIRE,
+        TRESORIER,
+        CENSEUR,
+        MEMBRE_ORDINAIRE
     }
 }

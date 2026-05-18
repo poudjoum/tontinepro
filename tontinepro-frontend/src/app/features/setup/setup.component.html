@@ -1,0 +1,188 @@
+<div class="min-h-screen bg-gradient-to-br from-primary-600 to-primary-700
+            flex flex-col items-center justify-center px-4 py-8">
+
+  <div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+    <!-- Header -->
+    <div class="bg-primary-600 px-6 pt-8 pb-5">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+          <span class="text-white font-bold text-xl">T</span>
+        </div>
+        <div>
+          <h1 class="text-white font-bold text-lg leading-tight">Configuration</h1>
+          <p class="text-primary-200 text-xs">TontinePro</p>
+        </div>
+      </div>
+
+      <!-- Indicateur d'étapes -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+               [class]="step() === 1 ? 'bg-white text-primary-600' : 'bg-white/30 text-white'">1</div>
+          <span class="text-xs text-white/80">Tontine</span>
+        </div>
+        <div class="flex-1 h-px bg-white/30"></div>
+        <div class="flex items-center gap-1.5">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+               [class]="step() === 2 ? 'bg-white text-primary-600' : 'bg-white/30 text-white'">2</div>
+          <span class="text-xs text-white/80">Votre compte</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Erreur globale -->
+    @if (error()) {
+      <div class="mx-6 mt-4 bg-red-50 border border-red-200 rounded-xl
+                  px-4 py-3 text-red-700 text-sm">{{ error() }}</div>
+    }
+
+    <!-- ── Étape 1 : Tontine ──────────────────────────────────────── -->
+    @if (step() === 1) {
+      <form [formGroup]="tontineForm" (ngSubmit)="nextStep()" class="px-6 py-5 space-y-4">
+
+        <p class="text-gray-500 text-sm">
+          Renseignez les informations de base de votre tontine.
+        </p>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Nom de la tontine *
+          </label>
+          <input formControlName="tontineNom" type="text" placeholder="Ex: Tontine des Amis"
+                 class="input-field"
+                 [class.border-red-400]="tontineForm.get('tontineNom')?.invalid && tontineForm.get('tontineNom')?.touched">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Description <span class="text-gray-400 font-normal">(optionnel)</span>
+          </label>
+          <textarea formControlName="tontineDescription" rows="2"
+                    placeholder="Présentez votre tontine…"
+                    class="input-field resize-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+              Cotisation mensuelle (FCFA) *
+            </label>
+            <input formControlName="montantCotisation" type="number" min="1"
+                   placeholder="5000" class="input-field"
+                   [class.border-red-400]="tontineForm.get('montantCotisation')?.invalid && tontineForm.get('montantCotisation')?.touched">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+              Jour de prélèvement *
+            </label>
+            <input formControlName="jourCotisation" type="number" min="1" max="28"
+                   placeholder="1" class="input-field"
+                   [class.border-red-400]="tontineForm.get('jourCotisation')?.invalid && tontineForm.get('jourCotisation')?.touched">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary mt-2">
+          Suivant →
+        </button>
+
+        <p class="text-center text-xs text-gray-400">
+          Déjà configuré ?
+          <a routerLink="/auth/login" class="text-primary-600 font-semibold">Se connecter</a>
+        </p>
+      </form>
+    }
+
+    <!-- ── Étape 2 : Fondateur ────────────────────────────────────── -->
+    @if (step() === 2) {
+      <form [formGroup]="fondateurForm" (ngSubmit)="submit()" class="px-6 py-5 space-y-4">
+
+        <p class="text-gray-500 text-sm">
+          Ce compte sera celui du <strong>Président fondateur</strong>
+          avec accès administrateur complet.
+        </p>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Nom *</label>
+            <input formControlName="nom" type="text" placeholder="Dupont" class="input-field"
+                   [class.border-red-400]="fondateurForm.get('nom')?.invalid && fondateurForm.get('nom')?.touched">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Prénom *</label>
+            <input formControlName="prenom" type="text" placeholder="Jean" class="input-field"
+                   [class.border-red-400]="fondateurForm.get('prenom')?.invalid && fondateurForm.get('prenom')?.touched">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
+          <input formControlName="email" type="email" autocomplete="email"
+                 placeholder="president@exemple.com" class="input-field"
+                 [class.border-red-400]="fondateurForm.get('email')?.invalid && fondateurForm.get('email')?.touched">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Téléphone <span class="text-gray-400 font-normal">(optionnel)</span>
+          </label>
+          <input formControlName="telephone" type="tel" placeholder="+225 07 00 00 00 00"
+                 class="input-field">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Mot de passe *
+          </label>
+          <div class="relative">
+            <input formControlName="password" [type]="showPass() ? 'text' : 'password'"
+                   autocomplete="new-password" placeholder="8 caractères minimum"
+                   class="input-field pr-12"
+                   [class.border-red-400]="fondateurForm.get('password')?.invalid && fondateurForm.get('password')?.touched">
+            <button type="button" (click)="showPass.set(!showPass())"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Confirmer le mot de passe *
+          </label>
+          <input formControlName="confirm" [type]="showPass() ? 'text' : 'password'"
+                 autocomplete="new-password" placeholder="••••••••" class="input-field"
+                 [class.border-red-400]="fondateurForm.errors?.['mismatch'] && fondateurForm.get('confirm')?.touched">
+          @if (fondateurForm.errors?.['mismatch'] && fondateurForm.get('confirm')?.touched) {
+            <p class="text-red-500 text-xs mt-1">Les mots de passe ne correspondent pas</p>
+          }
+        </div>
+
+        <div class="flex gap-3 mt-2">
+          <button type="button" class="btn-secondary flex-none w-auto px-5"
+                  (click)="prevStep()">
+            ←
+          </button>
+          <button type="submit" class="btn-primary flex-1" [disabled]="loading()">
+            @if (loading()) {
+              <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Création…
+            } @else {
+              Lancer TontinePro 🚀
+            }
+          </button>
+        </div>
+
+      </form>
+    }
+
+  </div>
+</div>

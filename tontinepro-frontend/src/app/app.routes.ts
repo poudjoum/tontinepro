@@ -1,9 +1,25 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { notConfiguredGuard } from './core/guards/setup.guard';
 import { ShellComponent } from './layout/shell.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
+  // Landing (page d'accueil publique)
+  {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./features/landing/landing.component').then(m => m.LandingComponent),
+  },
+
+  // Setup — accessible seulement si la plateforme n'est pas encore configurée
+  {
+    path: 'setup',
+    canActivate: [notConfiguredGuard],
+    loadComponent: () =>
+      import('./features/setup/setup.component').then(m => m.SetupComponent),
+  },
 
   // Auth (sans layout)
   {
@@ -67,5 +83,5 @@ export const routes: Routes = [
     ],
   },
 
-  { path: '**', redirectTo: 'dashboard' },
+  { path: '**', redirectTo: '' },
 ];

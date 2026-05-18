@@ -1,0 +1,80 @@
+<div class="min-h-screen bg-white flex flex-col">
+
+  <!-- ── Navbar ─────────────────────────────────────────────────────── -->
+  <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-100">
+    <div class="flex items-center justify-between h-14 px-4 max-w-4xl mx-auto">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-primary-600 flex items-center justify-center">
+          <span class="text-white font-bold">T</span>
+        </div>
+        <span class="font-bold text-gray-900">TontinePro</span>
+      </div>
+      @if (configured()) {
+        <a routerLink="/auth/login"
+           class="text-sm font-semibold text-primary-600 border border-primary-600
+                  px-4 py-2 rounded-xl active:bg-primary-50 transition-colors">
+          Se connecter
+        </a>
+      }
+    </div>
+  </nav>
+
+  <!-- ── Hero ───────────────────────────────────────────────────────── -->
+  <section class="flex-1 flex flex-col items-center justify-center
+                  px-4 py-12 text-center max-w-2xl mx-auto">
+
+    <div class="w-20 h-20 rounded-3xl bg-primary-600 flex items-center
+                justify-center mx-auto mb-6 shadow-lg shadow-primary-600/30">
+      <span class="text-white font-bold text-4xl">T</span>
+    </div>
+
+    <h1 class="text-3xl font-bold text-gray-900 leading-tight">
+      Gérez votre tontine<br>
+      <span class="text-primary-600">simplement et efficacement</span>
+    </h1>
+
+    <p class="mt-4 text-gray-500 text-base leading-relaxed max-w-sm mx-auto">
+      TontinePro numérise votre tontine africaine — cotisations, épargne,
+      prêts, aides mutuelles et rapports en un seul endroit.
+    </p>
+
+    <!-- CTAs -->
+    <div class="mt-8 flex flex-col gap-3 w-full max-w-xs">
+      @if (!configured()) {
+        <a routerLink="/setup" class="btn-primary">
+          Créer ma tontine →
+        </a>
+        <p class="text-xs text-gray-400">Gratuit · Prend 2 minutes</p>
+      } @else {
+        <a routerLink="/auth/login" class="btn-primary">
+          Se connecter →
+        </a>
+      }
+    </div>
+  </section>
+
+  <!-- ── Fonctionnalités ─────────────────────────────────────────────── -->
+  <section class="px-4 pb-12 max-w-2xl mx-auto w-full">
+    <h2 class="text-center text-lg font-bold text-gray-700 mb-6">
+      Tout ce dont votre tontine a besoin
+    </h2>
+
+    <div class="grid grid-cols-2 gap-3">
+      @for (f of features; track f.title) {
+        <div class="card flex items-start gap-3 p-3">
+          <span class="text-2xl flex-shrink-0">{{ f.icon }}</span>
+          <div>
+            <p class="font-semibold text-sm text-gray-900">{{ f.title }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ f.desc }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────── -->
+  <footer class="text-center py-4 text-xs text-gray-400 border-t border-gray-100">
+    © 2026 TontinePro — Tous droits réservés
+  </footer>
+
+</div>

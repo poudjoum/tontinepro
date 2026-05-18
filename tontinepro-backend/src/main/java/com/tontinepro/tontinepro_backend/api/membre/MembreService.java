@@ -2,6 +2,7 @@ package com.tontinepro.tontinepro_backend.api.membre;
 
 import com.tontinepro.tontinepro_backend.api.membre.dto.CreateMembreRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
+import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreFonctionRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreStatutRequest;
 import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargne;
 import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargneRepository;
@@ -50,6 +51,7 @@ public class MembreService {
                 .nom(request.nom())
                 .prenom(request.prenom())
                 .dateAdhesion(request.dateAdhesion() != null ? request.dateAdhesion() : LocalDate.now())
+                .fonction(request.fonction() != null ? request.fonction() : Membre.Fonction.MEMBRE_ORDINAIRE)
                 .build();
 
         membre = membreRepository.save(membre);
@@ -96,6 +98,15 @@ public class MembreService {
                 .orElseThrow(() -> new IllegalArgumentException("Membre introuvable : " + id));
 
         membre.setStatut(request.statut());
+        return MembreResponse.from(membreRepository.save(membre));
+    }
+
+    @Transactional
+    public MembreResponse updateFonction(UUID id, UpdateMembreFonctionRequest request) {
+        Membre membre = membreRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Membre introuvable : " + id));
+
+        membre.setFonction(request.fonction());
         return MembreResponse.from(membreRepository.save(membre));
     }
 

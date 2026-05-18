@@ -122,6 +122,13 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    /** Connexion directe sans credentials — utilisé par SetupService après création initiale. */
+    @Transactional
+    public AuthResponse loginDirectly(User user) {
+        refreshTokenRepository.revokeAllByUserId(user.getId());
+        return buildAuthResponse(user);
+    }
+
     @Transactional
     public void logout(String userEmail) {
         userRepository.findByEmail(userEmail)
