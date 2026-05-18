@@ -26,7 +26,10 @@ public class SecurityConfig {
     private final CorsConfigurationSource corsConfigurationSource;
 
     private static final String[] PUBLIC_PATHS = {
-        "/api/v1/auth/**",
+        "/api/v1/auth/register",
+        "/api/v1/auth/login",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/2fa/valider",   // ticket-based, pas de JWT requis
         "/v3/api-docs/**",
         "/swagger-ui/**",
         "/swagger-ui.html"

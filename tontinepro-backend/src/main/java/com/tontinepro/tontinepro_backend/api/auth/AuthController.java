@@ -1,9 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.auth;
 
-import com.tontinepro.tontinepro_backend.api.auth.dto.AuthResponse;
-import com.tontinepro.tontinepro_backend.api.auth.dto.LoginRequest;
-import com.tontinepro.tontinepro_backend.api.auth.dto.RefreshRequest;
-import com.tontinepro.tontinepro_backend.api.auth.dto.RegisterRequest;
+import com.tontinepro.tontinepro_backend.api.auth.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,7 +17,10 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Authentification")
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthService  authService;
+    private final TwoFaService twoFaService;
+
+    // ── Auth de base ─────────────────────────────────────────────────────
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -29,10 +29,19 @@ public class AuthController {
         return authService.register(request);
     }
 
+    /**
+     * Retourne soit un {@link AuthResponse} complet (2FA désactivée),
+     * soit un {@link TwoFaChallengeResponse} avec un ticket éphémère (2FA activée).
+     */
     @PostMapping("/login")
     @Operation(summary = "Se connecter")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+    public ResponseEntity<Object> login(@Valid @RequestBody LoginRequest request) {
+        return switch (authService.login(request)) {
+            case LoginResult.Authenticated a ->
+                    ResponseEntity.ok(a.auth());
+            case LoginResult.TwoFaRequired r ->
+                    ResponseEntity.ok(new TwoFaChallengeResponse(true, r.ticket(), r.email()));
+        };
     }
 
     @PostMapping("/refresh")
@@ -46,6 +55,42 @@ public class AuthController {
     @Operation(summary = "Se déconnecter")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails principal) {
         authService.logout(principal.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── 2FA ──────────────────────────────────────────────────────────────
+
+    @PostMapping("/2fa/activer")
+    @Operation(summary = "Initialiser la 2FA — génère le secret et le QR code")
+    public TwoFaSetupResponse activer2fa(@AuthenticationPrincipal UserDetails principal) {
+        return twoFaService.setup(principal.getUsername());
+    }
+
+    @PostMapping("/2fa/confirmer")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Confirmer l'activation 2FA avec le premier code TOTP")
+    public ResponseEntity<Void> confirmer2fa(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody ConfirmerTwoFaRequest request
+    ) {
+        twoFaService.confirmer(principal.getUsername(), request.code());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/2fa/valider")
+    @Operation(summary = "Valider le code TOTP après login — retourne les tokens d'accès")
+    public AuthResponse valider2fa(@Valid @RequestBody ValiderTwoFaRequest request) {
+        return authService.loginWith2fa(request);
+    }
+
+    @PostMapping("/2fa/desactiver")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Désactiver la 2FA (code TOTP courant requis)")
+    public ResponseEntity<Void> desactiver2fa(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody ConfirmerTwoFaRequest request
+    ) {
+        twoFaService.desactiver(principal.getUsername(), request.code());
         return ResponseEntity.noContent().build();
     }
 }

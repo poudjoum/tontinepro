@@ -4,6 +4,9 @@ import com.tontinepro.tontinepro_backend.api.auth.dto.AuthResponse;
 import com.tontinepro.tontinepro_backend.api.auth.dto.LoginRequest;
 import com.tontinepro.tontinepro_backend.api.auth.dto.RefreshRequest;
 import com.tontinepro.tontinepro_backend.api.auth.dto.RegisterRequest;
+import com.tontinepro.tontinepro_backend.api.auth.dto.ValiderTwoFaRequest;
+
+import java.util.UUID;
 import com.tontinepro.tontinepro_backend.domain.user.RefreshToken;
 import com.tontinepro.tontinepro_backend.domain.user.RefreshTokenRepository;
 import com.tontinepro.tontinepro_backend.domain.user.User;
@@ -38,6 +41,7 @@ public class AuthService {
     private final JwtProperties jwtProperties;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
+    private final TwoFaService twoFaService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -57,17 +61,34 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse login(LoginRequest request) {
+    public LoginResult login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow();
+        User user = userRepository.findByEmail(request.email()).orElseThrow();
 
-        // révoque les anciens refresh tokens
+        if (user.isTwoFaEnabled()) {
+            String ticket = twoFaService.genererTicket(user.getId());
+            return new LoginResult.TwoFaRequired(ticket, user.getEmail());
+        }
+
         refreshTokenRepository.revokeAllByUserId(user.getId());
+        return new LoginResult.Authenticated(buildAuthResponse(user));
+    }
 
+    @Transactional
+    public AuthResponse loginWith2fa(ValiderTwoFaRequest request) {
+        UUID userId = twoFaService.consommerTicket(request.ticket());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        if (!twoFaService.estCodeValide(user.getTwoFaSecret(), request.code())) {
+            throw new IllegalArgumentException("Code TOTP invalide ou expiré");
+        }
+
+        refreshTokenRepository.revokeAllByUserId(user.getId());
         return buildAuthResponse(user);
     }
 
