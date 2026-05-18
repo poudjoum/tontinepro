@@ -1,0 +1,78 @@
+package com.tontinepro.tontinepro_backend.api.cotisation;
+
+import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
+import com.tontinepro.tontinepro_backend.api.cotisation.dto.CreateCotisationRequest;
+import com.tontinepro.tontinepro_backend.api.cotisation.dto.EnregistrerPaiementRequest;
+import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/cotisations")
+@RequiredArgsConstructor
+@Tag(name = "Cotisations")
+public class CotisationController {
+
+    private final CotisationService cotisationService;
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Créer une cotisation pour un membre")
+    public CotisationResponse create(@Valid @RequestBody CreateCotisationRequest request) {
+        return cotisationService.create(request);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Lister les cotisations (filtrables par membre, tontine, période, statut)")
+    public List<CotisationResponse> list(
+            @RequestParam(required = false) UUID membreId,
+            @RequestParam(required = false) UUID tontineId,
+            @RequestParam(required = false) Short mois,
+            @RequestParam(required = false) Short annee,
+            @RequestParam(required = false) Cotisation.Statut statut
+    ) {
+        return cotisationService.list(membreId, tontineId, mois, annee, statut);
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Mes cotisations")
+    public List<CotisationResponse> getMe(@AuthenticationPrincipal UserDetails principal) {
+        return cotisationService.getMe(principal.getUsername());
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Détails d'une cotisation")
+    public CotisationResponse getById(@PathVariable UUID id) {
+        return cotisationService.getById(id);
+    }
+
+    @PatchMapping("/{id}/paiement")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Enregistrer le paiement d'une cotisation")
+    public CotisationResponse enregistrerPaiement(
+            @PathVariable UUID id,
+            @RequestBody EnregistrerPaiementRequest request
+    ) {
+        return cotisationService.enregistrerPaiement(id, request);
+    }
+
+    @PatchMapping("/{id}/retard")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Marquer une cotisation en retard")
+    public CotisationResponse marquerEnRetard(@PathVariable UUID id) {
+        return cotisationService.marquerEnRetard(id);
+    }
+}
