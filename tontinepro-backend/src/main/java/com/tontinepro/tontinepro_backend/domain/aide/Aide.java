@@ -1,0 +1,71 @@
+package com.tontinepro.tontinepro_backend.domain.aide;
+
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
+import com.tontinepro.tontinepro_backend.domain.user.User;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "aides")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Aide {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "membre_id", nullable = false)
+    private Membre membre;
+
+    @Column(name = "type_aide", nullable = false, length = 50)
+    private String typeAide;
+
+    @Column(name = "montant_demande", nullable = false, precision = 15, scale = 2)
+    private BigDecimal montantDemande;
+
+    @Column(name = "montant_accorde", precision = 15, scale = 2)
+    private BigDecimal montantAccorde;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String motif;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    @Builder.Default
+    private Statut statut = Statut.SOUMISE;
+
+    @Column(name = "justificatif_url", length = 500)
+    private String justificatifUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "valide_par")
+    private User validePar;
+
+    @Column(name = "date_validation")
+    private OffsetDateTime dateValidation;
+
+    @Column(name = "motif_rejet", columnDefinition = "TEXT")
+    private String motifRejet;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @Builder.Default
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
+
+    public enum Statut {
+        SOUMISE, VALIDEE, REJETEE, PAYEE
+    }
+}

@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: tontinepro-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tontinepro_db
+      POSTGRES_USER: tontinepro_user
+      POSTGRES_PASSWORD: tontinepro_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tontinepro-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: tontinepro-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@tontinepro.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - tontinepro-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: tontinepro-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tontinepro-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  tontinepro-network:
+    driver: bridge
