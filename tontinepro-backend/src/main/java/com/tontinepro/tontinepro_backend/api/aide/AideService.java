@@ -4,9 +4,11 @@ import com.tontinepro.tontinepro_backend.api.aide.dto.AideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ValiderAideRequest;
+import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.domain.aide.*;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
+import com.tontinepro.tontinepro_backend.domain.notification.Notification;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.user.User;
 import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
@@ -31,6 +33,7 @@ public class AideService {
     private final FondsAideRepository fondsAideRepository;
     private final MouvementFondsAideRepository mouvementFondsAideRepository;
     private final ContributionFondsAideRepository contributionFondsAideRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public AideResponse soumettreDemande(String email, DemandeAideRequest request) {
@@ -49,7 +52,17 @@ public class AideService {
                 .justificatifUrl(request.justificatifUrl())
                 .build();
 
-        return AideResponse.from(aideRepository.save(aide));
+        AideResponse response = AideResponse.from(aideRepository.save(aide));
+
+        notificationService.notifierAdmins(
+                Notification.Type.AIDE_SOUMISE,
+                "Nouvelle demande d'aide",
+                "Le membre %s %s a soumis une demande d'aide (%s) de %s FCFA."
+                        .formatted(membre.getNom(), membre.getPrenom(),
+                                request.typeAide(), request.montantDemande()),
+                response.id(), "AIDE");
+
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -101,7 +114,16 @@ public class AideService {
         aide.setValidePar(admin);
         aide.setDateValidation(OffsetDateTime.now());
 
-        return AideResponse.from(aideRepository.save(aide));
+        AideResponse response = AideResponse.from(aideRepository.save(aide));
+
+        notificationService.notifier(aide.getMembre().getUser(),
+                Notification.Type.AIDE_VALIDEE,
+                "Demande d'aide approuvée",
+                "Votre demande d'aide a été approuvée. Montant accordé : %s FCFA."
+                        .formatted(request.montantAccorde()),
+                aide.getId(), "AIDE");
+
+        return response;
     }
 
     @Transactional
@@ -121,7 +143,15 @@ public class AideService {
         aide.setValidePar(admin);
         aide.setDateValidation(OffsetDateTime.now());
 
-        return AideResponse.from(aideRepository.save(aide));
+        AideResponse response = AideResponse.from(aideRepository.save(aide));
+
+        notificationService.notifier(aide.getMembre().getUser(),
+                Notification.Type.AIDE_REJETEE,
+                "Demande d'aide rejetée",
+                "Votre demande d'aide a été rejetée. Motif : %s.".formatted(request.motifRejet()),
+                aide.getId(), "AIDE");
+
+        return response;
     }
 
     @Transactional
@@ -165,7 +195,15 @@ public class AideService {
         }
 
         aide.setStatut(Aide.Statut.PAYEE);
-        return AideResponse.from(aideRepository.save(aide));
+        AideResponse response = AideResponse.from(aideRepository.save(aide));
+
+        notificationService.notifier(aide.getMembre().getUser(),
+                Notification.Type.AIDE_PAYEE,
+                "Aide versée",
+                "Votre aide de %s FCFA a été versée.".formatted(aide.getMontantAccorde()),
+                aide.getId(), "AIDE");
+
+        return response;
     }
 
     private void genererContributionsALaBeneficiation(Aide aide, FondsAide fonds) {

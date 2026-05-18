@@ -1,6 +1,8 @@
 package com.tontinepro.tontinepro_backend.api.pret;
 
+import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.api.pret.dto.*;
+import com.tontinepro.tontinepro_backend.domain.notification.Notification;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.pret.EcheancePret;
@@ -33,6 +35,7 @@ public class PretService {
     private final MembreRepository membreRepository;
     private final UserRepository userRepository;
     private final TontineRepository tontineRepository;
+    private final NotificationService notificationService;
 
     // ── Membre ───────────────────────────────────────────────────────────
 
@@ -56,7 +59,17 @@ public class PretService {
                 .montantTotal(montantTotal)
                 .build();
 
-        return PretResponse.from(pretRepository.save(pret));
+        PretResponse response = PretResponse.from(pretRepository.save(pret));
+
+        notificationService.notifierAdmins(
+                Notification.Type.PRET_DEMANDE,
+                "Nouvelle demande de prêt",
+                "Le membre %s %s demande un prêt de %s FCFA sur %s mois."
+                        .formatted(membre.getNom(), membre.getPrenom(),
+                                request.montantPrincipal(), request.dureeMois()),
+                response.id(), "PRET");
+
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -92,10 +105,23 @@ public class PretService {
         echeance.setDatePaiement(OffsetDateTime.now());
         echeancePretRepository.save(echeance);
 
-        // Si toutes les échéances sont payées → solde le prêt
-        if (echeancePretRepository.countByPretIdAndStatutNot(pretId, EcheancePret.Statut.PAYEE) == 0) {
+        boolean pretSolde = echeancePretRepository.countByPretIdAndStatutNot(pretId, EcheancePret.Statut.PAYEE) == 0;
+        if (pretSolde) {
             pret.setStatut(Pret.Statut.SOLDE);
             pretRepository.save(pret);
+            notificationService.notifier(pret.getMembre().getUser(),
+                    Notification.Type.PRET_SOLDE,
+                    "Prêt intégralement remboursé",
+                    "Félicitations ! Votre prêt de %s FCFA est entièrement remboursé."
+                            .formatted(pret.getMontantPrincipal()),
+                    pret.getId(), "PRET");
+        } else {
+            notificationService.notifier(pret.getMembre().getUser(),
+                    Notification.Type.PRET_REMBOURSE,
+                    "Remboursement enregistré",
+                    "Votre remboursement de l'échéance %d a bien été enregistré."
+                            .formatted(echeance.getNumeroEcheance()),
+                    pret.getId(), "PRET");
         }
 
         return EcheancePretResponse.from(echeance);
@@ -141,6 +167,13 @@ public class PretService {
 
         genererEcheancier(pret, maintenant.toLocalDate());
 
+        notificationService.notifier(pret.getMembre().getUser(),
+                Notification.Type.PRET_APPROUVE,
+                "Prêt approuvé",
+                "Votre demande de prêt de %s FCFA sur %s mois a été approuvée et décaissée."
+                        .formatted(pret.getMontantPrincipal(), pret.getDureeMois()),
+                pret.getId(), "PRET");
+
         return PretResponse.from(pret);
     }
 
@@ -159,7 +192,15 @@ public class PretService {
         pret.setMotifRejet(request.motif());
         pret.setValidePar(admin);
         pret.setDateValidation(OffsetDateTime.now());
-        return PretResponse.from(pretRepository.save(pret));
+        PretResponse response = PretResponse.from(pretRepository.save(pret));
+
+        notificationService.notifier(pret.getMembre().getUser(),
+                Notification.Type.PRET_REJETE,
+                "Demande de prêt rejetée",
+                "Votre demande de prêt a été rejetée. Motif : %s.".formatted(request.motif()),
+                pret.getId(), "PRET");
+
+        return response;
     }
 
     @Transactional

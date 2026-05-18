@@ -3,10 +3,12 @@ package com.tontinepro.tontinepro_backend.api.cotisation;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CreateCotisationRequest;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.EnregistrerPaiementRequest;
+import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
+import com.tontinepro.tontinepro_backend.domain.notification.Notification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ public class CotisationService {
 
     private final CotisationRepository cotisationRepository;
     private final MembreRepository membreRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public CotisationResponse create(CreateCotisationRequest request) {
@@ -100,7 +103,16 @@ public class CotisationService {
                 request.datePaiement() != null ? request.datePaiement() : OffsetDateTime.now());
         cotisation.setReferencePaiement(request.referencePaiement());
 
-        return CotisationResponse.from(cotisationRepository.save(cotisation));
+        CotisationResponse response = CotisationResponse.from(cotisationRepository.save(cotisation));
+
+        notificationService.notifier(cotisation.getMembre().getUser(),
+                Notification.Type.COTISATION_PAYEE,
+                "Cotisation enregistrée",
+                "Votre cotisation de %02d/%d (%s FCFA) a bien été enregistrée."
+                        .formatted(cotisation.getMois(), cotisation.getAnnee(), cotisation.getMontant()),
+                cotisation.getId(), "COTISATION");
+
+        return response;
     }
 
     @Transactional
@@ -113,6 +125,15 @@ public class CotisationService {
         }
 
         cotisation.setStatut(Cotisation.Statut.EN_RETARD);
-        return CotisationResponse.from(cotisationRepository.save(cotisation));
+        CotisationResponse response = CotisationResponse.from(cotisationRepository.save(cotisation));
+
+        notificationService.notifier(cotisation.getMembre().getUser(),
+                Notification.Type.COTISATION_EN_RETARD,
+                "Cotisation en retard",
+                "Votre cotisation de %02d/%d est en retard. Veuillez régulariser votre situation."
+                        .formatted(cotisation.getMois(), cotisation.getAnnee()),
+                cotisation.getId(), "COTISATION");
+
+        return response;
     }
 }

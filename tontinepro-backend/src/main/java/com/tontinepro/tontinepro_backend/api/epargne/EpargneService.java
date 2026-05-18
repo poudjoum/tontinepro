@@ -4,6 +4,8 @@ import com.tontinepro.tontinepro_backend.api.epargne.dto.CompteEpargneResponse;
 import com.tontinepro.tontinepro_backend.api.epargne.dto.DepotRequest;
 import com.tontinepro.tontinepro_backend.api.epargne.dto.MouvementEpargneResponse;
 import com.tontinepro.tontinepro_backend.api.epargne.dto.RetraitRequest;
+import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
+import com.tontinepro.tontinepro_backend.domain.notification.Notification;
 import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargne;
 import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargneRepository;
 import com.tontinepro.tontinepro_backend.domain.epargne.MouvementEpargne;
@@ -29,6 +31,7 @@ public class EpargneService {
     private final MouvementEpargneRepository mouvementRepository;
     private final MembreRepository membreRepository;
     private final TontineRepository tontineRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public CompteEpargneResponse getMonCompte(String email) {
@@ -88,6 +91,13 @@ public class EpargneService {
                 .reference(request.reference())
                 .build());
 
+        notificationService.notifier(compte.getMembre().getUser(),
+                Notification.Type.EPARGNE_DEPOT,
+                "Dépôt effectué",
+                "Dépôt de %s FCFA enregistré. Nouveau solde : %s FCFA."
+                        .formatted(request.montant(), compte.getSolde()),
+                compte.getId(), "EPARGNE");
+
         return CompteEpargneResponse.from(compte);
     }
 
@@ -116,6 +126,13 @@ public class EpargneService {
                 .soldeApres(compte.getSolde())
                 .reference(request.reference())
                 .build());
+
+        notificationService.notifier(compte.getMembre().getUser(),
+                Notification.Type.EPARGNE_RETRAIT,
+                "Retrait effectué",
+                "Retrait de %s FCFA effectué. Nouveau solde : %s FCFA."
+                        .formatted(request.montant(), compte.getSolde()),
+                compte.getId(), "EPARGNE");
 
         return CompteEpargneResponse.from(compte);
     }
@@ -156,6 +173,13 @@ public class EpargneService {
                     .soldeApres(compte.getSolde())
                     .reference("Intérêts " + tontine.getTauxInteretEpargne() + "%")
                     .build());
+
+            notificationService.notifier(compte.getMembre().getUser(),
+                    Notification.Type.EPARGNE_INTERETS,
+                    "Intérêts crédités",
+                    "Intérêts de %s FCFA (%s%%) crédités. Nouveau solde : %s FCFA."
+                            .formatted(interet, tontine.getTauxInteretEpargne(), compte.getSolde()),
+                    compte.getId(), "EPARGNE");
         }
 
         return comptes.size();

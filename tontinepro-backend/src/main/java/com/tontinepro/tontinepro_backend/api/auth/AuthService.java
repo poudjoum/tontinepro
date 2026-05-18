@@ -5,6 +5,8 @@ import com.tontinepro.tontinepro_backend.api.auth.dto.LoginRequest;
 import com.tontinepro.tontinepro_backend.api.auth.dto.RefreshRequest;
 import com.tontinepro.tontinepro_backend.api.auth.dto.RegisterRequest;
 import com.tontinepro.tontinepro_backend.api.auth.dto.ValiderTwoFaRequest;
+import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
+import com.tontinepro.tontinepro_backend.domain.notification.Notification;
 
 import java.util.UUID;
 import com.tontinepro.tontinepro_backend.domain.user.RefreshToken;
@@ -42,6 +44,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final TwoFaService twoFaService;
+    private final NotificationService notificationService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -57,6 +60,12 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        notificationService.notifier(user, Notification.Type.BIENVENUE,
+                "Bienvenue sur TontinePro",
+                "Votre compte a été créé avec succès. Bienvenue !",
+                null, null);
+
         return buildAuthResponse(user);
     }
 
