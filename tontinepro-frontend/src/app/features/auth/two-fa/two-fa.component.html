@@ -1,0 +1,65 @@
+<div class="min-h-screen bg-gradient-to-br from-primary-600 to-primary-700
+            flex flex-col items-center justify-center px-4 py-8">
+
+  <div class="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+    <!-- Header -->
+    <div class="bg-primary-600 px-6 pt-8 pb-6 text-center">
+      <div class="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+      <h1 class="text-white text-xl font-bold">Vérification 2FA</h1>
+      <p class="text-primary-200 text-sm mt-1">{{ email() }}</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="px-6 py-6 space-y-4">
+
+      <p class="text-gray-600 text-sm text-center">
+        Saisissez le code à 6 chiffres affiché dans votre application d'authentification.
+      </p>
+
+      @if (error()) {
+        <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm text-center">
+          {{ error() }}
+        </div>
+      }
+
+      <!-- Code input -->
+      <div>
+        <input formControlName="code"
+               type="text"
+               inputmode="numeric"
+               autocomplete="one-time-code"
+               maxlength="6"
+               placeholder="000000"
+               class="input-field text-center text-3xl font-bold tracking-[0.5em] placeholder:tracking-normal"
+               [class.border-red-400]="form.get('code')?.invalid && form.get('code')?.touched">
+        <p class="text-xs text-gray-400 text-center mt-1.5">
+          Le code est valide 30 secondes
+        </p>
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        @if (loading()) {
+          <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          Vérification…
+        } @else {
+          Valider
+        }
+      </button>
+
+      <p class="text-center text-sm text-gray-500">
+        <a routerLink="/auth/login" class="text-primary-600 font-semibold">
+          ← Retour à la connexion
+        </a>
+      </p>
+
+    </form>
+  </div>
+</div>
