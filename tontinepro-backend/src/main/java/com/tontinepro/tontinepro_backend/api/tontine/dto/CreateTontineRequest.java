@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.tontine.dto;
 
+import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
@@ -21,5 +22,10 @@ public record CreateTontineRequest(
         BigDecimal tauxInteretPret,
 
         @NotNull @DecimalMin("0.0")
-        BigDecimal tauxInteretEpargne
+        BigDecimal tauxInteretEpargne,
+
+        Tontine.ModeContributionAide modeContributionAide,
+
+        @DecimalMin("0.01")
+        BigDecimal montantCotisationAide
 ) {}

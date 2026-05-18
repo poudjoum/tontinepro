@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.tontine.dto;
 
+import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -24,5 +25,10 @@ public record UpdateTontineConfigRequest(
         @DecimalMin("0.0")
         BigDecimal tauxInteretEpargne,
 
-        Boolean actif
+        Boolean actif,
+
+        Tontine.ModeContributionAide modeContributionAide,
+
+        @DecimalMin("0.01")
+        BigDecimal montantCotisationAide
 ) {}

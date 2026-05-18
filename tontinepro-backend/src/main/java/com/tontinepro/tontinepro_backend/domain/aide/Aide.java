@@ -27,8 +27,9 @@ public class Aide {
     @JoinColumn(name = "membre_id", nullable = false)
     private Membre membre;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type_aide", nullable = false, length = 50)
-    private String typeAide;
+    private TypeAide typeAide;
 
     @Column(name = "montant_demande", nullable = false, precision = 15, scale = 2)
     private BigDecimal montantDemande;
@@ -67,5 +68,16 @@ public class Aide {
 
     public enum Statut {
         SOUMISE, VALIDEE, REJETEE, PAYEE
+    }
+
+    public enum TypeAide {
+        DECES,        // Décès d'un membre ou d'un proche
+        MALADIE,      // Hospitalisation ou frais médicaux importants
+        ACCIDENT,     // Accident grave
+        MARIAGE,      // Aide au mariage
+        NAISSANCE,    // Naissance d'un enfant
+        SCOLARITE,    // Frais de scolarité
+        CALAMITE,     // Sinistre naturel (incendie, inondation…)
+        AUTRE         // Toute autre situation exceptionnelle
     }
 }

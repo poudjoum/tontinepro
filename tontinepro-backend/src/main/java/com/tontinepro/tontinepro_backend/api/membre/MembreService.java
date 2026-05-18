@@ -3,6 +3,8 @@ package com.tontinepro.tontinepro_backend.api.membre;
 import com.tontinepro.tontinepro_backend.api.membre.dto.CreateMembreRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreStatutRequest;
+import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargne;
+import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargneRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
@@ -24,6 +26,7 @@ public class MembreService {
     private final MembreRepository membreRepository;
     private final UserRepository userRepository;
     private final TontineRepository tontineRepository;
+    private final CompteEpargneRepository compteEpargneRepository;
 
     @Transactional
     public MembreResponse create(CreateMembreRequest request) {
@@ -52,6 +55,8 @@ public class MembreService {
         membre = membreRepository.save(membre);
         membre.setMatricule(generateMatricule(membre.getId()));
         membre = membreRepository.save(membre);
+
+        compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());
 
         return MembreResponse.from(membre);
     }

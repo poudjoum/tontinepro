@@ -15,6 +15,8 @@ public record TontineResponse(
         short jourCotisation,
         BigDecimal tauxInteretPret,
         BigDecimal tauxInteretEpargne,
+        Tontine.ModeContributionAide modeContributionAide,
+        BigDecimal montantCotisationAide,
         boolean actif,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
@@ -28,6 +30,8 @@ public record TontineResponse(
                 t.getJourCotisation(),
                 t.getTauxInteretPret(),
                 t.getTauxInteretEpargne(),
+                t.getModeContributionAide(),
+                t.getMontantCotisationAide(),
                 t.isActif(),
                 t.getCreatedAt(),
                 t.getUpdatedAt()

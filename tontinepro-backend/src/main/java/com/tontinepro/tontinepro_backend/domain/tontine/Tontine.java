@@ -42,6 +42,14 @@ public class Tontine {
     @Builder.Default
     private BigDecimal tauxInteretEpargne = BigDecimal.ZERO;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode_contribution_aide", nullable = false, length = 30)
+    @Builder.Default
+    private ModeContributionAide modeContributionAide = ModeContributionAide.AUCUN;
+
+    @Column(name = "montant_cotisation_aide", precision = 15, scale = 2)
+    private BigDecimal montantCotisationAide;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean actif = true;
@@ -53,4 +61,10 @@ public class Tontine {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    public enum ModeContributionAide {
+        AUCUN,
+        MENSUEL,
+        A_LA_BENEFICIATION
+    }
 }

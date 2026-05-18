@@ -3,6 +3,8 @@ package com.tontinepro.tontinepro_backend.api.tontine;
 import com.tontinepro.tontinepro_backend.api.tontine.dto.CreateTontineRequest;
 import com.tontinepro.tontinepro_backend.api.tontine.dto.TontineResponse;
 import com.tontinepro.tontinepro_backend.api.tontine.dto.UpdateTontineConfigRequest;
+import com.tontinepro.tontinepro_backend.domain.aide.FondsAide;
+import com.tontinepro.tontinepro_backend.domain.aide.FondsAideRepository;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +19,20 @@ import java.util.UUID;
 public class TontineService {
 
     private final TontineRepository tontineRepository;
+    private final FondsAideRepository fondsAideRepository;
 
     @Transactional
     public TontineResponse create(CreateTontineRequest request) {
         if (tontineRepository.existsByNom(request.nom())) {
             throw new IllegalArgumentException("Une tontine avec le nom « " + request.nom() + " » existe déjà");
+        }
+
+        var mode = request.modeContributionAide() != null
+                ? request.modeContributionAide()
+                : Tontine.ModeContributionAide.AUCUN;
+
+        if (mode == Tontine.ModeContributionAide.MENSUEL && request.montantCotisationAide() == null) {
+            throw new IllegalArgumentException("montantCotisationAide est obligatoire pour le mode MENSUEL");
         }
 
         Tontine tontine = Tontine.builder()
@@ -31,9 +42,15 @@ public class TontineService {
                 .jourCotisation(request.jourCotisation())
                 .tauxInteretPret(request.tauxInteretPret())
                 .tauxInteretEpargne(request.tauxInteretEpargne())
+                .modeContributionAide(mode)
+                .montantCotisationAide(request.montantCotisationAide())
                 .build();
 
-        return TontineResponse.from(tontineRepository.save(tontine));
+        Tontine saved = tontineRepository.save(tontine);
+
+        fondsAideRepository.save(FondsAide.builder().tontine(saved).build());
+
+        return TontineResponse.from(saved);
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +96,17 @@ public class TontineService {
         }
         if (request.actif() != null) {
             tontine.setActif(request.actif());
+        }
+        if (request.modeContributionAide() != null) {
+            if (request.modeContributionAide() == Tontine.ModeContributionAide.MENSUEL
+                    && request.montantCotisationAide() == null
+                    && tontine.getMontantCotisationAide() == null) {
+                throw new IllegalArgumentException("montantCotisationAide est obligatoire pour le mode MENSUEL");
+            }
+            tontine.setModeContributionAide(request.modeContributionAide());
+        }
+        if (request.montantCotisationAide() != null) {
+            tontine.setMontantCotisationAide(request.montantCotisationAide());
         }
 
         return TontineResponse.from(tontineRepository.save(tontine));

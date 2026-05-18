@@ -51,6 +51,9 @@ public class Pret {
     @Column(name = "date_validation")
     private OffsetDateTime dateValidation;
 
+    @Column(name = "motif_rejet", columnDefinition = "TEXT")
+    private String motifRejet;
+
     @Column(name = "date_decaissement")
     private OffsetDateTime dateDecaissement;
 
