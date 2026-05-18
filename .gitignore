@@ -1,0 +1,21 @@
+﻿# Java / Spring Boot
+target/
+*.class
+*.jar
+*.war
+.mvn/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Environnement
+.env
+*.env.local
+application-prod.yml
+
+# IDE
+.idea/
+*.iml
+.vscode/settings.json
