@@ -4,6 +4,8 @@ import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+
+import java.awt.Color;
 import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAide;
 import com.tontinepro.tontinepro_backend.domain.aide.FondsAide;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
@@ -26,10 +28,10 @@ import java.util.stream.Collectors;
 @Component
 public class RapportFinancierPdfBuilder {
 
-    private static final BaseColor BLEU_FONCE = new BaseColor(44, 62, 80);
-    private static final BaseColor BLEU_MOYEN = new BaseColor(52, 152, 219);
-    private static final BaseColor GRIS_CLAIR = new BaseColor(245, 245, 245);
-    private static final BaseColor VERT       = new BaseColor(39, 174, 96);
+    private static final Color BLEU_FONCE = new Color(44, 62, 80);
+    private static final Color BLEU_MOYEN = new Color(52, 152, 219);
+    private static final Color GRIS_CLAIR = new Color(245, 245, 245);
+    private static final Color VERT       = new Color(39, 174, 96);
 
     private static final DateTimeFormatter FMT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -72,7 +74,7 @@ public class RapportFinancierPdfBuilder {
     private void ajouterEntete(Document doc, Tontine tontine) throws DocumentException {
         Font fTitre  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20, BLEU_FONCE);
         Font fSub    = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13, BLEU_MOYEN);
-        Font fPetit  = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.GRAY);
+        Font fPetit  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.GRAY);
 
         Paragraph p = new Paragraph("TONTINEPRO — Rapport Financier", fTitre);
         p.setAlignment(Element.ALIGN_CENTER);
@@ -107,7 +109,7 @@ public class RapportFinancierPdfBuilder {
                 .map(CompteEpargne::getSolde).max(Comparator.naturalOrder())
                 .orElse(BigDecimal.ZERO);
 
-        Font fLabel  = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.DARK_GRAY);
+        Font fLabel  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY);
         Font fValeur = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BLEU_FONCE);
 
         PdfPTable t = new PdfPTable(4);
@@ -129,7 +131,7 @@ public class RapportFinancierPdfBuilder {
             Font fTitreTbl = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, BLEU_FONCE);
             doc.add(new Paragraph("Top épargnants :", fTitreTbl));
 
-            Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.WHITE);
+            Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
             Font fData = FontFactory.getFont(FontFactory.HELVETICA, 8);
             PdfPTable tbl = new PdfPTable(3);
             tbl.setWidthPercentage(60f);
@@ -140,7 +142,7 @@ public class RapportFinancierPdfBuilder {
             }
             boolean pair = false;
             for (CompteEpargne c : top5) {
-                BaseColor bg = pair ? BaseColor.WHITE : GRIS_CLAIR;
+                Color bg = pair ? Color.WHITE : GRIS_CLAIR;
                 pair = !pair;
                 tbl.addCell(cellDonnee(c.getMembre().getMatricule(), fData, bg));
                 tbl.addCell(cellDonnee(c.getMembre().getNom() + " " + c.getMembre().getPrenom(), fData, bg));
@@ -166,7 +168,7 @@ public class RapportFinancierPdfBuilder {
         BigDecimal encours = pretsActifs.stream()
                 .map(Pret::getMontantTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Font fLabel  = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.DARK_GRAY);
+        Font fLabel  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY);
         Font fValeur = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BLEU_FONCE);
 
         PdfPTable stats = new PdfPTable(5);
@@ -183,7 +185,7 @@ public class RapportFinancierPdfBuilder {
             Font fTitreTbl = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, BLEU_FONCE);
             doc.add(new Paragraph("Prêts en cours :", fTitreTbl));
 
-            Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.WHITE);
+            Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
             Font fData = FontFactory.getFont(FontFactory.HELVETICA, 8);
             PdfPTable tbl = new PdfPTable(5);
             tbl.setWidthPercentage(100f);
@@ -193,7 +195,7 @@ public class RapportFinancierPdfBuilder {
             }
             boolean pair = false;
             for (Pret p : pretsActifs) {
-                BaseColor bg = pair ? BaseColor.WHITE : GRIS_CLAIR;
+                Color bg = pair ? Color.WHITE : GRIS_CLAIR;
                 pair = !pair;
                 tbl.addCell(cellDonnee(p.getMembre().getMatricule(), fData, bg));
                 tbl.addCell(cellDonnee(p.getMembre().getNom() + " " + p.getMembre().getPrenom(), fData, bg));
@@ -216,7 +218,7 @@ public class RapportFinancierPdfBuilder {
         BigDecimal totalARecevoir = aRecevoir.stream()
                 .map(ContributionFondsAide::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Font fLabel  = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.DARK_GRAY);
+        Font fLabel  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY);
         Font fValeur = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BLEU_FONCE);
 
         PdfPTable t = new PdfPTable(3);
@@ -246,7 +248,7 @@ public class RapportFinancierPdfBuilder {
         BigDecimal taux = nbTotal == 0 ? BigDecimal.ZERO :
                 BigDecimal.valueOf(nbPayees * 100L).divide(BigDecimal.valueOf(nbTotal), 1, RoundingMode.HALF_UP);
 
-        Font fLabel  = FontFactory.getFont(FontFactory.HELVETICA, 9, BaseColor.DARK_GRAY);
+        Font fLabel  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY);
         Font fValeur = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BLEU_FONCE);
 
         PdfPTable t = new PdfPTable(3);
@@ -262,7 +264,7 @@ public class RapportFinancierPdfBuilder {
                 .collect(Collectors.groupingBy(Cotisation::getMois));
 
         if (!parMois.isEmpty()) {
-            Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.WHITE);
+            Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
             Font fData = FontFactory.getFont(FontFactory.HELVETICA, 8);
 
             PdfPTable tbl = new PdfPTable(5);
@@ -291,7 +293,7 @@ public class RapportFinancierPdfBuilder {
                                 BigDecimal.valueOf(p * 100L).divide(BigDecimal.valueOf(cots.size()),
                                         1, RoundingMode.HALF_UP);
                         boolean altRow = m % 2 == 0;
-                        BaseColor bg = altRow ? GRIS_CLAIR : BaseColor.WHITE;
+                        Color bg = altRow ? GRIS_CLAIR : Color.WHITE;
                         tbl.addCell(cellDonnee(m < moisFr.length ? moisFr[m] : String.valueOf(m), fData, bg));
                         tbl.addCell(cellDonnee(fcfa(att), fData, bg));
                         tbl.addCell(cellDonnee(fcfa(col), fData, bg));
@@ -304,7 +306,7 @@ public class RapportFinancierPdfBuilder {
 
     private void ajouterPiedDePage(Document doc) throws DocumentException {
         doc.add(separateur());
-        Font fPied = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 8, BaseColor.GRAY);
+        Font fPied = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 8, Color.GRAY);
         Paragraph pied = new Paragraph("Document confidentiel — généré automatiquement par TontinePro", fPied);
         pied.setAlignment(Element.ALIGN_CENTER);
         doc.add(pied);
@@ -320,11 +322,11 @@ public class RapportFinancierPdfBuilder {
         cell.setBackgroundColor(GRIS_CLAIR);
         cell.setPadding(8f);
         cell.setBorder(Rectangle.BOX);
-        cell.setBorderColor(new BaseColor(220, 220, 220));
+        cell.setBorderColor(new Color(220, 220, 220));
         return cell;
     }
 
-    private PdfPCell cellEntete(String texte, Font font, BaseColor bg) {
+    private PdfPCell cellEntete(String texte, Font font, Color bg) {
         PdfPCell cell = new PdfPCell(new Phrase(texte, font));
         cell.setBackgroundColor(bg);
         cell.setPadding(6f);
@@ -332,7 +334,7 @@ public class RapportFinancierPdfBuilder {
         return cell;
     }
 
-    private PdfPCell cellDonnee(String texte, Font font, BaseColor bg) {
+    private PdfPCell cellDonnee(String texte, Font font, Color bg) {
         PdfPCell cell = new PdfPCell(new Phrase(texte, font));
         cell.setBackgroundColor(bg);
         cell.setPadding(5f);
@@ -353,7 +355,7 @@ public class RapportFinancierPdfBuilder {
         t.setSpacingAfter(4f);
         PdfPCell c = new PdfPCell();
         c.setBorderWidthBottom(0.5f);
-        c.setBorderColorBottom(new BaseColor(200, 200, 200));
+        c.setBorderColorBottom(new Color(200, 200, 200));
         c.setBorderWidthTop(0);
         c.setBorderWidthLeft(0);
         c.setBorderWidthRight(0);

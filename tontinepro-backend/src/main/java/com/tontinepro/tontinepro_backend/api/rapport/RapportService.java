@@ -84,7 +84,7 @@ public class RapportService {
         var contributions = fondsAide.getId() != null
                 ? contributionRepository.findAllByFondsAideIdAndStatut(
                         fondsAide.getId(), ContributionFondsAide.Statut.A_PAYER)
-                : List.of();
+                : List.<ContributionFondsAide>of();
         short anneeEnCours = (short) LocalDate.now().getYear();
         var cotisationsAnnee = cotisationRepository.findAllByTontineIdAndAnnee(tontineId, anneeEnCours);
 
