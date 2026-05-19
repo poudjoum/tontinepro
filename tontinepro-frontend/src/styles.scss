@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Safe Area (Capacitor / iPhone notch / Android nav bar) ──────── */
+.safe-area-top    { padding-top:    env(safe-area-inset-top,    0px); }
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Corps de page : évite que le contenu passe sous les barres système */
+body {
+  padding-top:    env(safe-area-inset-top,    0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 @layer base {
   html {
     /* Empêche le zoom sur les inputs iOS (Capacitor) */

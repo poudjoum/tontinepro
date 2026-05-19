@@ -40,3 +40,12 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Capacitor / Android (build artifacts)
+android/.gradle/
+android/app/build/
+android/build/
+android/.idea/
+android/capacitor-cordova-android-plugins/
+/ios/App/Pods/
+/ios/App/App.xcworkspace/

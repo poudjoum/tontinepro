@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Couleur principale TontinePro (primary-600) -->
+    <color name="colorPrimary">#4F46E5</color>
+    <color name="colorPrimaryDark">#4338CA</color>
+    <color name="colorAccent">#10B981</color>
+
+    <!-- Status bar + splash -->
+    <color name="colorSplashBackground">#4F46E5</color>
+</resources>
