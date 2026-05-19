@@ -90,7 +90,7 @@ public class DashboardService {
                 soldeEpargne,
                 derniere != null ? derniere.getMois()   : null,
                 derniere != null ? derniere.getAnnee()  : null,
-                membre.getTontine().getMontantCotisation(),
+                membre.getTontine().getMontantCotisationMin(),
                 derniere != null ? derniere.getStatut().name() : null,
                 pretActif.map(Pret::getId).orElse(null),
                 pretActif.map(Pret::getMontantPrincipal).orElse(null),
@@ -134,7 +134,7 @@ public class DashboardService {
         BigDecimal montantCollecte = cotisationsMois.stream()
                 .filter(c -> c.getStatut() == Cotisation.Statut.PAYEE)
                 .map(Cotisation::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal montantAttendu = tontine.getMontantCotisation()
+        BigDecimal montantAttendu = tontine.getMontantCotisationMin()
                 .multiply(BigDecimal.valueOf(membresActifs));
 
         // Épargne totale

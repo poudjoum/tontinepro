@@ -1,4 +1,4 @@
-package com.tontinepro.tontinepro_backend.api.invitation;
+﻿package com.tontinepro.tontinepro_backend.api.invitation;
 
 import com.tontinepro.tontinepro_backend.api.auth.dto.AuthResponse;
 import com.tontinepro.tontinepro_backend.api.invitation.dto.GenererInvitationRequest;
@@ -28,8 +28,8 @@ public class InvitationController {
 
     @PostMapping("/generer")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Générer un lien d'invitation à la tontine")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "GÃ©nÃ©rer un lien d'invitation Ã  la tontine")
     public InvitationResponse generer(
             @Valid @RequestBody GenererInvitationRequest request,
             @AuthenticationPrincipal UserDetails principal
@@ -38,7 +38,7 @@ public class InvitationController {
     }
 
     @GetMapping("/{token}/statut")
-    @Operation(summary = "Vérifier la validité d'un lien d'invitation (public)")
+    @Operation(summary = "VÃ©rifier la validitÃ© d'un lien d'invitation (public)")
     public StatutInvitationResponse statut(@PathVariable String token) {
         return invitationService.statut(token);
     }
@@ -54,9 +54,10 @@ public class InvitationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Lister les invitations")
     public List<InvitationResponse> lister(@RequestParam(required = false) UUID tontineId) {
         return invitationService.lister(tontineId);
     }
 }
+

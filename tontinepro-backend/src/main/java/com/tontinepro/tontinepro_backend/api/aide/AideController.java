@@ -1,4 +1,4 @@
-package com.tontinepro.tontinepro_backend.api.aide;
+﻿package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
@@ -43,7 +43,7 @@ public class AideController {
     }
 
     @GetMapping("/demandes")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Lister les demandes d'aide (filtrables par membre, tontine, statut)")
     public List<AideResponse> list(
             @RequestParam(required = false) UUID membreId,
@@ -54,14 +54,14 @@ public class AideController {
     }
 
     @GetMapping("/demandes/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Détails d'une demande d'aide")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "DÃ©tails d'une demande d'aide")
     public AideResponse getById(@PathVariable UUID id) {
         return aideService.getById(id);
     }
 
     @PatchMapping("/demandes/{id}/valider")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Approuver une demande d'aide")
     public AideResponse valider(
             @PathVariable UUID id,
@@ -72,7 +72,7 @@ public class AideController {
     }
 
     @PatchMapping("/demandes/{id}/rejeter")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Rejeter une demande d'aide")
     public AideResponse rejeter(
             @PathVariable UUID id,
@@ -83,8 +83,8 @@ public class AideController {
     }
 
     @PatchMapping("/demandes/{id}/payer")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Marquer une aide comme payée")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Marquer une aide comme payÃ©e")
     public AideResponse marquerPayee(@PathVariable UUID id) {
         return aideService.marquerPayee(id);
     }

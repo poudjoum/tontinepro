@@ -104,7 +104,7 @@ public class RapportMensuelPdfBuilder {
         long nbPayees   = cotisations.stream().filter(c -> c.getStatut() == Cotisation.Statut.PAYEE).count();
         long nbRetard   = cotisations.stream().filter(c -> c.getStatut() == Cotisation.Statut.EN_RETARD).count();
         long nbAttente  = nbTotal - nbPayees - nbRetard;
-        BigDecimal attendu  = tontine.getMontantCotisation().multiply(BigDecimal.valueOf(nbTotal));
+        BigDecimal attendu  = tontine.getMontantCotisationMin().multiply(BigDecimal.valueOf(nbTotal));
         BigDecimal collecte = cotisations.stream()
                 .filter(c -> c.getStatut() == Cotisation.Statut.PAYEE)
                 .map(Cotisation::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);

@@ -72,6 +72,13 @@ export class AdminComponent {
       color: 'bg-red-50',
     },
     {
+      title: 'Sessions',
+      desc: 'Rotation et bénéficiaires',
+      route: '/admin/sessions',
+      icon: '🔄',
+      color: 'bg-teal-50',
+    },
+    {
       title: 'Rapports',
       desc: 'PDF et Excel',
       route: '/rapports',

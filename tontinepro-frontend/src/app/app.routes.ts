@@ -139,6 +139,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/admin/membres/membres-admin.component').then(m => m.MembresAdminComponent),
           },
+          {
+            path: 'sessions',
+            loadComponent: () =>
+              import('./features/admin/sessions/sessions.component').then(m => m.SessionsComponent),
+          },
         ],
       },
     ],

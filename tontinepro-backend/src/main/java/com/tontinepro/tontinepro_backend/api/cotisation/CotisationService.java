@@ -42,7 +42,7 @@ public class CotisationService {
 
         var montant = request.montant() != null
                 ? request.montant()
-                : membre.getTontine().getMontantCotisation();
+                : membre.getTontine().getMontantCotisationMin();
 
         Cotisation cotisation = Cotisation.builder()
                 .membre(membre)

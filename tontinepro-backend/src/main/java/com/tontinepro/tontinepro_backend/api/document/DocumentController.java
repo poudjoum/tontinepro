@@ -1,4 +1,4 @@
-package com.tontinepro.tontinepro_backend.api.document;
+﻿package com.tontinepro.tontinepro_backend.api.document;
 
 import com.tontinepro.tontinepro_backend.api.document.dto.DocumentResponse;
 import com.tontinepro.tontinepro_backend.domain.document.Document;
@@ -29,7 +29,7 @@ public class DocumentController {
 
     @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Télécharger un document (membre sur son propre profil, ou admin)")
+    @Operation(summary = "TÃ©lÃ©charger un document (membre sur son propre profil, ou admin)")
     public DocumentResponse telecharger(
             @RequestParam UUID membreId,
             @RequestParam Document.TypeDocument typeDocument,
@@ -40,8 +40,8 @@ public class DocumentController {
     }
 
     @GetMapping("/membre/{membreId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Lister les documents d'un membre (Admin / Président / Secrétaire)")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Lister les documents d'un membre (Admin / PrÃ©sident / SecrÃ©taire)")
     public List<DocumentResponse> listerParMembre(@PathVariable UUID membreId) {
         return documentService.listerParMembre(membreId);
     }
@@ -53,7 +53,7 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}/fichier")
-    @Operation(summary = "Télécharger le fichier d'un document (propriétaire ou Admin)")
+    @Operation(summary = "TÃ©lÃ©charger le fichier d'un document (propriÃ©taire ou Admin)")
     public ResponseEntity<Resource> telechargerFichier(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails principal
@@ -74,3 +74,4 @@ public class DocumentController {
         documentService.supprimer(id, principal.getUsername());
     }
 }
+

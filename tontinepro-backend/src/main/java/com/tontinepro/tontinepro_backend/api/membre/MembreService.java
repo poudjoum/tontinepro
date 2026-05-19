@@ -127,11 +127,21 @@ public class MembreService {
             throw new IllegalArgumentException("Impossible d'inscrire dans une tontine inactive");
         }
 
+        Membre.Fonction fonction = request.fonction() != null
+                ? request.fonction() : Membre.Fonction.MEMBRE_ORDINAIRE;
+
+        // Le Président reçoit le rôle ADMIN, le Secrétaire le rôle SECRETAIRE
+        User.Role role = switch (fonction) {
+            case PRESIDENT  -> User.Role.ADMIN;
+            case SECRETAIRE -> User.Role.SECRETAIRE;
+            default         -> User.Role.MEMBRE;
+        };
+
         User user = User.builder()
                 .email(request.email())
                 .hashedPassword(passwordEncoder.encode(request.password()))
                 .telephone(request.telephone())
-                .role(User.Role.MEMBRE)
+                .role(role)
                 .build();
         user = userRepository.save(user);
 
@@ -140,7 +150,7 @@ public class MembreService {
                 .tontine(tontine)
                 .nom(request.nom())
                 .prenom(request.prenom())
-                .fonction(request.fonction() != null ? request.fonction() : Membre.Fonction.MEMBRE_ORDINAIRE)
+                .fonction(fonction)
                 .build();
         membre = membreRepository.save(membre);
         membre.setMatricule(generateMatricule(membre.getId()));

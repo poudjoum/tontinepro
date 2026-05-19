@@ -25,14 +25,14 @@ public class SanctionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Créer une sanction manuelle")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') or @sec.isCenseur(authentication.name)")
+    @Operation(summary = "Créer une sanction (Censeur / Secrétaire / Président)")
     public SanctionResponse creer(@Valid @RequestBody CreerSanctionRequest request) {
         return sanctionService.creer(request);
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') or @sec.isCenseur(authentication.name)")
     @Operation(summary = "Lister les sanctions d'une tontine")
     public List<SanctionResponse> lister(
             @RequestParam UUID tontineId,
@@ -48,8 +48,8 @@ public class SanctionController {
     }
 
     @PatchMapping("/{id}/payer")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Marquer une sanction comme payée")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Marquer une sanction comme payée (Secrétaire / Président)")
     public SanctionResponse marquerPayee(@PathVariable UUID id) {
         return sanctionService.marquerPayee(id);
     }

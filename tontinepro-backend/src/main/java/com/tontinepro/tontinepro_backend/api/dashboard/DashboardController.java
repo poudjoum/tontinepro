@@ -1,4 +1,4 @@
-package com.tontinepro.tontinepro_backend.api.dashboard;
+﻿package com.tontinepro.tontinepro_backend.api.dashboard;
 
 import com.tontinepro.tontinepro_backend.api.dashboard.dto.AdminDashboardResponse;
 import com.tontinepro.tontinepro_backend.api.dashboard.dto.MembreDashboardResponse;
@@ -28,10 +28,11 @@ public class DashboardController {
     }
 
     @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Tableau de bord administrateur")
     public AdminDashboardResponse getAdminDashboard(
             @AuthenticationPrincipal UserDetails principal) {
         return dashboardService.getAdminDashboard(principal.getUsername());
     }
 }
+

@@ -1,4 +1,4 @@
-package com.tontinepro.tontinepro_backend.api.cotisation;
+﻿package com.tontinepro.tontinepro_backend.api.cotisation;
 
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CreateCotisationRequest;
@@ -27,15 +27,15 @@ public class CotisationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Créer une cotisation pour un membre")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "CrÃ©er une cotisation pour un membre")
     public CotisationResponse create(@Valid @RequestBody CreateCotisationRequest request) {
         return cotisationService.create(request);
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Lister les cotisations (filtrables par membre, tontine, période, statut)")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Lister les cotisations (filtrables par membre, tontine, pÃ©riode, statut)")
     public List<CotisationResponse> list(
             @RequestParam(required = false) UUID membreId,
             @RequestParam(required = false) UUID tontineId,
@@ -53,14 +53,14 @@ public class CotisationController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Détails d'une cotisation")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "DÃ©tails d'une cotisation")
     public CotisationResponse getById(@PathVariable UUID id) {
         return cotisationService.getById(id);
     }
 
     @PatchMapping("/{id}/paiement")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Enregistrer le paiement d'une cotisation")
     public CotisationResponse enregistrerPaiement(
             @PathVariable UUID id,
@@ -70,9 +70,10 @@ public class CotisationController {
     }
 
     @PatchMapping("/{id}/retard")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Marquer une cotisation en retard")
     public CotisationResponse marquerEnRetard(@PathVariable UUID id) {
         return cotisationService.marquerEnRetard(id);
     }
 }
+

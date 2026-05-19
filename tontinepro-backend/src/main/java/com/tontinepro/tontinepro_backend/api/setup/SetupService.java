@@ -34,12 +34,15 @@ public class SetupService {
     private final AuthService             authService;
 
     public SetupStatusResponse status() {
-        return new SetupStatusResponse(userRepository.existsByRole(User.Role.ADMIN));
+        return new SetupStatusResponse(
+                userRepository.existsByRole(User.Role.ADMIN)
+                || userRepository.existsByRole(User.Role.SECRETAIRE));
     }
 
     @Transactional
     public AuthResponse setup(SetupRequest req) {
-        if (userRepository.existsByRole(User.Role.ADMIN)) {
+        if (userRepository.existsByRole(User.Role.ADMIN)
+                || userRepository.existsByRole(User.Role.SECRETAIRE)) {
             throw new IllegalStateException("La plateforme est déjà configurée.");
         }
 
@@ -51,8 +54,8 @@ public class SetupService {
         Tontine tontine = tontineRepository.save(Tontine.builder()
                 .nom(req.tontineNom())
                 .description(req.tontineDescription())
-                .montantCotisation(req.montantCotisation())
-                .jourCotisation(req.jourCotisation())
+                .montantCotisationMin(req.montantCotisationMin())
+                .jourReference(req.jourReference() != null ? req.jourReference() : 1)
                 .tauxInteretPret(nvl(req.tauxInteretPret()))
                 .tauxInteretEpargne(nvl(req.tauxInteretEpargne()))
                 .modeContributionAide(mode)
@@ -61,15 +64,14 @@ public class SetupService {
 
         fondsAideRepository.save(FondsAide.builder().tontine(tontine).build());
 
-        // ── Compte fondateur (ADMIN + Président) ─────────────────────────
+        // ── Compte fondateur (Secrétaire — gère l'application au quotidien) ──
         User user = userRepository.save(User.builder()
                 .email(req.email())
                 .hashedPassword(passwordEncoder.encode(req.password()))
                 .telephone(req.telephone())
-                .role(User.Role.ADMIN)
+                .role(User.Role.SECRETAIRE)
                 .build());
 
-        // Le matricule doit être défini avant le premier save (colonne NOT NULL)
         String matricule = "MBR-" + java.util.UUID.randomUUID().toString()
                 .replace("-", "").substring(0, 8).toUpperCase();
 
@@ -79,7 +81,7 @@ public class SetupService {
                 .nom(req.nom())
                 .prenom(req.prenom())
                 .matricule(matricule)
-                .fonction(Membre.Fonction.PRESIDENT)
+                .fonction(Membre.Fonction.SECRETAIRE)
                 .build());
 
         compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());

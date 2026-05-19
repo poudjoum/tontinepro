@@ -1,4 +1,4 @@
-package com.tontinepro.tontinepro_backend.api.epargne;
+﻿package com.tontinepro.tontinepro_backend.api.epargne;
 
 import com.tontinepro.tontinepro_backend.api.epargne.dto.CompteEpargneResponse;
 import com.tontinepro.tontinepro_backend.api.epargne.dto.DepotRequest;
@@ -20,21 +20,21 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/epargne")
 @RequiredArgsConstructor
-@Tag(name = "Épargne")
+@Tag(name = "Ã‰pargne")
 public class EpargneController {
 
     private final EpargneService epargneService;
 
-    // ── Endpoints membre ────────────────────────────────────────────────
+    // â”€â”€ Endpoints membre â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @GetMapping("/mon-compte")
-    @Operation(summary = "Mon compte épargne (solde)")
+    @Operation(summary = "Mon compte Ã©pargne (solde)")
     public CompteEpargneResponse getMonCompte(@AuthenticationPrincipal UserDetails principal) {
         return epargneService.getMonCompte(principal.getUsername());
     }
 
     @PostMapping("/depot")
-    @Operation(summary = "Effectuer un dépôt sur mon compte épargne")
+    @Operation(summary = "Effectuer un dÃ©pÃ´t sur mon compte Ã©pargne")
     public CompteEpargneResponse depot(
             @AuthenticationPrincipal UserDetails principal,
             @Valid @RequestBody DepotRequest request
@@ -43,7 +43,7 @@ public class EpargneController {
     }
 
     @PostMapping("/retrait")
-    @Operation(summary = "Effectuer un retrait de mon compte épargne")
+    @Operation(summary = "Effectuer un retrait de mon compte Ã©pargne")
     public CompteEpargneResponse retrait(
             @AuthenticationPrincipal UserDetails principal,
             @Valid @RequestBody RetraitRequest request
@@ -52,16 +52,16 @@ public class EpargneController {
     }
 
     @GetMapping("/historique")
-    @Operation(summary = "Historique de mes transactions épargne")
+    @Operation(summary = "Historique de mes transactions Ã©pargne")
     public List<MouvementEpargneResponse> getHistorique(@AuthenticationPrincipal UserDetails principal) {
         return epargneService.getHistorique(principal.getUsername());
     }
 
-    // ── Endpoints admin ──────────────────────────────────────────────────
+    // â”€â”€ Endpoints admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @GetMapping("/comptes")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Lister tous les comptes épargne (filtrable par tontine)")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Lister tous les comptes Ã©pargne (filtrable par tontine)")
     public List<CompteEpargneResponse> getAllComptes(
             @RequestParam(required = false) UUID tontineId
     ) {
@@ -69,24 +69,25 @@ public class EpargneController {
     }
 
     @GetMapping("/comptes/{membreId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Compte épargne d'un membre")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Compte Ã©pargne d'un membre")
     public CompteEpargneResponse getCompteByMembre(@PathVariable UUID membreId) {
         return epargneService.getCompteByMembre(membreId);
     }
 
     @GetMapping("/comptes/{membreId}/historique")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Historique épargne d'un membre")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Historique Ã©pargne d'un membre")
     public List<MouvementEpargneResponse> getHistoriqueByMembre(@PathVariable UUID membreId) {
         return epargneService.getHistoriqueByMembre(membreId);
     }
 
     @PostMapping("/distribuer-interets")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Distribuer les intérêts sur tous les comptes d'une tontine")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Distribuer les intÃ©rÃªts sur tous les comptes d'une tontine")
     public Map<String, Object> distribuerInterets(@RequestParam UUID tontineId) {
         int nb = epargneService.distribuerInterets(tontineId);
         return Map.of("comptesCredites", nb);
     }
 }
+

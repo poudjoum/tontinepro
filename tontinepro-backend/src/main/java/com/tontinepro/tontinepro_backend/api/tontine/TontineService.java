@@ -38,8 +38,14 @@ public class TontineService {
         Tontine tontine = Tontine.builder()
                 .nom(request.nom())
                 .description(request.description())
-                .montantCotisation(request.montantCotisation())
-                .jourCotisation(request.jourCotisation())
+                .montantCotisationMin(request.montantCotisationMin())
+                .montantCotisationMax(request.montantCotisationMax())
+                .montantConsensuel(request.montantConsensuel())
+                .jourReference(request.jourReference() != null ? request.jourReference() : 1)
+                .typeReglePeriodicite(request.typeReglePeriodicite() != null
+                        ? request.typeReglePeriodicite()
+                        : Tontine.TypeReglePeriodicite.MENSUEL_JOUR_FIXE)
+                .dateProchaineTontine(request.dateProchaineTontine())
                 .tauxInteretPret(request.tauxInteretPret())
                 .tauxInteretEpargne(request.tauxInteretEpargne())
                 .modeContributionAide(mode)
@@ -82,11 +88,23 @@ public class TontineService {
         if (request.description() != null) {
             tontine.setDescription(request.description());
         }
-        if (request.montantCotisation() != null) {
-            tontine.setMontantCotisation(request.montantCotisation());
+        if (request.montantCotisationMin() != null) {
+            tontine.setMontantCotisationMin(request.montantCotisationMin());
         }
-        if (request.jourCotisation() != null) {
-            tontine.setJourCotisation(request.jourCotisation());
+        if (request.montantCotisationMax() != null) {
+            tontine.setMontantCotisationMax(request.montantCotisationMax());
+        }
+        if (request.montantConsensuel() != null) {
+            tontine.setMontantConsensuel(request.montantConsensuel());
+        }
+        if (request.jourReference() != null) {
+            tontine.setJourReference(request.jourReference());
+        }
+        if (request.typeReglePeriodicite() != null) {
+            tontine.setTypeReglePeriodicite(request.typeReglePeriodicite());
+        }
+        if (request.dateProchaineTontine() != null) {
+            tontine.setDateProchaineTontine(request.dateProchaineTontine());
         }
         if (request.tauxInteretPret() != null) {
             tontine.setTauxInteretPret(request.tauxInteretPret());
@@ -107,9 +125,6 @@ public class TontineService {
         }
         if (request.montantCotisationAide() != null) {
             tontine.setMontantCotisationAide(request.montantCotisationAide());
-        }
-        if (request.periodeCotisation() != null) {
-            tontine.setPeriodeCotisation(request.periodeCotisation());
         }
         if (request.montantAmende() != null) {
             tontine.setMontantAmende(request.montantAmende());

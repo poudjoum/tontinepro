@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -27,12 +28,25 @@ public class Tontine {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "montant_cotisation", nullable = false, precision = 15, scale = 2)
-    private BigDecimal montantCotisation;
+    @Column(name = "montant_cotisation_min", nullable = false, precision = 15, scale = 2)
+    private BigDecimal montantCotisationMin;
 
-    @Column(name = "jour_cotisation", nullable = false)
+    @Column(name = "montant_cotisation_max", precision = 15, scale = 2)
+    private BigDecimal montantCotisationMax;
+
+    @Column(name = "montant_consensuel", precision = 15, scale = 2)
+    private BigDecimal montantConsensuel;
+
+    @Column(name = "jour_reference")
+    private Integer jourReference;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_regle_periodicite", nullable = false, length = 40)
     @Builder.Default
-    private short jourCotisation = 1;
+    private TypeReglePeriodicite typeReglePeriodicite = TypeReglePeriodicite.MENSUEL_JOUR_FIXE;
+
+    @Column(name = "date_prochaine_tontine")
+    private LocalDate dateProchaineTontine;
 
     @Column(name = "taux_interet_pret", nullable = false, precision = 5, scale = 2)
     @Builder.Default
@@ -88,5 +102,18 @@ public class Tontine {
         TRIMESTRIEL,
         SEMESTRIEL,
         ANNUEL
+    }
+
+    public enum TypeReglePeriodicite {
+        HEBDOMADAIRE,
+        MENSUEL_JOUR_FIXE,
+        MENSUEL_DERNIER_SAMEDI,
+        MENSUEL_DERNIER_DIMANCHE,
+        MENSUEL_PREMIER_DIMANCHE_APRES,
+        MENSUEL_DIMANCHE_SUR_OU_APRES,
+        TRIMESTRIEL_JOUR_FIXE,
+        SEMESTRIEL_JOUR_FIXE,
+        ANNUEL_JOUR_FIXE,
+        DATE_MANUELLE
     }
 }

@@ -15,8 +15,8 @@ export interface SetupRequest {
   telephone?: string;
   tontineNom: string;
   tontineDescription?: string;
-  montantCotisation: number;
-  jourCotisation: number;
+  montantCotisationMin: number;
+  jourReference?: number;
   tauxInteretPret?: number;
   tauxInteretEpargne?: number;
 }

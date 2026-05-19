@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record UpdateTontineConfigRequest(
 
@@ -14,12 +15,20 @@ public record UpdateTontineConfigRequest(
         String description,
 
         @DecimalMin("0.01")
-        BigDecimal montantCotisation,
+        BigDecimal montantCotisationMin,
+
+        @DecimalMin("0.01")
+        BigDecimal montantCotisationMax,
+
+        @DecimalMin("0.01")
+        BigDecimal montantConsensuel,
 
         @Min(1) @Max(28)
-        Short jourCotisation,
+        Integer jourReference,
 
-        Tontine.PeriodeCotisation periodeCotisation,
+        Tontine.TypeReglePeriodicite typeReglePeriodicite,
+
+        LocalDate dateProchaineTontine,
 
         @DecimalMin("0.0")
         BigDecimal tauxInteretPret,

@@ -1,4 +1,4 @@
-package com.tontinepro.tontinepro_backend.api.aide;
+﻿package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.ContributionFondsAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.FondsAideResponse;
@@ -24,21 +24,21 @@ public class FondsAideController {
     private final FondsAideService fondsAideService;
 
     @GetMapping("/{tontineId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "État du fonds d'aide d'une tontine (solde, mode, montant par membre)")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Ã‰tat du fonds d'aide d'une tontine (solde, mode, montant par membre)")
     public FondsAideResponse getByTontineId(@PathVariable UUID tontineId) {
         return fondsAideService.getByTontineId(tontineId);
     }
 
     @GetMapping("/{tontineId}/mouvements")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Historique des mouvements du fonds d'aide")
     public List<MouvementFondsAideResponse> getMouvements(@PathVariable UUID tontineId) {
         return fondsAideService.getMouvements(tontineId);
     }
 
     @GetMapping("/{tontineId}/contributions")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Contributions des membres au fonds (filtrables par statut)")
     public List<ContributionFondsAideResponse> getContributions(
             @PathVariable UUID tontineId,
@@ -48,8 +48,8 @@ public class FondsAideController {
     }
 
     @PostMapping("/{tontineId}/contributions/generer")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Générer les contributions mensuelles pour tous les membres actifs (mode MENSUEL)")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "GÃ©nÃ©rer les contributions mensuelles pour tous les membres actifs (mode MENSUEL)")
     public List<ContributionFondsAideResponse> genererContributionsMensuelles(
             @PathVariable UUID tontineId,
             @RequestParam short mois,
@@ -59,7 +59,7 @@ public class FondsAideController {
     }
 
     @PatchMapping("/contributions/{id}/payer")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Enregistrer le paiement d'une contribution au fonds d'aide")
     public ContributionFondsAideResponse enregistrerPaiement(@PathVariable UUID id) {
         return fondsAideService.enregistrerPaiement(id);
@@ -73,3 +73,4 @@ public class FondsAideController {
         return fondsAideService.getMesContributions(principal.getUsername());
     }
 }
+

@@ -25,8 +25,8 @@ public class AbsenceController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Enregistrer une absence (Censeur / Admin)")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') or @sec.isCenseur(authentication.name)")
+    @Operation(summary = "Enregistrer une absence (Censeur / Secrétaire / Président)")
     public AbsenceResponse enregistrer(
             @Valid @RequestBody EnregistrerAbsenceRequest request,
             @AuthenticationPrincipal UserDetails principal
@@ -35,7 +35,7 @@ public class AbsenceController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') or @sec.isCenseur(authentication.name)")
     @Operation(summary = "Lister les absences d'une tontine")
     public List<AbsenceResponse> lister(@RequestParam UUID tontineId) {
         return absenceService.listerParTontine(tontineId);

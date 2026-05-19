@@ -19,10 +19,10 @@ public record SetupRequest(
         String tontineDescription,
 
         @NotNull @DecimalMin("0.01")
-        BigDecimal montantCotisation,
+        BigDecimal montantCotisationMin,
 
-        @NotNull @Min(1) @Max(28)
-        Short jourCotisation,
+        @Min(1) @Max(28)
+        Integer jourReference,
 
         @DecimalMin("0.0") BigDecimal tauxInteretPret,
         @DecimalMin("0.0") BigDecimal tauxInteretEpargne,

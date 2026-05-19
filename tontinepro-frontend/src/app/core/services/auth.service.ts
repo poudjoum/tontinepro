@@ -16,11 +16,14 @@ export class AuthService {
 
   private _auth = signal<AuthResponse | null>(this.loadFromStorage());
 
-  readonly isLoggedIn   = computed(() => !!this._auth()?.accessToken);
-  readonly currentUser  = computed(() => this._auth());
-  readonly isAdmin      = computed(() => this._auth()?.role === 'ADMIN');
-  readonly isMembre     = computed(() => this._auth()?.role === 'MEMBRE');
-  readonly twoFaEnabled = computed(() => this._auth()?.twoFaEnabled ?? false);
+  readonly isLoggedIn    = computed(() => !!this._auth()?.accessToken);
+  readonly currentUser   = computed(() => this._auth());
+  readonly isAdmin       = computed(() => this._auth()?.role === 'ADMIN');
+  readonly isSecretaire  = computed(() => this._auth()?.role === 'SECRETAIRE');
+  readonly isGestionnaire = computed(() =>
+    this._auth()?.role === 'ADMIN' || this._auth()?.role === 'SECRETAIRE');
+  readonly isMembre      = computed(() => this._auth()?.role === 'MEMBRE');
+  readonly twoFaEnabled  = computed(() => this._auth()?.twoFaEnabled ?? false);
 
   constructor(private http: HttpClient, private router: Router) {}
 

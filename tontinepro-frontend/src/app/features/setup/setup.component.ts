@@ -30,8 +30,8 @@ export class SetupComponent {
   tontineForm = this.fb.nonNullable.group({
     tontineNom:        ['', Validators.required],
     tontineDescription:[''],
-    montantCotisation: [0, [Validators.required, Validators.min(1)]],
-    jourCotisation:    [1, [Validators.required, Validators.min(1), Validators.max(28)]],
+    montantCotisationMin: [0, [Validators.required, Validators.min(1)]],
+    jourReference:        [1, [Validators.min(1), Validators.max(28)]],
   });
 
   // Étape 2 — Fondateur
@@ -69,8 +69,8 @@ export class SetupComponent {
       nom: f.nom, prenom: f.prenom, email: f.email,
       password: f.password, telephone: f.telephone || undefined,
       tontineNom: t.tontineNom, tontineDescription: t.tontineDescription || undefined,
-      montantCotisation: t.montantCotisation,
-      jourCotisation: t.jourCotisation,
+      montantCotisationMin: t.montantCotisationMin,
+      jourReference: t.jourReference || undefined,
     }).subscribe({
       next: authResp => {
         this.loading.set(false);

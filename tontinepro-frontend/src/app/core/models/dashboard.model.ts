@@ -10,7 +10,7 @@ export interface MembreDashboard {
 
   derniereCotisationMois:    number | null;
   derniereCotisationAnnee:   number | null;
-  montantCotisation:         number;
+  montantCotisation:         number; // correspond à montantCotisationMin
   statutDerniereCotisation:  string | null;
 
   pretActifId:            string | null;

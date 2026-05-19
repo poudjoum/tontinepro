@@ -1,4 +1,4 @@
-package com.tontinepro.tontinepro_backend.api.membre;
+﻿package com.tontinepro.tontinepro_backend.api.membre;
 
 import com.tontinepro.tontinepro_backend.api.membre.dto.CreateMembreRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.InscriptionDirecteRequest;
@@ -29,14 +29,14 @@ public class MembreController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Inscrire un membre")
     public MembreResponse create(@Valid @RequestBody CreateMembreRequest request) {
         return membreService.create(request);
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Lister les membres (filtrables par tontine et statut)")
     public List<MembreResponse> list(
             @RequestParam(required = false) UUID tontineId,
@@ -52,14 +52,14 @@ public class MembreController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Détails d'un membre")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "DÃ©tails d'un membre")
     public MembreResponse getById(@PathVariable UUID id) {
         return membreService.getById(id);
     }
 
     @PatchMapping("/{id}/statut")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Modifier le statut d'un membre")
     public MembreResponse updateStatut(
             @PathVariable UUID id,
@@ -70,14 +70,14 @@ public class MembreController {
 
     @PostMapping("/inscription-directe")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Inscrire directement un nouveau membre (crée le compte utilisateur + le profil membre)")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Inscrire directement un nouveau membre (crÃ©e le compte utilisateur + le profil membre)")
     public MembreResponse inscrireDirectement(@Valid @RequestBody InscriptionDirecteRequest request) {
         return membreService.inscrireDirectement(request);
     }
 
     @PatchMapping("/{id}/fonction")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Modifier la fonction d'un membre dans le bureau")
     public MembreResponse updateFonction(
             @PathVariable UUID id,
@@ -86,3 +86,4 @@ public class MembreController {
         return membreService.updateFonction(id, request);
     }
 }
+

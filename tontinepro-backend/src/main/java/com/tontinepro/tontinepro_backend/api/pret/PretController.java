@@ -1,4 +1,4 @@
-package com.tontinepro.tontinepro_backend.api.pret;
+﻿package com.tontinepro.tontinepro_backend.api.pret;
 
 import com.tontinepro.tontinepro_backend.api.pret.dto.*;
 import com.tontinepro.tontinepro_backend.domain.pret.Pret;
@@ -19,16 +19,16 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/prets")
 @RequiredArgsConstructor
-@Tag(name = "Prêts")
+@Tag(name = "PrÃªts")
 public class PretController {
 
     private final PretService pretService;
 
-    // ── Endpoints membre ─────────────────────────────────────────────────
+    // â”€â”€ Endpoints membre â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @PostMapping("/demande")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Soumettre une demande de prêt")
+    @Operation(summary = "Soumettre une demande de prÃªt")
     public PretResponse soumettreDemande(
             @AuthenticationPrincipal UserDetails principal,
             @Valid @RequestBody DemandePretRequest request
@@ -37,13 +37,13 @@ public class PretController {
     }
 
     @GetMapping("/mes-prets")
-    @Operation(summary = "Mes prêts")
+    @Operation(summary = "Mes prÃªts")
     public List<PretResponse> getMesPrets(@AuthenticationPrincipal UserDetails principal) {
         return pretService.getMesPrets(principal.getUsername());
     }
 
     @GetMapping("/{id}/echeances")
-    @Operation(summary = "Tableau d'amortissement d'un prêt")
+    @Operation(summary = "Tableau d'amortissement d'un prÃªt")
     public List<EcheancePretResponse> getEcheances(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails principal
@@ -54,7 +54,7 @@ public class PretController {
     }
 
     @PostMapping("/{id}/rembourser")
-    @Operation(summary = "Rembourser la prochaine échéance")
+    @Operation(summary = "Rembourser la prochaine Ã©chÃ©ance")
     public EcheancePretResponse rembourser(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails principal
@@ -63,7 +63,7 @@ public class PretController {
     }
 
     @GetMapping("/simulation")
-    @Operation(summary = "Simuler un prêt (mensualité, tableau d'amortissement, coût total)")
+    @Operation(summary = "Simuler un prÃªt (mensualitÃ©, tableau d'amortissement, coÃ»t total)")
     public SimulationPretResponse simuler(
             @RequestParam BigDecimal montant,
             @RequestParam short duree,
@@ -72,11 +72,11 @@ public class PretController {
         return pretService.simuler(montant, duree, tontineId);
     }
 
-    // ── Endpoints admin ──────────────────────────────────────────────────
+    // â”€â”€ Endpoints admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Lister tous les prêts (filtrables par tontine ou statut)")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Lister tous les prÃªts (filtrables par tontine ou statut)")
     public List<PretResponse> list(
             @RequestParam(required = false) UUID tontineId,
             @RequestParam(required = false) Pret.Statut statut
@@ -85,15 +85,15 @@ public class PretController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Détails d'un prêt")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "DÃ©tails d'un prÃªt")
     public PretResponse getById(@PathVariable UUID id) {
         return pretService.getById(id);
     }
 
     @PatchMapping("/{id}/valider")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Valider et décaisser un prêt — génère l'échéancier")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Valider et dÃ©caisser un prÃªt â€” gÃ©nÃ¨re l'Ã©chÃ©ancier")
     public PretResponse valider(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails principal
@@ -102,8 +102,8 @@ public class PretController {
     }
 
     @PatchMapping("/{id}/rejeter")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Rejeter une demande de prêt")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Rejeter une demande de prÃªt")
     public PretResponse rejeter(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails principal,
@@ -113,9 +113,10 @@ public class PretController {
     }
 
     @PatchMapping("/echeances/{echeanceId}/retard")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Marquer une échéance en retard")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Marquer une Ã©chÃ©ance en retard")
     public EcheancePretResponse marquerEnRetard(@PathVariable UUID echeanceId) {
         return pretService.marquerEcheanceEnRetard(echeanceId);
     }
 }
+

@@ -54,6 +54,9 @@ public class User {
     private OffsetDateTime updatedAt;
 
     public enum Role {
-        ADMIN, MEMBRE, INVITE
+        ADMIN,       // Président — accès total
+        SECRETAIRE,  // Secrétaire — gestion quotidienne
+        MEMBRE,
+        INVITE
     }
 }

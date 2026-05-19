@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(./mvnw dependency:resolve -q)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(node --max-old-space-size=4096 node_modules/.bin/ng build --configuration development)",
+      "Bash(grep -v \"^$\")",
+      "Bash(npm uninstall *)",
+      "Bash(npm cache *)",
+      "Bash(wmic logicaldisk *)",
+      "PowerShell(Get-PSDrive D | Select-Object Name, @{N='Used\\(GB\\)';E={[math]::Round\\($_.Used/1GB,1\\)}}, @{N='Free\\(GB\\)';E={[math]::Round\\($_.Free/1GB,1\\)}})",
+      "Bash(npm config *)",
+      "PowerShell(npm config *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\jumpy\\\\AppData\\\\Local\" | Sort-Object -Property Length -Descending | Select-Object Name, @{N='Size\\(MB\\)';E={[math]::Round\\($_.Length/1MB,1\\)}} | Select-Object -First 10)",
+      "PowerShell(Get-PSDrive C | Select-Object @{N='Free\\(GB\\)';E={[math]::Round\\($_.Free/1GB,2\\)}})",
+      "PowerShell(Get-WmiObject *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(npm run *)",
+      "Bash(npx cap *)",
+      "Bash(ssh *)",
+      "Bash(mvn compile *)",
+      "PowerShell(Get-Command *)"
+    ]
+  }
+}

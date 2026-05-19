@@ -22,7 +22,7 @@ export class DashboardComponent implements OnInit {
   error   = signal('');
 
   ngOnInit(): void {
-    if (this.auth.isAdmin()) {
+    if (this.auth.isGestionnaire()) {
       this.svc.getAdminDashboard().subscribe({
         next:  d => { this.admin.set(d);  this.loading.set(false); },
         error: e => { this.error.set(e.message); this.loading.set(false); },
