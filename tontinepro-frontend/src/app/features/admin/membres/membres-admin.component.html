@@ -1,7 +1,13 @@
 <div class="space-y-4">
-  <h1 class="text-xl font-bold text-gray-900">Gestion des membres</h1>
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-bold text-gray-900">Membres</h1>
+    <button (click)="showForm.set(!showForm())"
+            class="px-3 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg">
+      {{ showForm() ? '✕ Annuler' : '+ Ajouter' }}
+    </button>
+  </div>
 
-  <!-- Sélection tontine + recherche -->
+  <!-- Sélection tontine -->
   <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
     <div>
       <label class="block text-xs font-medium text-gray-600 mb-1">Tontine</label>
@@ -15,7 +21,67 @@
            class="input-field" />
   </div>
 
-  @if (error()) {
+  <!-- Formulaire inscription directe -->
+  @if (showForm()) {
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-primary-200 space-y-3">
+      <h2 class="text-sm font-semibold text-gray-800">Inscrire un nouveau membre</h2>
+      <p class="text-xs text-gray-500">Crée le compte utilisateur et le profil membre en une seule étape.</p>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Prénom *</label>
+          <input [(ngModel)]="form.prenom" type="text" class="input-field" placeholder="Prénom" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Nom *</label>
+          <input [(ngModel)]="form.nom" type="text" class="input-field" placeholder="Nom" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Email *</label>
+        <input [(ngModel)]="form.email" type="email" class="input-field" placeholder="email@exemple.com" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
+        <input [(ngModel)]="form.telephone" type="tel" class="input-field" placeholder="+237 6XX XXX XXX" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Mot de passe provisoire *</label>
+        <input [(ngModel)]="form.password" type="text" class="input-field" placeholder="Min 8 caractères" />
+        <p class="text-[11px] text-gray-400 mt-1">Le membre pourra le changer depuis son profil.</p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Fonction dans le bureau</label>
+        <select [(ngModel)]="form.fonction" class="input-field">
+          @for (f of fonctions; track f.value) {
+            <option [value]="f.value">{{ f.label }}</option>
+          }
+        </select>
+      </div>
+
+      @if (error()) {
+        <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+      }
+      @if (success()) {
+        <div class="bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2">{{ success() }}</div>
+      }
+
+      <button (click)="inscrire()"
+              [disabled]="inscribing() || !form.nom || !form.prenom || !form.email || !form.password"
+              class="btn-primary w-full">
+        @if (inscribing()) { Inscription en cours… } @else { Inscrire le membre }
+      </button>
+    </div>
+  }
+
+  @if (success() && !showForm()) {
+    <div class="bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2">{{ success() }}</div>
+  }
+  @if (error() && !showForm()) {
     <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
   }
 
@@ -27,55 +93,46 @@
       <p class="text-xs text-gray-500 px-1">{{ filtres().length }} membre(s)</p>
       @for (m of filtres(); track m.id) {
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
-          <!-- En-tête membre -->
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm">
+            <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm flex-shrink-0">
               {{ m.prenom[0] }}{{ m.nom[0] }}
             </div>
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-gray-900">{{ m.prenom }} {{ m.nom }}</p>
-              <p class="text-xs text-gray-500">{{ m.matricule }} · {{ m.userEmail }}</p>
+              <p class="text-xs text-gray-500 truncate">{{ m.matricule }} · {{ m.userEmail }}</p>
             </div>
-            @if (m.statut === 'ACTIF') {
-              <span class="badge-green">Actif</span>
-            } @else if (m.statut === 'SUSPENDU') {
-              <span class="badge-yellow">Suspendu</span>
-            } @else {
-              <span class="badge-gray">Retiré</span>
-            }
+            @if (m.statut === 'ACTIF') { <span class="badge-green">Actif</span> }
+            @else if (m.statut === 'SUSPENDU') { <span class="badge-yellow">Suspendu</span> }
+            @else { <span class="badge-gray">Retiré</span> }
           </div>
 
-          <!-- Fonction -->
           <div class="flex items-center gap-2">
-            <span class="text-xs text-gray-500 w-16 flex-shrink-0">Fonction :</span>
-            <select [value]="m.fonction"
-                    (change)="changerFonction(m.id, $event)"
-                    [disabled]="saving() === m.id"
-                    class="input-field flex-1 text-xs py-1">
+            <span class="text-xs text-gray-500 flex-shrink-0">Fonction :</span>
+            <select [value]="m.fonction" (change)="changerFonction(m.id, $event)"
+                    [disabled]="saving() === m.id" class="input-field flex-1 text-xs py-1">
               @for (f of fonctions; track f.value) {
                 <option [value]="f.value" [selected]="m.fonction === f.value">{{ f.label }}</option>
               }
             </select>
           </div>
 
-          <!-- Actions statut -->
           @if (m.statut === 'ACTIF') {
-            <button (click)="changerStatut(m.id, 'SUSPENDU')"
-                    [disabled]="saving() === m.id"
-                    class="text-xs text-amber-700 underline">
-              Suspendre
-            </button>
+            <button (click)="changerStatut(m.id, 'SUSPENDU')" [disabled]="saving() === m.id"
+                    class="text-xs text-amber-700 underline">Suspendre</button>
           } @else if (m.statut === 'SUSPENDU') {
-            <div class="flex gap-3">
+            <div class="flex gap-4">
               <button (click)="changerStatut(m.id, 'ACTIF')" [disabled]="saving() === m.id"
                       class="text-xs text-green-700 underline">Réactiver</button>
               <button (click)="changerStatut(m.id, 'RETIRE')" [disabled]="saving() === m.id"
-                      class="text-xs text-red-700 underline">Retirer</button>
+                      class="text-xs text-red-700 underline">Retirer définitivement</button>
             </div>
           }
         </div>
       } @empty {
-        <p class="text-center text-sm text-gray-400 py-6">Aucun membre trouvé</p>
+        <div class="text-center py-8 text-gray-400">
+          <p class="text-sm">Aucun membre dans cette tontine.</p>
+          <p class="text-xs mt-1">Cliquez sur « + Ajouter » pour inscrire le premier membre.</p>
+        </div>
       }
     </div>
   }

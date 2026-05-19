@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.membre;
 
 import com.tontinepro.tontinepro_backend.api.membre.dto.CreateMembreRequest;
+import com.tontinepro.tontinepro_backend.api.membre.dto.InscriptionDirecteRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreFonctionRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreStatutRequest;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +31,7 @@ public class MembreService {
     private final UserRepository userRepository;
     private final TontineRepository tontineRepository;
     private final CompteEpargneRepository compteEpargneRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public MembreResponse create(CreateMembreRequest request) {
@@ -108,6 +112,43 @@ public class MembreService {
 
         membre.setFonction(request.fonction());
         return MembreResponse.from(membreRepository.save(membre));
+    }
+
+    @Transactional
+    public MembreResponse inscrireDirectement(InscriptionDirecteRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("Un compte existe déjà avec l'email : " + request.email());
+        }
+
+        Tontine tontine = tontineRepository.findById(request.tontineId())
+                .orElseThrow(() -> new IllegalArgumentException("Tontine introuvable : " + request.tontineId()));
+
+        if (!tontine.isActif()) {
+            throw new IllegalArgumentException("Impossible d'inscrire dans une tontine inactive");
+        }
+
+        User user = User.builder()
+                .email(request.email())
+                .hashedPassword(passwordEncoder.encode(request.password()))
+                .telephone(request.telephone())
+                .role(User.Role.MEMBRE)
+                .build();
+        user = userRepository.save(user);
+
+        Membre membre = Membre.builder()
+                .user(user)
+                .tontine(tontine)
+                .nom(request.nom())
+                .prenom(request.prenom())
+                .fonction(request.fonction() != null ? request.fonction() : Membre.Fonction.MEMBRE_ORDINAIRE)
+                .build();
+        membre = membreRepository.save(membre);
+        membre.setMatricule(generateMatricule(membre.getId()));
+        membre = membreRepository.save(membre);
+
+        compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());
+
+        return MembreResponse.from(membre);
     }
 
     private String generateMatricule(UUID membreId) {

@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.membre;
 
 import com.tontinepro.tontinepro_backend.api.membre.dto.CreateMembreRequest;
+import com.tontinepro.tontinepro_backend.api.membre.dto.InscriptionDirecteRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreFonctionRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreStatutRequest;
@@ -65,6 +66,14 @@ public class MembreController {
             @Valid @RequestBody UpdateMembreStatutRequest request
     ) {
         return membreService.updateStatut(id, request);
+    }
+
+    @PostMapping("/inscription-directe")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Inscrire directement un nouveau membre (crée le compte utilisateur + le profil membre)")
+    public MembreResponse inscrireDirectement(@Valid @RequestBody InscriptionDirecteRequest request) {
+        return membreService.inscrireDirectement(request);
     }
 
     @PatchMapping("/{id}/fonction")
