@@ -1,4 +1,4 @@
-﻿package com.tontinepro.tontinepro_backend.api.epargne;
+package com.tontinepro.tontinepro_backend.api.epargne;
 
 import com.tontinepro.tontinepro_backend.api.epargne.dto.CompteEpargneResponse;
 import com.tontinepro.tontinepro_backend.api.epargne.dto.DepotRequest;

@@ -1,4 +1,4 @@
-﻿package com.tontinepro.tontinepro_backend.api.invitation;
+package com.tontinepro.tontinepro_backend.api.invitation;
 
 import com.tontinepro.tontinepro_backend.api.auth.dto.AuthResponse;
 import com.tontinepro.tontinepro_backend.api.invitation.dto.GenererInvitationRequest;

@@ -1,4 +1,4 @@
-﻿package com.tontinepro.tontinepro_backend.api.session;
+package com.tontinepro.tontinepro_backend.api.session;
 
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
 import io.swagger.v3.oas.annotations.Operation;

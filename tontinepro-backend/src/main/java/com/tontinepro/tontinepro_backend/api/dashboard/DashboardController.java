@@ -1,4 +1,4 @@
-﻿package com.tontinepro.tontinepro_backend.api.dashboard;
+package com.tontinepro.tontinepro_backend.api.dashboard;
 
 import com.tontinepro.tontinepro_backend.api.dashboard.dto.AdminDashboardResponse;
 import com.tontinepro.tontinepro_backend.api.dashboard.dto.MembreDashboardResponse;

@@ -1,4 +1,4 @@
-﻿package com.tontinepro.tontinepro_backend.api.document;
+package com.tontinepro.tontinepro_backend.api.document;
 
 import com.tontinepro.tontinepro_backend.api.document.dto.DocumentResponse;
 import com.tontinepro.tontinepro_backend.domain.document.Document;

@@ -1,4 +1,4 @@
-﻿package com.tontinepro.tontinepro_backend.api.pret;
+package com.tontinepro.tontinepro_backend.api.pret;
 
 import com.tontinepro.tontinepro_backend.api.pret.dto.*;
 import com.tontinepro.tontinepro_backend.domain.pret.Pret;

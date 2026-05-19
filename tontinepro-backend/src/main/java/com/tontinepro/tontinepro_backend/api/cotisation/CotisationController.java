@@ -1,4 +1,4 @@
-﻿package com.tontinepro.tontinepro_backend.api.cotisation;
+package com.tontinepro.tontinepro_backend.api.cotisation;
 
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CreateCotisationRequest;

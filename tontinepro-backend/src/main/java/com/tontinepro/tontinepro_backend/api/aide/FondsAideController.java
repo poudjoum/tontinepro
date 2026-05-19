@@ -1,4 +1,4 @@
-﻿package com.tontinepro.tontinepro_backend.api.aide;
+package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.ContributionFondsAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.FondsAideResponse;
