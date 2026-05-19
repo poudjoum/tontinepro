@@ -1,0 +1,179 @@
+@if (loading()) {
+  <div class="flex justify-center py-16">
+    <svg class="animate-spin w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+    </svg>
+  </div>
+}
+
+@if (!loading()) {
+  <div class="space-y-4">
+
+    <h1 class="text-xl font-bold text-gray-900">Rapports</h1>
+
+    @if (error()) {
+      <div class="card border border-red-200 bg-red-50 text-red-700 text-sm py-3 text-center">
+        {{ error() }}
+      </div>
+    }
+
+    <!-- ── Rapport Mensuel ─────────────────────────────────────── -->
+    <div class="card space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-900">Rapport Mensuel</p>
+          <p class="text-xs text-gray-500 mt-0.5">Cotisations + Aides du mois · Format PDF</p>
+        </div>
+        <span class="ml-auto badge-danger flex-shrink-0">PDF</span>
+      </div>
+
+      <!-- Paramètres -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Mois</label>
+          <select [value]="moisM()"
+                  (change)="moisM.set(+$any($event.target).value)"
+                  class="input-field text-sm py-2">
+            @for (m of MOIS_OPTIONS; track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Année</label>
+          <select [value]="anneeM()"
+                  (change)="anneeM.set(+$any($event.target).value)"
+                  class="input-field text-sm py-2">
+            @for (a of ANNEES; track a) {
+              <option [value]="a">{{ a }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <button (click)="downloadMensuel()" [disabled]="dlM() || !tontineId()"
+              class="btn-primary py-2.5">
+        @if (dlM()) {
+          <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          Génération en cours…
+        } @else {
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Télécharger — {{ moisNom(moisM()) }} {{ anneeM() }}
+        }
+      </button>
+    </div>
+
+    <!-- ── Export Cotisations ──────────────────────────────────── -->
+    <div class="card space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-900">Export Cotisations</p>
+          <p class="text-xs text-gray-500 mt-0.5">Données détaillées + résumé par période · Format Excel</p>
+        </div>
+        <span class="ml-auto badge-success flex-shrink-0">XLSX</span>
+      </div>
+
+      <!-- Paramètres -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Mois</label>
+          <select [value]="moisC() ?? ''"
+                  (change)="moisC.set($any($event.target).value ? +$any($event.target).value : null)"
+                  class="input-field text-sm py-2">
+            <option value="">Tous les mois</option>
+            @for (m of MOIS_OPTIONS; track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Année</label>
+          <select [value]="anneeC()"
+                  (change)="anneeC.set(+$any($event.target).value)"
+                  class="input-field text-sm py-2">
+            @for (a of ANNEES; track a) {
+              <option [value]="a">{{ a }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <button (click)="downloadCotisations()" [disabled]="dlC() || !tontineId()"
+              class="btn-primary py-2.5 bg-green-600 hover:bg-green-700">
+        @if (dlC()) {
+          <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          Génération en cours…
+        } @else {
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Télécharger Excel
+          @if (moisC()) { — {{ moisNom(moisC()!) }} {{ anneeC() }} }
+          @else { — {{ anneeC() }} (tous mois) }
+        }
+      </button>
+    </div>
+
+    <!-- ── Rapport Financier ───────────────────────────────────── -->
+    <div class="card space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-900">Rapport Financier</p>
+          <p class="text-xs text-gray-500 mt-0.5">Épargne · Prêts · Fonds d'aide · Cotisations annuelles · Format PDF</p>
+        </div>
+        <span class="ml-auto badge-info flex-shrink-0">PDF</span>
+      </div>
+
+      <div class="bg-blue-50 rounded-xl px-4 py-3 text-xs text-blue-700">
+        Ce rapport est une photo instantanée de la situation financière complète de la tontine.
+      </div>
+
+      <button (click)="downloadFinancier()" [disabled]="dlF() || !tontineId()"
+              class="btn-primary py-2.5 bg-blue-600 hover:bg-blue-700">
+        @if (dlF()) {
+          <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          Génération en cours…
+        } @else {
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Télécharger le rapport financier
+        }
+      </button>
+    </div>
+
+  </div>
+}
