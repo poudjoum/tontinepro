@@ -1,0 +1,131 @@
+version: '3.8'
+
+# ═══════════════════════════════════════════════════════════════════
+#  TontinePro — Stack de production
+#  Serveur cible : 192.168.1.209
+#
+#  Utilisation :
+#    cp .env.example .env && nano .env   # remplir les secrets
+#    docker-compose -f docker-compose.prod.yml up -d
+# ═══════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── Frontend Angular (Nginx) ─────────────────────────────────────
+  frontend:
+    build:
+      context: ./tontinepro-frontend
+      dockerfile: Dockerfile
+    image: tontinepro/frontend:latest
+    container_name: tontinepro-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - tontinepro-net
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # ── Backend Spring Boot ──────────────────────────────────────────
+  backend:
+    build:
+      context: ./tontinepro-backend
+      dockerfile: Dockerfile
+    image: tontinepro/backend:latest
+    container_name: tontinepro-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL:         jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DB_USERNAME:    ${POSTGRES_USER}
+      DB_PASSWORD:    ${POSTGRES_PASSWORD}
+      REDIS_HOST:     redis
+      REDIS_PORT:     6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET:     ${JWT_SECRET}
+      JWT_ACCESS_EXP_MS:  ${JWT_ACCESS_EXP_MS:-900000}
+      JWT_REFRESH_EXP_MS: ${JWT_REFRESH_EXP_MS:-604800000}
+      MAIL_HOST:      ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT:      ${MAIL_PORT:-587}
+      MAIL_USERNAME:  ${MAIL_USERNAME}
+      MAIL_PASSWORD:  ${MAIL_PASSWORD}
+      MAIL_FROM:      ${MAIL_FROM}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - tontinepro-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 3
+    logging:
+      driver: json-file
+      options: { max-size: "50m", max-file: "5" }
+
+  # ── PostgreSQL 16 ─────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: tontinepro-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tontinepro-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # ── Redis 7 ───────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: tontinepro-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-}
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - tontinepro-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+# ── Volumes persistants ──────────────────────────────────────────────
+volumes:
+  postgres_data:
+    name: tontinepro_postgres_data
+  redis_data:
+    name: tontinepro_redis_data
+
+# ── Réseau isolé ─────────────────────────────────────────────────────
+networks:
+  tontinepro-net:
+    name: tontinepro_network
+    driver: bridge

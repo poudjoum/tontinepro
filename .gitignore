@@ -1,19 +1,20 @@
 ﻿# Java / Spring Boot
 target/
 *.class
-*.jar
 *.war
-.mvn/
+# Garder .mvn/wrapper/maven-wrapper.properties (tracké) mais ignorer le JAR
+.mvn/wrapper/maven-wrapper.jar
 
 # Node / Angular
 node_modules/
 dist/
 .angular/
 
-# Environnement
+# Environnement — secrets (ne jamais committer)
 .env
 *.env.local
-application-prod.yml
+application-local.yml
+# application-prod.yml est safe (env vars uniquement) → tracké
 
 # IDE
 .idea/
