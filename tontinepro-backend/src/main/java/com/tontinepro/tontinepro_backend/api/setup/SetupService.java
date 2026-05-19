@@ -69,17 +69,18 @@ public class SetupService {
                 .role(User.Role.ADMIN)
                 .build());
 
+        // Le matricule doit être défini avant le premier save (colonne NOT NULL)
+        String matricule = "MBR-" + java.util.UUID.randomUUID().toString()
+                .replace("-", "").substring(0, 8).toUpperCase();
+
         Membre membre = membreRepository.save(Membre.builder()
                 .user(user)
                 .tontine(tontine)
                 .nom(req.nom())
                 .prenom(req.prenom())
+                .matricule(matricule)
                 .fonction(Membre.Fonction.PRESIDENT)
                 .build());
-
-        String matricule = "MBR-" + membre.getId().toString().replace("-", "").substring(0, 8).toUpperCase();
-        membre.setMatricule(matricule);
-        membreRepository.save(membre);
 
         compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());
 
