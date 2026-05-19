@@ -1,0 +1,228 @@
+<!-- Chargement -->
+@if (loading()) {
+  <div class="flex items-center justify-center py-16">
+    <svg class="animate-spin w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+    </svg>
+  </div>
+}
+
+@if (!loading()) {
+  <div class="space-y-4">
+
+    <!-- ━━━━ VUE MEMBRE ━━━━ -->
+    @if (!auth.isAdmin()) {
+      <h1 class="text-xl font-bold text-gray-900">Mon Épargne</h1>
+
+      <!-- Carte solde -->
+      @if (compte()) {
+        <div class="card bg-gradient-to-br from-primary-600 to-primary-700 text-white">
+          <p class="text-primary-200 text-xs font-medium">Solde actuel</p>
+          <p class="text-3xl font-bold mt-1">{{ fcfa(compte()!.solde) }}</p>
+          <p class="text-primary-200 text-xs mt-2">{{ compte()!.tontineNom }}</p>
+        </div>
+      }
+
+      <!-- Erreur -->
+      @if (error()) {
+        <div class="card border border-red-200 bg-red-50 text-red-700 text-sm py-3 text-center">
+          {{ error() }}
+        </div>
+      }
+
+      <!-- Formulaire dépôt / retrait -->
+      <div class="card space-y-4">
+        <!-- Onglets -->
+        <div class="flex bg-gray-100 rounded-xl p-1">
+          <button (click)="mode.set('depot')"
+                  [class]="mode() === 'depot'
+                    ? 'flex-1 py-2 rounded-lg bg-white text-primary-600 font-semibold text-sm shadow-sm'
+                    : 'flex-1 py-2 rounded-lg text-gray-500 text-sm'">
+            ↑ Dépôt
+          </button>
+          <button (click)="mode.set('retrait')"
+                  [class]="mode() === 'retrait'
+                    ? 'flex-1 py-2 rounded-lg bg-white text-red-600 font-semibold text-sm shadow-sm'
+                    : 'flex-1 py-2 rounded-lg text-gray-500 text-sm'">
+            ↓ Retrait
+          </button>
+        </div>
+
+        <!-- Montant -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Montant (FCFA) *
+          </label>
+          <input type="number" min="1"
+                 [value]="montant()"
+                 (input)="montant.set(+$any($event.target).value)"
+                 placeholder="0"
+                 class="input-field text-lg font-semibold">
+        </div>
+
+        <!-- Référence -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            Référence <span class="text-gray-400 font-normal">(optionnel)</span>
+          </label>
+          <input type="text"
+                 [value]="reference()"
+                 (input)="reference.set($any($event.target).value)"
+                 placeholder="Ex : virement bancaire…"
+                 class="input-field text-sm">
+        </div>
+
+        <!-- Bouton -->
+        <button (click)="soumettre()" [disabled]="montant() <= 0 || submitting()"
+                [class]="mode() === 'depot'
+                  ? 'btn-primary'
+                  : 'w-full min-h-[44px] flex items-center justify-center px-4 py-3 rounded-xl bg-red-600 text-white font-semibold disabled:opacity-50'">
+          @if (submitting()) {
+            <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          }
+          {{ submitting() ? 'Traitement…' : mode() === 'depot' ? '↑ Effectuer le dépôt' : '↓ Effectuer le retrait' }}
+        </button>
+      </div>
+
+      <!-- Historique -->
+      <div class="space-y-2">
+        <h2 class="font-semibold text-gray-900">Historique</h2>
+
+        @if (mouvements().length === 0) {
+          <div class="card text-center py-8 text-gray-400">
+            <p>Aucune transaction</p>
+          </div>
+        }
+
+        @for (m of mouvements(); track m.id) {
+          <div class="card flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                 [class]="m.typeMouvement === 'DEPOT' ? 'bg-green-100' : m.typeMouvement === 'RETRAIT' ? 'bg-red-100' : 'bg-blue-100'">
+              <span class="font-bold text-sm" [class]="typeClass(m.typeMouvement)">
+                {{ typeIcon(m.typeMouvement) }}
+              </span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-sm text-gray-900">
+                {{ m.typeMouvement === 'DEPOT' ? 'Dépôt' : m.typeMouvement === 'RETRAIT' ? 'Retrait' : 'Intérêts' }}
+              </p>
+              <p class="text-xs text-gray-400">{{ formatDate(m.createdAt) }}</p>
+              @if (m.reference) {
+                <p class="text-xs text-gray-400 truncate">{{ m.reference }}</p>
+              }
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="font-bold text-sm" [class]="typeClass(m.typeMouvement)">
+                {{ m.typeMouvement === 'RETRAIT' ? '-' : '+' }}{{ fcfa(m.montant) }}
+              </p>
+              <p class="text-xs text-gray-400">{{ fcfa(m.soldeApres) }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ━━━━ VUE ADMIN ━━━━ -->
+    @if (auth.isAdmin()) {
+      <!-- En-tête + stats -->
+      <div class="flex items-start justify-between">
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">Épargne</h1>
+          <p class="text-sm text-gray-500 mt-0.5">Total : {{ fcfa(totalEpargne()) }}</p>
+        </div>
+        <button (click)="confirmInterets.set(true)"
+                class="text-xs font-semibold text-primary-600 border border-primary-200
+                       px-3 py-2 rounded-xl active:bg-primary-50 min-h-[44px]">
+          ✦ Distribuer intérêts
+        </button>
+      </div>
+
+      <!-- Confirmation distribution intérêts -->
+      @if (confirmInterets()) {
+        <div class="card border border-amber-200 bg-amber-50 space-y-3">
+          <p class="text-sm font-semibold text-amber-800">
+            Distribuer les intérêts sur tous les comptes ?
+          </p>
+          <p class="text-xs text-amber-700">
+            Cette action crédite les intérêts sur {{ comptes().length }} compte(s) épargne.
+          </p>
+          <div class="flex gap-2">
+            <button (click)="distribuerInterets()" [disabled]="submitting()"
+                    class="btn-primary text-sm py-2 flex-1">
+              @if (submitting()) { Traitement… } @else { Confirmer }
+            </button>
+            <button (click)="confirmInterets.set(false)"
+                    class="btn-secondary text-sm py-2 px-4">Annuler</button>
+          </div>
+        </div>
+      }
+
+      @if (resultatInterets() !== null) {
+        <div class="card border border-green-200 bg-green-50 text-green-800 text-sm text-center py-3">
+          ✓ {{ resultatInterets() }} compte(s) crédité(s) avec succès
+        </div>
+      }
+
+      <!-- Erreur -->
+      @if (error()) {
+        <div class="card border border-red-200 bg-red-50 text-red-700 text-sm py-3 text-center">
+          {{ error() }}
+        </div>
+      }
+
+      <!-- Liste des comptes -->
+      @if (comptes().length === 0) {
+        <div class="card text-center py-10 text-gray-400">Aucun compte épargne</div>
+      }
+
+      @for (c of comptes(); track c.id) {
+        <div class="card space-y-0">
+          <button (click)="voirHistorique(c.membreId)"
+                  class="w-full flex items-center justify-between text-left">
+            <div>
+              <p class="font-semibold text-gray-900">{{ c.membreNom }} {{ c.membrePrenom }}</p>
+              <p class="text-xs text-gray-500">{{ c.membreMatricule }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-primary-600">{{ fcfa(c.solde) }}</span>
+              <span class="text-gray-400 text-xs">
+                {{ selectedMembreId() === c.membreId ? '▲' : '▼' }}
+              </span>
+            </div>
+          </button>
+
+          <!-- Historique inline -->
+          @if (selectedMembreId() === c.membreId) {
+            <div class="mt-3 pt-3 border-t border-gray-100 space-y-2">
+              @if (selectedHistorique().length === 0) {
+                <p class="text-xs text-center text-gray-400 py-2">Aucune transaction</p>
+              }
+              @for (m of selectedHistorique(); track m.id) {
+                <div class="flex items-center gap-2 py-1">
+                  <span class="w-6 h-6 rounded-lg text-xs flex items-center justify-center font-bold flex-shrink-0"
+                        [class]="m.typeMouvement === 'DEPOT' ? 'bg-green-100 text-green-600' : m.typeMouvement === 'RETRAIT' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'">
+                    {{ typeIcon(m.typeMouvement) }}
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs text-gray-700">
+                      {{ m.typeMouvement === 'DEPOT' ? 'Dépôt' : m.typeMouvement === 'RETRAIT' ? 'Retrait' : 'Intérêts' }}
+                      <span class="text-gray-400 ml-1">{{ formatDate(m.createdAt) }}</span>
+                    </p>
+                  </div>
+                  <p class="text-xs font-semibold flex-shrink-0" [class]="typeClass(m.typeMouvement)">
+                    {{ m.typeMouvement === 'RETRAIT' ? '-' : '+' }}{{ fcfa(m.montant) }}
+                  </p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+
+  </div>
+}
