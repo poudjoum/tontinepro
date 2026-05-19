@@ -1,7 +1,4 @@
 spring:
-  profiles:
-    active: prod
-
   datasource:
     url: ${DB_URL:jdbc:postgresql://postgres:5432/tontinepro_db}
     username: ${DB_USERNAME}
