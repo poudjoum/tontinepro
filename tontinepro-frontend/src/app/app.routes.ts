@@ -80,6 +80,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/notifications/notifications.component').then(m => m.NotificationsComponent),
       },
+      {
+        path: 'profil',
+        loadComponent: () =>
+          import('./features/profil/profil.component').then(m => m.ProfilComponent),
+      },
     ],
   },
 

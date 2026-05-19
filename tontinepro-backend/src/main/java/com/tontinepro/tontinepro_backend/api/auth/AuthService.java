@@ -145,7 +145,8 @@ public class AuthService {
                 rawRefreshToken,
                 jwtProperties.getAccessTokenExpirationMs(),
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole().name(),
+                user.isTwoFaEnabled()
         );
     }
 

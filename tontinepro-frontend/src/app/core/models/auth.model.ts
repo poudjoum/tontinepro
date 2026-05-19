@@ -16,6 +16,12 @@ export interface AuthResponse {
   expiresIn: number;
   email: string;
   role: 'ADMIN' | 'MEMBRE' | 'INVITE';
+  twoFaEnabled: boolean;
+}
+
+export interface TwoFaSetupResponse {
+  secret: string;
+  qrCodeDataUri: string;
 }
 
 export interface TwoFaChallengeResponse {

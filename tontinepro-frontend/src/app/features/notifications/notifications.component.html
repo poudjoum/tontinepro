@@ -1,25 +1,66 @@
-<div class="space-y-3">
-  <h1 class="text-xl font-bold text-gray-900">Notifications</h1>
+@if (loading()) {
+  <div class="flex justify-center py-16">
+    <svg class="animate-spin w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+    </svg>
+  </div>
+}
 
-  @if (notifications.length === 0) {
-    <div class="card text-center py-8 text-gray-400">
-      <p>Aucune notification</p>
-    </div>
-  }
+@if (!loading()) {
+  <div class="space-y-4">
 
-  @for (n of notifications; track n.id) {
-    <div class="card flex items-start gap-3"
-         [class.opacity-60]="n.lu">
-      <div class="w-2 h-2 rounded-full mt-2 flex-shrink-0"
-           [class.bg-primary-600]="!n.lu"
-           [class.bg-gray-300]="n.lu"></div>
-      <div class="flex-1 min-w-0">
-        <p class="font-semibold text-sm text-gray-900">{{ n.titre }}</p>
-        <p class="text-sm text-gray-600 mt-0.5">{{ n.message }}</p>
-        <p class="text-xs text-gray-400 mt-1">
-          {{ n.createdAt | date:'dd/MM/yyyy HH:mm' }}
-        </p>
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold text-gray-900">Notifications</h1>
+        @if (nonLues() > 0) {
+          <p class="text-sm text-gray-500 mt-0.5">{{ nonLues() }} non lue(s)</p>
+        }
       </div>
+      @if (nonLues() > 0) {
+        <button (click)="toutMarquerLu()" [disabled]="marking()"
+                class="text-sm font-semibold text-primary-600 border border-primary-200
+                       px-4 py-2 rounded-xl min-h-[44px] active:bg-primary-50">
+          {{ marking() ? '...' : 'Tout lire' }}
+        </button>
+      }
     </div>
-  }
-</div>
+
+    @if (notifications().length === 0) {
+      <div class="card text-center py-12 text-gray-400">
+        <p class="text-4xl mb-3">&#x1F514;</p>
+        <p class="font-medium">Aucune notification</p>
+        <p class="text-sm mt-1">Vous etes a jour !</p>
+      </div>
+    }
+
+    @for (n of notifications(); track n.id) {
+      <button (click)="marquerLue(n.id)"
+              class="w-full text-left card flex items-start gap-3 active:scale-99"
+              [class.opacity-60]="n.lu"
+              [class.bg-primary-50]="!n.lu"
+              [class.border-primary-100]="!n.lu">
+
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+             [class]="style(n.type).bg">
+          {{ style(n.type).icon }}
+        </div>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-2">
+            <p class="font-semibold text-sm text-gray-900 leading-tight">{{ n.titre }}</p>
+            <span class="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap">
+              {{ formatDate(n.createdAt) }}
+            </span>
+          </div>
+          <p class="text-sm text-gray-600 mt-0.5 leading-snug">{{ n.message }}</p>
+        </div>
+
+        @if (!n.lu) {
+          <div class="w-2 h-2 rounded-full bg-primary-600 flex-shrink-0 mt-1.5"></div>
+        }
+      </button>
+    }
+
+  </div>
+}

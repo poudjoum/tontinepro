@@ -28,8 +28,8 @@
       </a>
 
       <!-- Avatar / Profil -->
-      <a routerLink="/profil"
-         class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+      <a routerLink="/profil" routerLinkActive="ring-2 ring-primary-400"
+         class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center">
         <span class="text-primary-700 font-semibold text-sm uppercase">
           {{ auth.currentUser()?.email?.charAt(0) }}
         </span>

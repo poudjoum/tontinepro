@@ -4,7 +4,8 @@ export interface MembreResponse {
   nom: string;
   prenom: string;
   dateAdhesion: string;
-  statut: 'ACTIF' | 'SUSPENDU' | 'RETIRE';
+  statut:   'ACTIF' | 'SUSPENDU' | 'RETIRE';
+  fonction: 'PRESIDENT' | 'SECRETAIRE' | 'TRESORIER' | 'CENSEUR' | 'MEMBRE_ORDINAIRE';
   tontineId: string;
   tontineNom: string;
   userId: string;

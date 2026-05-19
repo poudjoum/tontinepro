@@ -7,10 +7,13 @@ public record AuthResponse(
         String tokenType,
         long expiresIn,
         String email,
-        String role
+        String role,
+        boolean twoFaEnabled
 ) {
     public static AuthResponse of(String accessToken, String refreshToken,
-                                  long expiresIn, String email, String role) {
-        return new AuthResponse(accessToken, refreshToken, "Bearer", expiresIn, email, role);
+                                  long expiresIn, String email, String role,
+                                  boolean twoFaEnabled) {
+        return new AuthResponse(accessToken, refreshToken, "Bearer",
+                expiresIn, email, role, twoFaEnabled);
     }
 }

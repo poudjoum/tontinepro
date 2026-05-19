@@ -5,7 +5,7 @@ import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   AuthResponse, LoginRequest, LoginResponse,
-  RegisterRequest, isTwoFaChallenge
+  RegisterRequest, TwoFaSetupResponse, isTwoFaChallenge
 } from '../models/auth.model';
 
 const TOKEN_KEY = 'tp_auth';
@@ -16,10 +16,11 @@ export class AuthService {
 
   private _auth = signal<AuthResponse | null>(this.loadFromStorage());
 
-  readonly isLoggedIn = computed(() => !!this._auth()?.accessToken);
-  readonly currentUser = computed(() => this._auth());
-  readonly isAdmin = computed(() => this._auth()?.role === 'ADMIN');
-  readonly isMembre = computed(() => this._auth()?.role === 'MEMBRE');
+  readonly isLoggedIn   = computed(() => !!this._auth()?.accessToken);
+  readonly currentUser  = computed(() => this._auth());
+  readonly isAdmin      = computed(() => this._auth()?.role === 'ADMIN');
+  readonly isMembre     = computed(() => this._auth()?.role === 'MEMBRE');
+  readonly twoFaEnabled = computed(() => this._auth()?.twoFaEnabled ?? false);
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -62,6 +63,30 @@ export class AuthService {
 
   getRefreshToken(): string | null {
     return this._auth()?.refreshToken ?? null;
+  }
+
+  // ── 2FA profile management ─────────────────────────────────────────
+
+  setup2fa() {
+    return this.http.post<TwoFaSetupResponse>(`${this.api}/2fa/activer`, {});
+  }
+
+  confirm2fa(code: string) {
+    return this.http.post<void>(`${this.api}/2fa/confirmer`, { code }).pipe(
+      tap(() => {
+        const current = this._auth();
+        if (current) this.saveAuth({ ...current, twoFaEnabled: true });
+      })
+    );
+  }
+
+  disable2fa(code: string) {
+    return this.http.post<void>(`${this.api}/2fa/desactiver`, { code }).pipe(
+      tap(() => {
+        const current = this._auth();
+        if (current) this.saveAuth({ ...current, twoFaEnabled: false });
+      })
+    );
   }
 
   private clearAuth(): void {
