@@ -12,4 +12,23 @@ export class MembreService {
   getMonProfil() {
     return this.http.get<MembreResponse>(`${this.api}/me`);
   }
+
+  getAll(tontineId?: string, statut?: string) {
+    const params: Record<string, string> = {};
+    if (tontineId) params['tontineId'] = tontineId;
+    if (statut) params['statut'] = statut;
+    return this.http.get<MembreResponse[]>(this.api, { params });
+  }
+
+  getById(id: string) {
+    return this.http.get<MembreResponse>(`${this.api}/${id}`);
+  }
+
+  updateStatut(id: string, statut: string) {
+    return this.http.patch<MembreResponse>(`${this.api}/${id}/statut`, { statut });
+  }
+
+  updateFonction(id: string, fonction: string) {
+    return this.http.patch<MembreResponse>(`${this.api}/${id}/fonction`, { fonction });
+  }
 }

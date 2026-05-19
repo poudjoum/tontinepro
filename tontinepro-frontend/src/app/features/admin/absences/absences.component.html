@@ -1,0 +1,91 @@
+<div class="space-y-4">
+  <h1 class="text-xl font-bold text-gray-900">Absences</h1>
+
+  <!-- Sélection tontine -->
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+    <label class="block text-xs font-medium text-gray-600 mb-1">Tontine</label>
+    <select [(ngModel)]="tontineId" (ngModelChange)="charger()" class="input-field">
+      @for (t of tontines(); track t.id) {
+        <option [value]="t.id">{{ t.nom }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- Formulaire enregistrement -->
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+    <h2 class="text-sm font-semibold text-gray-700">Enregistrer une absence</h2>
+
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Membre</label>
+      <select [(ngModel)]="form.membreId" class="input-field">
+        <option value="">Sélectionner un membre</option>
+        @for (m of membres(); track m.id) {
+          <option [value]="m.id">{{ m.prenom }} {{ m.nom }} ({{ m.matricule }})</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Date de réunion</label>
+      <input [(ngModel)]="form.dateReunion" type="date" class="input-field" />
+    </div>
+
+    <div class="flex items-center gap-3">
+      <input [(ngModel)]="form.justifiee" type="checkbox" id="justifiee"
+             class="w-4 h-4 rounded text-primary-600" />
+      <label for="justifiee" class="text-sm text-gray-700">Absence justifiée</label>
+    </div>
+
+    @if (!form.justifiee) {
+      <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg px-3 py-2">
+        Une sanction sera générée automatiquement si le montant de l'amende est configuré.
+      </div>
+    }
+
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Motif (optionnel)</label>
+      <input [(ngModel)]="form.motif" type="text" class="input-field"
+             placeholder="Motif de l'absence…" />
+    </div>
+
+    @if (success()) {
+      <div class="bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2">{{ success() }}</div>
+    }
+    @if (error()) {
+      <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+    }
+
+    <button (click)="enregistrer()" [disabled]="saving() || !form.membreId" class="btn-primary w-full">
+      @if (saving()) { Enregistrement… } @else { Enregistrer l'absence }
+    </button>
+  </div>
+
+  <!-- Historique -->
+  @if (loading()) {
+    <div class="text-center py-6 text-gray-400">Chargement…</div>
+  } @else {
+    <div class="space-y-2">
+      <p class="text-xs text-gray-500 px-1">{{ absences().length }} absence(s)</p>
+      @for (a of absences(); track a.id) {
+        <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-800">{{ a.membrePrenom }} {{ a.membreNom }}</p>
+              <p class="text-xs text-gray-500">{{ a.membreMatricule }} · {{ a.dateReunion }}</p>
+            </div>
+            @if (a.justifiee) {
+              <span class="badge-green">Justifiée</span>
+            } @else {
+              <span class="badge-red">Non justifiée</span>
+            }
+          </div>
+          @if (a.motif) {
+            <p class="text-xs text-gray-500 mt-1 italic">{{ a.motif }}</p>
+          }
+        </div>
+      } @empty {
+        <p class="text-center text-sm text-gray-400 py-6">Aucune absence enregistrée</p>
+      }
+    </div>
+  }
+</div>

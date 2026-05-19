@@ -108,6 +108,15 @@ public class TontineService {
         if (request.montantCotisationAide() != null) {
             tontine.setMontantCotisationAide(request.montantCotisationAide());
         }
+        if (request.periodeCotisation() != null) {
+            tontine.setPeriodeCotisation(request.periodeCotisation());
+        }
+        if (request.montantAmende() != null) {
+            tontine.setMontantAmende(request.montantAmende());
+        }
+        if (request.montantPenaliteRetard() != null) {
+            tontine.setMontantPenaliteRetard(request.montantPenaliteRetard());
+        }
 
         return TontineResponse.from(tontineRepository.save(tontine));
     }

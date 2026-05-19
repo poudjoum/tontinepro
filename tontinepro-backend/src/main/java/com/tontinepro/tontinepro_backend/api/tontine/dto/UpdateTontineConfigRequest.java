@@ -19,6 +19,8 @@ public record UpdateTontineConfigRequest(
         @Min(1) @Max(28)
         Short jourCotisation,
 
+        Tontine.PeriodeCotisation periodeCotisation,
+
         @DecimalMin("0.0")
         BigDecimal tauxInteretPret,
 
@@ -30,5 +32,11 @@ public record UpdateTontineConfigRequest(
         Tontine.ModeContributionAide modeContributionAide,
 
         @DecimalMin("0.01")
-        BigDecimal montantCotisationAide
+        BigDecimal montantCotisationAide,
+
+        @DecimalMin("0.0")
+        BigDecimal montantAmende,
+
+        @DecimalMin("0.0")
+        BigDecimal montantPenaliteRetard
 ) {}

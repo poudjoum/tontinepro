@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/auth.guard';
 import { notConfiguredGuard } from './core/guards/setup.guard';
 import { ShellComponent } from './layout/shell.component';
 
@@ -19,6 +20,13 @@ export const routes: Routes = [
     canActivate: [notConfiguredGuard],
     loadComponent: () =>
       import('./features/setup/setup.component').then(m => m.SetupComponent),
+  },
+
+  // Rejoindre via lien d'invitation (public)
+  {
+    path: 'rejoindre/:token',
+    loadComponent: () =>
+      import('./features/rejoindre/rejoindre.component').then(m => m.RejoindreComponent),
   },
 
   // Auth (sans layout)
@@ -89,6 +97,49 @@ export const routes: Routes = [
         path: 'rapports',
         loadComponent: () =>
           import('./features/rapports/rapports.component').then(m => m.RapportsComponent),
+      },
+      {
+        path: 'documents',
+        loadComponent: () =>
+          import('./features/documents/documents.component').then(m => m.DocumentsComponent),
+      },
+
+      // Administration (admin only)
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/admin/admin.component').then(m => m.AdminComponent),
+          },
+          {
+            path: 'configuration',
+            loadComponent: () =>
+              import('./features/admin/configuration/configuration.component').then(m => m.ConfigurationComponent),
+          },
+          {
+            path: 'invitations',
+            loadComponent: () =>
+              import('./features/admin/invitations/invitations.component').then(m => m.InvitationsComponent),
+          },
+          {
+            path: 'absences',
+            loadComponent: () =>
+              import('./features/admin/absences/absences.component').then(m => m.AbsencesComponent),
+          },
+          {
+            path: 'sanctions',
+            loadComponent: () =>
+              import('./features/admin/sanctions/sanctions.component').then(m => m.SanctionsComponent),
+          },
+          {
+            path: 'membres',
+            loadComponent: () =>
+              import('./features/admin/membres/membres-admin.component').then(m => m.MembresAdminComponent),
+          },
+        ],
       },
     ],
   },

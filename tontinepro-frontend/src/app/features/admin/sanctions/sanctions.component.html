@@ -1,0 +1,112 @@
+<div class="space-y-4">
+  <h1 class="text-xl font-bold text-gray-900">Sanctions</h1>
+
+  <!-- Sélection tontine + filtre -->
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex gap-3">
+    <div class="flex-1">
+      <label class="block text-xs font-medium text-gray-600 mb-1">Tontine</label>
+      <select [(ngModel)]="tontineId" (ngModelChange)="charger()" class="input-field">
+        @for (t of tontines(); track t.id) {
+          <option [value]="t.id">{{ t.nom }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Filtre</label>
+      <select [(ngModel)]="filtrePayee" (ngModelChange)="charger()" class="input-field">
+        <option [ngValue]="undefined">Toutes</option>
+        <option [ngValue]="false">Non payées</option>
+        <option [ngValue]="true">Payées</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Total impayé -->
+  @if (total() > 0) {
+    <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center justify-between">
+      <span class="text-sm font-medium text-red-800">Total impayé</span>
+      <span class="text-sm font-bold text-red-900">{{ fcfa(total()) }}</span>
+    </div>
+  }
+
+  <!-- Formulaire création manuelle -->
+  <details class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <summary class="px-4 py-3 text-sm font-semibold text-gray-700 cursor-pointer">
+      Créer une sanction manuelle
+    </summary>
+    <div class="px-4 pb-4 space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Membre</label>
+        <select [(ngModel)]="form.membreId" class="input-field">
+          <option value="">Sélectionner…</option>
+          @for (m of membres(); track m.id) {
+            <option [value]="m.id">{{ m.prenom }} {{ m.nom }}</option>
+          }
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Type</label>
+          <select [(ngModel)]="form.typeSanction" class="input-field">
+            @for (t of types; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Montant (FCFA)</label>
+          <input [(ngModel)]="form.montant" type="number" min="0" class="input-field" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Motif</label>
+        <input [(ngModel)]="form.motif" type="text" class="input-field" placeholder="Motif…" />
+      </div>
+      @if (success()) {
+        <div class="bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2">{{ success() }}</div>
+      }
+      @if (error()) {
+        <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+      }
+      <button (click)="creer()" [disabled]="saving() || !form.membreId || !form.montant" class="btn-primary w-full">
+        @if (saving()) { Création… } @else { Créer la sanction }
+      </button>
+    </div>
+  </details>
+
+  <!-- Liste -->
+  @if (loading()) {
+    <div class="text-center py-6 text-gray-400">Chargement…</div>
+  } @else {
+    <div class="space-y-2">
+      @for (s of sanctions(); track s.id) {
+        <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-gray-800">{{ s.membrePrenom }} {{ s.membreNom }}</p>
+                @if (s.payee) {
+                  <span class="badge-green">Payée</span>
+                } @else {
+                  <span class="badge-red">Impayée</span>
+                }
+              </div>
+              <p class="text-xs text-gray-500">{{ labelType(s.typeSanction) }} · {{ fcfa(s.montant) }}</p>
+              @if (s.motif) {
+                <p class="text-xs text-gray-400 mt-0.5 italic">{{ s.motif }}</p>
+              }
+            </div>
+            @if (!s.payee) {
+              <button (click)="payer(s.id)"
+                      class="flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 text-green-700">
+                Marquer payée
+              </button>
+            }
+          </div>
+        </div>
+      } @empty {
+        <p class="text-center text-sm text-gray-400 py-6">Aucune sanction</p>
+      }
+    </div>
+  }
+</div>

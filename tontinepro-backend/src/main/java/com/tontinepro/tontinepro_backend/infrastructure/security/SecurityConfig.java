@@ -32,6 +32,8 @@ public class SecurityConfig {
         "/api/v1/auth/2fa/valider",
         "/api/v1/setup",
         "/api/v1/setup/status",
+        "/api/v1/invitation/*/statut",
+        "/api/v1/invitation/*/rejoindre",
         "/v3/api-docs/**",
         "/swagger-ui/**",
         "/swagger-ui.html"

@@ -1,0 +1,72 @@
+<div class="space-y-4">
+  <h1 class="text-xl font-bold text-gray-900">Mes documents</h1>
+  <p class="text-sm text-gray-500">Téléchargez vos documents (CNI, lettre d'engagement, etc.).</p>
+
+  <!-- Uploader -->
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+    <h2 class="text-sm font-semibold text-gray-700">Ajouter un document</h2>
+
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Type de document</label>
+      <select [(ngModel)]="selectedType" class="input-field">
+        @for (t of types; track t.value) {
+          <option [value]="t.value">{{ t.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Fichier (PDF ou image, max 10 Mo)</label>
+      <input type="file" accept=".pdf,image/*" (change)="onFileChange($event)"
+             class="block w-full text-sm text-gray-500
+                    file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
+                    file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700
+                    hover:file:bg-primary-100" />
+    </div>
+
+    @if (selectedFile) {
+      <p class="text-xs text-gray-500">Fichier sélectionné : {{ selectedFile.name }} ({{ formatSize(selectedFile.size) }})</p>
+    }
+
+    @if (success()) {
+      <div class="bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2">{{ success() }}</div>
+    }
+    @if (error()) {
+      <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+    }
+
+    <button (click)="upload()" [disabled]="uploading() || !selectedFile" class="btn-primary w-full">
+      @if (uploading()) { Téléchargement… } @else { Télécharger le document }
+    </button>
+  </div>
+
+  <!-- Liste -->
+  @if (loading()) {
+    <div class="text-center py-8 text-gray-400">Chargement…</div>
+  } @else {
+    <div class="space-y-2">
+      @for (doc of documents(); track doc.id) {
+        <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+            @if (doc.contentType === 'application/pdf') {
+              <span class="text-lg">📄</span>
+            } @else {
+              <span class="text-lg">🖼️</span>
+            }
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-800 truncate">{{ doc.nomFichier }}</p>
+            <p class="text-xs text-gray-500">{{ labelType(doc.typeDocument) }} · {{ formatSize(doc.tailleOctets) }}</p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <a [href]="urlFichier(doc.id)" target="_blank"
+               class="text-xs text-primary-600 underline">Voir</a>
+            <button (click)="supprimer(doc.id)" class="text-xs text-red-500 underline">Supprimer</button>
+          </div>
+        </div>
+      } @empty {
+        <p class="text-center text-sm text-gray-400 py-6">Aucun document téléchargé</p>
+      }
+    </div>
+  }
+</div>

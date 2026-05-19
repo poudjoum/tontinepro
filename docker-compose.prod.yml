@@ -55,6 +55,9 @@ services:
       MAIL_USERNAME:  ${MAIL_USERNAME}
       MAIL_PASSWORD:  ${MAIL_PASSWORD}
       MAIL_FROM:      ${MAIL_FROM}
+      UPLOAD_DIR:     /app/uploads/documents
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -124,6 +127,8 @@ volumes:
     name: tontinepro_postgres_data
   redis_data:
     name: tontinepro_redis_data
+  uploads_data:
+    name: tontinepro_uploads_data
 
 # ── Réseau isolé ─────────────────────────────────────────────────────
 networks:

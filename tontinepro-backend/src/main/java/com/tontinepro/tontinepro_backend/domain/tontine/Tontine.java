@@ -50,6 +50,19 @@ public class Tontine {
     @Column(name = "montant_cotisation_aide", precision = 15, scale = 2)
     private BigDecimal montantCotisationAide;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "periode_cotisation", nullable = false, length = 20)
+    @Builder.Default
+    private PeriodeCotisation periodeCotisation = PeriodeCotisation.MENSUEL;
+
+    @Column(name = "montant_amende", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantAmende = BigDecimal.ZERO;
+
+    @Column(name = "montant_penalite_retard", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantPenaliteRetard = BigDecimal.ZERO;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean actif = true;
@@ -66,5 +79,14 @@ public class Tontine {
         AUCUN,
         MENSUEL,
         A_LA_BENEFICIATION
+    }
+
+    public enum PeriodeCotisation {
+        HEBDOMADAIRE,
+        MENSUEL,
+        BIMENSUEL,
+        TRIMESTRIEL,
+        SEMESTRIEL,
+        ANNUEL
     }
 }
