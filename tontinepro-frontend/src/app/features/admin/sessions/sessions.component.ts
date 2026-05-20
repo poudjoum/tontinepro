@@ -6,6 +6,7 @@ import { TontineService } from '../../../core/services/tontine.service';
 import {
   SessionResponse,
   SessionBilanResponse,
+  SessionCotisationsStatutResponse,
   OrdreBeneficiaireResponse,
   CreerSessionRequest,
   MiseAJourDateRequest,
@@ -37,11 +38,17 @@ export class SessionsComponent implements OnInit {
   bilan = signal<SessionBilanResponse | null>(null);
   afficherBilan = signal(false);
 
+  // Statut cotisations
+  statutCotisations = signal<SessionCotisationsStatutResponse | null>(null);
+  afficherStatut = signal(false);
+
   // Validation bénéfice
   montantValide: { [id: string]: number } = {};
 
   // Date manuelle session
   nouvelleDateProchaine = '';
+
+  nbGenerees = signal(0);
 
   // Echeancier — édition de date par bénéficiaire
   dateEdition: { [id: string]: string } = {};  // ordreBeneficiaireId -> nouvelle date saisie
@@ -156,6 +163,50 @@ export class SessionsComponent implements OnInit {
       },
       error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur mise à jour date.'); this.saving.set(false); },
     });
+  }
+
+  // ── Cotisations session ─────────────────────────────────────────────────────
+
+  genererCotisations(session: SessionResponse): void {
+    this.saving.set(true);
+    this.error.set('');
+    this.sessionSvc.genererCotisations(session.id).subscribe({
+      next: list => {
+        this.nbGenerees.set(list.length);
+        this.success.set(`${list.length} cotisation(s) générée(s) pour la session n°${session.numero}.`);
+        this.saving.set(false);
+        // Recharger le statut automatiquement
+        this.chargerStatut(session);
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur génération.'); this.saving.set(false); },
+    });
+  }
+
+  chargerStatut(session: SessionResponse): void {
+    this.saving.set(true);
+    this.error.set('');
+    this.sessionSvc.cotisationsStatut(session.id).subscribe({
+      next: s => { this.statutCotisations.set(s); this.afficherStatut.set(true); this.saving.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur statut'); this.saving.set(false); },
+    });
+  }
+
+  badgeStatutCot(s: string): string {
+    switch (s) {
+      case 'PAYEE':      return 'bg-green-100 text-green-700';
+      case 'EN_ATTENTE': return 'bg-amber-100 text-amber-700';
+      case 'EN_RETARD':  return 'bg-red-100 text-red-700';
+      default:           return 'bg-gray-100 text-gray-500';
+    }
+  }
+
+  libelleStatutCot(s: string): string {
+    switch (s) {
+      case 'PAYEE':      return '✓ Payée';
+      case 'EN_ATTENTE': return '⏳ En attente';
+      case 'EN_RETARD':  return '⚠ En retard';
+      default:           return '— Absente';
+    }
   }
 
   // ── Autres ─────────────────────────────────────────────────────────────────

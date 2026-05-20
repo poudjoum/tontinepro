@@ -85,19 +85,79 @@
 
         <!-- Boutons d'action -->
         @if (session.statut === 'EN_COURS') {
-          <div class="flex gap-2">
+          <div class="grid grid-cols-2 gap-2">
+            <button (click)="genererCotisations(session)" [disabled]="saving()"
+                    class="py-2 text-sm font-medium rounded-lg border border-indigo-300
+                           text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors
+                           disabled:opacity-50">
+              @if (saving()) { … } @else { 📋 Générer cotisations }
+            </button>
+            <button (click)="chargerStatut(session)" [disabled]="saving()"
+                    class="py-2 text-sm font-medium rounded-lg border border-blue-300
+                           text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors
+                           disabled:opacity-50">
+              @if (saving()) { … } @else { 📊 Statut paiements }
+            </button>
             <button (click)="chargerBilan(session)" [disabled]="saving()"
-                    class="flex-1 py-2 text-sm font-medium rounded-lg border border-green-300
+                    class="py-2 text-sm font-medium rounded-lg border border-green-300
                            text-green-700 bg-green-50 hover:bg-green-100 transition-colors
                            disabled:opacity-50">
               @if (saving()) { … } @else { 💰 Bilan de session }
             </button>
             <button (click)="recalibrer(session)" [disabled]="saving()"
-                    class="flex-1 py-2 text-sm font-medium rounded-lg border border-primary-300
+                    class="py-2 text-sm font-medium rounded-lg border border-primary-300
                            text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors
                            disabled:opacity-50">
               @if (saving()) { … } @else { 🔄 Synchroniser membres }
             </button>
+          </div>
+        }
+
+        <!-- Statut des cotisations -->
+        @if (afficherStatut() && statutCotisations()) {
+          <div class="border border-blue-200 rounded-xl p-4 bg-blue-50 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-blue-900">
+                Cotisations — Session n°{{ statutCotisations()!.sessionNumero }}
+                <span class="font-normal text-blue-600 ml-1">
+                  {{ statutCotisations()!.mois }}/{{ statutCotisations()!.annee }}
+                </span>
+              </h3>
+              <button (click)="afficherStatut.set(false)" class="text-xs text-blue-600">✕</button>
+            </div>
+
+            <!-- Barre de complétion -->
+            <div>
+              <div class="flex justify-between text-xs text-blue-700 mb-1">
+                <span>{{ statutCotisations()!.nbPayes }}/{{ statutCotisations()!.totalMembres }} membres payés</span>
+                @if (statutCotisations()!.complete) {
+                  <span class="font-bold text-green-700">✅ Session complète</span>
+                } @else {
+                  <span>{{ statutCotisations()!.nbEnAttente }} en attente · {{ statutCotisations()!.nbEnRetard }} en retard · {{ statutCotisations()!.nbAbsents }} sans cotisation</span>
+                }
+              </div>
+              <div class="w-full bg-blue-100 rounded-full h-2">
+                <div class="bg-green-500 h-2 rounded-full transition-all"
+                     [style.width.%]="(statutCotisations()!.nbPayes / statutCotisations()!.totalMembres) * 100">
+                </div>
+              </div>
+            </div>
+
+            <!-- Liste membres -->
+            <div class="space-y-1.5">
+              @for (m of statutCotisations()!.membres; track m.membreId) {
+                <div class="bg-white rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-gray-800 truncate">{{ m.prenom }} {{ m.nom }}</p>
+                    <p class="text-[10px] text-gray-400">{{ m.matricule }}</p>
+                  </div>
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                        [class]="badgeStatutCot(m.statutCotisation)">
+                    {{ libelleStatutCot(m.statutCotisation) }}
+                  </span>
+                </div>
+              }
+            </div>
           </div>
         }
 

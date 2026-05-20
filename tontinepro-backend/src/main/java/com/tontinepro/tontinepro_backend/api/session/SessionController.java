@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.session;
 
+import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -97,6 +98,21 @@ public class SessionController {
     @Operation(summary = "Ajouter les nouveaux membres a la session et recalculer dateFin")
     public SessionResponse recalibrerMembres(@PathVariable UUID id) {
         return sessionService.recalibrerMembres(id);
+    }
+
+    @PostMapping("/{id}/generer-cotisations")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Générer les cotisations EN_ATTENTE pour tous les membres de la session (idempotent)")
+    public List<CotisationResponse> genererCotisations(@PathVariable UUID id) {
+        return sessionService.genererCotisations(id);
+    }
+
+    @GetMapping("/{id}/cotisations-statut")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Statut des cotisations par membre pour la période de la session")
+    public SessionCotisationsStatutResponse cotisationsStatut(@PathVariable UUID id) {
+        return sessionService.cotisationsStatut(id);
     }
 
     @PostMapping("/{id}/valider-benefice/{ordreBeneficiaireId}")

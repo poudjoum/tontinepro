@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.session;
 
+import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
@@ -415,6 +416,102 @@ public class SessionService {
                 benefId, benefNom, benefPrenom, benefMatricule,
                 obligation, fondAidePayeAnnee, dettesFondsAide,
                 potNet, lignes
+        );
+    }
+
+    /**
+     * Génère en masse les cotisations EN_ATTENTE pour tous les membres de la session.
+     * Idempotent : si une cotisation existe déjà pour un membre sur le mois/année de la session,
+     * elle est conservée telle quelle et retournée sans modification.
+     */
+    @Transactional
+    public List<CotisationResponse> genererCotisations(UUID sessionId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+
+        Tontine tontine = session.getTontine();
+        short mois  = (short) session.getDateDebut().getMonthValue();
+        short annee = (short) session.getDateDebut().getYear();
+
+        List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(sessionId);
+
+        List<Cotisation> result = new ArrayList<>();
+        for (OrdreBeneficiaire ob : ordres) {
+            Membre membre = ob.getMembre();
+            if (membre.getStatut() != Membre.Statut.ACTIF) continue;
+
+            if (cotisationRepository.existsByMembreIdAndMoisAndAnnee(membre.getId(), mois, annee)) {
+                cotisationRepository.findAllByMembreId(membre.getId()).stream()
+                        .filter(c -> c.getMois() == mois && c.getAnnee() == annee)
+                        .findFirst()
+                        .ifPresent(result::add);
+            } else {
+                BigDecimal montant = tontine.getMontantCotisationMin() != null
+                        ? tontine.getMontantCotisationMin() : BigDecimal.ZERO;
+                Cotisation c = cotisationRepository.save(Cotisation.builder()
+                        .membre(membre)
+                        .tontine(tontine)
+                        .mois(mois)
+                        .annee(annee)
+                        .montant(montant)
+                        .build());
+                result.add(c);
+            }
+        }
+
+        return result.stream().map(CotisationResponse::from).toList();
+    }
+
+    /**
+     * Retourne le statut des cotisations de chaque membre pour la période de la session.
+     */
+    @Transactional(readOnly = true)
+    public SessionCotisationsStatutResponse cotisationsStatut(UUID sessionId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+
+        short mois  = (short) session.getDateDebut().getMonthValue();
+        short annee = (short) session.getDateDebut().getYear();
+
+        List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(sessionId);
+
+        // Index cotisations par membreId pour ce mois/annee
+        Map<UUID, Cotisation> cotParMembre = cotisationRepository
+                .findAllByTontineIdAndMoisAndAnnee(session.getTontine().getId(), mois, annee)
+                .stream().collect(Collectors.toMap(c -> c.getMembre().getId(), c -> c, (a, b) -> a));
+
+        List<SessionCotisationsStatutResponse.MembreCotisationStatut> membres = new ArrayList<>();
+        int nbPayes = 0, nbEnAttente = 0, nbEnRetard = 0, nbAbsents = 0;
+
+        for (OrdreBeneficiaire ob : ordres) {
+            Membre m = ob.getMembre();
+            Cotisation cot = cotParMembre.get(m.getId());
+            String statut;
+            UUID cotId = null;
+            if (cot == null) {
+                statut = "ABSENTE";
+                nbAbsents++;
+            } else {
+                statut = cot.getStatut().name();
+                cotId = cot.getId();
+                switch (cot.getStatut()) {
+                    case PAYEE -> nbPayes++;
+                    case EN_RETARD -> nbEnRetard++;
+                    default -> nbEnAttente++;
+                }
+            }
+            membres.add(new SessionCotisationsStatutResponse.MembreCotisationStatut(
+                    m.getId(), m.getNom(), m.getPrenom(), m.getMatricule(), statut, cotId));
+        }
+
+        int total = ordres.size();
+        return new SessionCotisationsStatutResponse(
+                sessionId, session.getNumero(), mois, annee,
+                total, nbPayes, nbEnAttente, nbEnRetard, nbAbsents,
+                nbPayes == total && total > 0,
+                membres
         );
     }
 

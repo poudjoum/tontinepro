@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import {
   SessionResponse,
   SessionBilanResponse,
+  SessionCotisationsStatutResponse,
   OrdreBeneficiaireResponse,
   MonTourResponse,
   CreerSessionRequest,
@@ -11,6 +12,7 @@ import {
   ValiderBeneficeRequest,
   ReordonnerBeneficiairesRequest,
 } from '../models/session.model';
+import { CotisationResponse } from '../models/cotisation.model';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -67,5 +69,13 @@ export class SessionService {
       `${this.api}/${sessionId}/beneficiaires/${ordreBeneficiaireId}/date`,
       { dateBenefice }
     );
+  }
+
+  genererCotisations(sessionId: string) {
+    return this.http.post<CotisationResponse[]>(`${this.api}/${sessionId}/generer-cotisations`, {});
+  }
+
+  cotisationsStatut(sessionId: string) {
+    return this.http.get<SessionCotisationsStatutResponse>(`${this.api}/${sessionId}/cotisations-statut`);
   }
 }

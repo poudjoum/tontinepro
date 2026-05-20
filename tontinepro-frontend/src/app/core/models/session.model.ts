@@ -45,6 +45,29 @@ export interface ReordonnerBeneficiairesRequest {
   ordreMembreIds: string[];
 }
 
+export interface MembreCotisationStatut {
+  membreId: string;
+  nom: string;
+  prenom: string;
+  matricule: string;
+  statutCotisation: 'PAYEE' | 'EN_ATTENTE' | 'EN_RETARD' | 'ABSENTE';
+  cotisationId: string | null;
+}
+
+export interface SessionCotisationsStatutResponse {
+  sessionId: string;
+  sessionNumero: number;
+  mois: number;
+  annee: number;
+  totalMembres: number;
+  nbPayes: number;
+  nbEnAttente: number;
+  nbEnRetard: number;
+  nbAbsents: number;
+  complete: boolean;
+  membres: MembreCotisationStatut[];
+}
+
 export interface MonTourResponse {
   sessionId: string;
   sessionNumero: number;
