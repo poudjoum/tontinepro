@@ -187,6 +187,66 @@ public class SessionService {
         return getById(sessionId);
     }
 
+    /**
+     * Ajoute à la session les membres actifs qui n'y figurent pas encore,
+     * recalcule dateFin et met à jour nombreMembres.
+     * Les membres déjà présents conservent leur ordre et leur statut.
+     */
+    @Transactional
+    public SessionResponse recalibrerMembres(UUID sessionId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+
+        if (session.getStatut() == SessionTontine.Statut.TERMINEE) {
+            throw new IllegalStateException("Impossible de recalibrer une session terminée");
+        }
+
+        Tontine tontine = session.getTontine();
+
+        List<OrdreBeneficiaire> existants = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(sessionId);
+        Set<UUID> dejaDans = existants.stream()
+                .map(ob -> ob.getMembre().getId())
+                .collect(Collectors.toSet());
+
+        List<Membre> nouveaux = membreRepository
+                .findAllByTontineIdAndStatut(tontine.getId(), Membre.Statut.ACTIF)
+                .stream()
+                .filter(m -> !dejaDans.contains(m.getId()))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        if (nouveaux.isEmpty()) {
+            return getById(sessionId);
+        }
+
+        int prochainOrdre = existants.stream()
+                .mapToInt(OrdreBeneficiaire::getOrdre).max().orElse(0) + 1;
+
+        int nouveauTotal = dejaDans.size() + nouveaux.size();
+        session.setNombreMembres(nouveauTotal);
+        session.setDateFin(periodiciteService.calculerDateFin(tontine, session.getDateDebut(), nouveauTotal));
+        sessionRepository.save(session);
+
+        List<LocalDate> toutesDatesBenefice = periodiciteService
+                .calculerDatesBenefice(tontine, session.getDateDebut(), nouveauTotal);
+
+        List<OrdreBeneficiaire> ajouts = new ArrayList<>();
+        for (int i = 0; i < nouveaux.size(); i++) {
+            int ordreGlobal = prochainOrdre + i;
+            LocalDate dateBenefice = ordreGlobal <= toutesDatesBenefice.size()
+                    ? toutesDatesBenefice.get(ordreGlobal - 1) : null;
+            ajouts.add(OrdreBeneficiaire.builder()
+                    .session(session)
+                    .membre(nouveaux.get(i))
+                    .ordre(ordreGlobal)
+                    .dateBenefice(dateBenefice)
+                    .build());
+        }
+        ordreBeneficiaireRepository.saveAll(ajouts);
+
+        return getById(sessionId);
+    }
+
     // ─── helpers ───────────────────────────────────────────────────────────────
 
     private List<Membre> construireOrdre(List<Membre> membres, List<UUID> ordreMembreIds) {

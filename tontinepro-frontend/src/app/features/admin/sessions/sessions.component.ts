@@ -157,6 +157,26 @@ export class SessionsComponent implements OnInit {
     this.sessionOuverte.set(s);
   }
 
+  recalibrer(session: SessionResponse): void {
+    this.saving.set(true);
+    this.error.set('');
+    this.success.set('');
+    this.sessionSvc.recalibrerMembres(session.id).subscribe({
+      next: updated => {
+        this.sessions.update(list => list.map(s => s.id === updated.id ? updated : s));
+        this.sessionOuverte.set(updated);
+        this.success.set(
+          `Session recalibrée — ${updated.nombreMembres} membre(s) dans la rotation.`
+        );
+        this.saving.set(false);
+      },
+      error: e => {
+        this.error.set(e.error?.message ?? 'Erreur lors du recalibrage.');
+        this.saving.set(false);
+      },
+    });
+  }
+
   prochainBeneficiaire(session: SessionResponse): OrdreBeneficiaireResponse | null {
     return session.beneficiaires.find(b => !b.beneficie) ?? null;
   }

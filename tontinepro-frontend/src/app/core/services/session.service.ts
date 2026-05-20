@@ -42,4 +42,8 @@ export class SessionService {
       request,
     );
   }
+
+  recalibrerMembres(sessionId: string) {
+    return this.http.post<SessionResponse>(`${this.api}/${sessionId}/recalibrer`, {});
+  }
 }

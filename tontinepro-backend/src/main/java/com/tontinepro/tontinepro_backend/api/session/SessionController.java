@@ -58,6 +58,13 @@ public class SessionController {
         return sessionService.reordonnerBeneficiaires(id, request);
     }
 
+    @PostMapping("/{id}/recalibrer")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Ajouter les nouveaux membres à la session et recalculer dateFin")
+    public SessionResponse recalibrerMembres(@PathVariable UUID id) {
+        return sessionService.recalibrerMembres(id);
+    }
+
     @PostMapping("/{id}/valider-benefice/{ordreBeneficiaireId}")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Valider le bÃ©nÃ©fice d'un membre dans la session")
