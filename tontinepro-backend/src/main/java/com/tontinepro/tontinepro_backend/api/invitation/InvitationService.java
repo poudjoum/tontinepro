@@ -104,19 +104,24 @@ public class InvitationService {
         if (invitationToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
             throw new IllegalArgumentException("Ce lien d'invitation a expiré");
         }
-        if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Un compte existe déjà avec cet email");
-        }
-
-        User user = User.builder()
-                .email(request.email())
-                .hashedPassword(passwordEncoder.encode(request.password()))
-                .telephone(request.telephone())
-                .role(User.Role.MEMBRE)
-                .build();
-        user = userRepository.save(user);
-
         Tontine tontine = invitationToken.getTontine();
+
+        // Permettre à un utilisateur existant de rejoindre via invitation
+        // (il peut déjà être membre d'une autre tontine)
+        User user;
+        if (userRepository.existsByEmail(request.email())) {
+            user = userRepository.findByEmail(request.email()).orElseThrow();
+            if (membreRepository.existsByUserIdAndTontineId(user.getId(), tontine.getId())) {
+                throw new IllegalArgumentException("Vous êtes déjà membre de cette tontine");
+            }
+        } else {
+            user = userRepository.save(User.builder()
+                    .email(request.email())
+                    .hashedPassword(passwordEncoder.encode(request.password()))
+                    .telephone(request.telephone())
+                    .role(User.Role.MEMBRE)
+                    .build());
+        }
         Membre membre = Membre.builder()
                 .user(user)
                 .tontine(tontine)

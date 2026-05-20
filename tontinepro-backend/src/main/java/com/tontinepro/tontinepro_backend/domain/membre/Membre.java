@@ -11,7 +11,13 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "membres")
+@Table(
+    name = "membres",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uq_membres_user_tontine",
+        columnNames = {"user_id", "tontine_id"}
+    )
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,8 +29,8 @@ public class Membre {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

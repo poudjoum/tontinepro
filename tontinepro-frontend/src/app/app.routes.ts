@@ -22,6 +22,13 @@ export const routes: Routes = [
       import('./features/setup/setup.component').then(m => m.SetupComponent),
   },
 
+  // Création libre-service d'une tontine
+  {
+    path: 'creer-tontine',
+    loadComponent: () =>
+      import('./features/creer-tontine/creer-tontine.component').then(m => m.CreerTontineComponent),
+  },
+
   // Liste publique des tontines disponibles
   {
     path: 'tontines',

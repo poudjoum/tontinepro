@@ -74,10 +74,16 @@ import { TontineResponse } from '../../core/models/tontine.model';
             }
           </div>
 
-          <div class="text-center pt-2">
-            <a routerLink="/auth/login" class="text-sm text-primary-600 font-medium">
-              Déjà membre ? Se connecter →
+          <div class="space-y-2 pt-2">
+            <a routerLink="/creer-tontine"
+               class="block text-center py-3 rounded-xl border-2 border-primary-600
+                      text-primary-700 font-semibold text-sm">
+              + Créer ma propre tontine
             </a>
+            <p class="text-center text-xs text-gray-400">
+              Déjà membre ?
+              <a routerLink="/auth/login" class="text-primary-600 font-medium">Se connecter</a>
+            </p>
           </div>
         }
       </div>

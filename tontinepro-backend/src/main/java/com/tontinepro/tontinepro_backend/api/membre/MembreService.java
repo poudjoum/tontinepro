@@ -35,8 +35,8 @@ public class MembreService {
 
     @Transactional
     public MembreResponse create(CreateMembreRequest request) {
-        if (membreRepository.existsByUserId(request.userId())) {
-            throw new IllegalArgumentException("Cet utilisateur est déjà membre d'une tontine");
+        if (membreRepository.existsByUserIdAndTontineId(request.userId(), request.tontineId())) {
+            throw new IllegalArgumentException("Cet utilisateur est déjà membre de cette tontine");
         }
 
         User user = userRepository.findById(request.userId())
@@ -127,16 +127,20 @@ public class MembreService {
 
     @Transactional
     public MembreResponse inscrireDirectement(InscriptionDirecteRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Un compte existe déjà avec l'email : " + request.email());
-        }
-
         Tontine tontine = tontineRepository.findById(request.tontineId())
                 .orElseThrow(() -> new IllegalArgumentException("Tontine introuvable : " + request.tontineId()));
 
         if (!tontine.isActif()) {
             throw new IllegalArgumentException("Impossible d'inscrire dans une tontine inactive");
         }
+
+        // Autoriser si l'utilisateur existe déjà — il peut rejoindre une autre tontine
+        // Mais il ne peut pas être inscrit deux fois dans la même tontine
+        userRepository.findByEmail(request.email()).ifPresent(existant -> {
+            if (membreRepository.existsByUserIdAndTontineId(existant.getId(), tontine.getId())) {
+                throw new IllegalArgumentException("Cet utilisateur est déjà membre de cette tontine");
+            }
+        });
 
         Membre.Fonction fonction = request.fonction() != null
                 ? request.fonction() : Membre.Fonction.MEMBRE_ORDINAIRE;
@@ -148,13 +152,15 @@ public class MembreService {
             default         -> User.Role.MEMBRE;
         };
 
-        User user = User.builder()
-                .email(request.email())
-                .hashedPassword(passwordEncoder.encode(request.password()))
-                .telephone(request.telephone())
-                .role(role)
-                .build();
-        user = userRepository.save(user);
+        // Réutiliser le compte existant s'il y en a un, sinon en créer un nouveau
+        User user = userRepository.findByEmail(request.email()).orElseGet(() ->
+                userRepository.save(User.builder()
+                        .email(request.email())
+                        .hashedPassword(passwordEncoder.encode(request.password()))
+                        .telephone(request.telephone())
+                        .role(role)
+                        .build())
+        );
 
         Membre membre = Membre.builder()
                 .user(user)
