@@ -1,72 +1,231 @@
-<div class="space-y-4">
-  <h1 class="text-xl font-bold text-gray-900">Mes documents</h1>
-  <p class="text-sm text-gray-500">Téléchargez vos documents (CNI, lettre d'engagement, etc.).</p>
+<div class="space-y-5">
 
-  <!-- Uploader -->
-  <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
-    <h2 class="text-sm font-semibold text-gray-700">Ajouter un document</h2>
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Documents membres</h1>
+    <p class="text-sm text-gray-500 mt-0.5">
+      @if (auth.isGestionnaire()) {
+        Consultez les documents d'identité et d'engagement des membres.
+      } @else {
+        CNI et lettre d'engagement requis pour toute demande de prêt.
+      }
+    </p>
+  </div>
 
-    <div>
-      <label class="block text-xs font-medium text-gray-600 mb-1">Type de document</label>
-      <select [(ngModel)]="selectedType" class="input-field">
-        @for (t of types; track t.value) {
-          <option [value]="t.value">{{ t.label }}</option>
+  @if (loading()) {
+    <div class="text-center py-10 text-gray-400">Chargement…</div>
+  }
+
+  <!-- ════════ VUE GESTIONNAIRE (Admin / Secrétaire) ════════ -->
+  @if (!loading() && auth.isGestionnaire()) {
+
+    <!-- Sélecteur de membre -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+      <h2 class="text-sm font-semibold text-gray-700">Sélectionner un membre</h2>
+      <select [(ngModel)]="selectedMembreId" (change)="onMembreChange()"
+              class="input-field">
+        <option value="">— Choisir un membre actif —</option>
+        @for (m of membres(); track m.id) {
+          <option [value]="m.id">{{ membreNom(m) }} · {{ m.tontineNom }}</option>
         }
       </select>
     </div>
 
-    <div>
-      <label class="block text-xs font-medium text-gray-600 mb-1">Fichier (PDF ou image, max 10 Mo)</label>
-      <input type="file" accept=".pdf,image/*" (change)="onFileChange($event)"
-             class="block w-full text-sm text-gray-500
-                    file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
-                    file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700
-                    hover:file:bg-primary-100" />
-    </div>
+    <!-- Documents du membre sélectionné -->
+    @if (selectedMembreId) {
+      @if (loadingGest()) {
+        <div class="text-center py-6 text-gray-400">Chargement des documents…</div>
+      } @else {
 
-    @if (selectedFile) {
-      <p class="text-xs text-gray-500">Fichier sélectionné : {{ selectedFile.name }} ({{ formatSize(selectedFile.size) }})</p>
-    }
+        <!-- CNI + Lettre d'engagement -->
+        <div class="space-y-3">
+          <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Documents requis</h2>
 
-    @if (success()) {
-      <div class="bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2">{{ success() }}</div>
-    }
-    @if (error()) {
-      <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
-    }
-
-    <button (click)="upload()" [disabled]="uploading() || !selectedFile" class="btn-primary w-full">
-      @if (uploading()) { Téléchargement… } @else { Télécharger le document }
-    </button>
-  </div>
-
-  <!-- Liste -->
-  @if (loading()) {
-    <div class="text-center py-8 text-gray-400">Chargement…</div>
-  } @else {
-    <div class="space-y-2">
-      @for (doc of documents(); track doc.id) {
-        <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-            @if (doc.contentType === 'application/pdf') {
-              <span class="text-lg">📄</span>
+          <!-- CNI -->
+          <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [class]="cniGest() ? 'bg-green-100' : 'bg-gray-100'">
+              <span class="text-lg">🪪</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800">Carte Nationale d'Identité</p>
+              @if (cniGest()) {
+                <p class="text-xs text-gray-500 truncate">{{ cniGest()!.nomFichier }} · {{ formatSize(cniGest()!.tailleOctets) }}</p>
+              } @else {
+                <p class="text-xs text-red-500">Non fournie</p>
+              }
+            </div>
+            @if (cniGest()) {
+              <a [href]="urlFichier(cniGest()!.id)" target="_blank"
+                 class="text-xs text-primary-600 font-medium flex-shrink-0">Voir →</a>
             } @else {
-              <span class="text-lg">🖼️</span>
+              <span class="text-xs text-gray-300 flex-shrink-0">—</span>
             }
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-gray-800 truncate">{{ doc.nomFichier }}</p>
-            <p class="text-xs text-gray-500">{{ labelType(doc.typeDocument) }} · {{ formatSize(doc.tailleOctets) }}</p>
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0">
-            <a [href]="urlFichier(doc.id)" target="_blank"
-               class="text-xs text-primary-600 underline">Voir</a>
-            <button (click)="supprimer(doc.id)" class="text-xs text-red-500 underline">Supprimer</button>
+
+          <!-- Lettre d'engagement -->
+          <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [class]="lettreGest() ? 'bg-green-100' : 'bg-gray-100'">
+              <span class="text-lg">📝</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800">Lettre d'engagement</p>
+              @if (lettreGest()) {
+                <p class="text-xs text-gray-500 truncate">{{ lettreGest()!.nomFichier }} · {{ formatSize(lettreGest()!.tailleOctets) }}</p>
+              } @else {
+                <p class="text-xs text-red-500">Non fournie</p>
+              }
+            </div>
+            @if (lettreGest()) {
+              <a [href]="urlFichier(lettreGest()!.id)" target="_blank"
+                 class="text-xs text-primary-600 font-medium flex-shrink-0">Voir →</a>
+            } @else {
+              <span class="text-xs text-gray-300 flex-shrink-0">—</span>
+            }
           </div>
         </div>
-      } @empty {
-        <p class="text-center text-sm text-gray-400 py-6">Aucun document téléchargé</p>
+
+        <!-- Autres documents -->
+        @if (autresGest().length > 0) {
+          <div class="space-y-2">
+            <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Autres documents</h2>
+            @for (doc of autresGest(); track doc.id) {
+              <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <span class="text-lg">{{ doc.contentType === 'application/pdf' ? '📄' : '🖼️' }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-800 truncate">{{ doc.nomFichier }}</p>
+                  <p class="text-xs text-gray-500">{{ labelType(doc.typeDocument) }} · {{ formatSize(doc.tailleOctets) }}</p>
+                </div>
+                <a [href]="urlFichier(doc.id)" target="_blank"
+                   class="text-xs text-primary-600 font-medium flex-shrink-0">Voir →</a>
+              </div>
+            }
+          </div>
+        }
+
+        @if (docsGest().length === 0) {
+          <div class="card text-center py-8 text-gray-400 text-sm">
+            Aucun document chargé par ce membre.
+          </div>
+        }
       }
-    </div>
+    }
   }
+
+  <!-- ════════ VUE MEMBRE ════════ -->
+  @if (!loading() && !auth.isGestionnaire()) {
+
+    <!-- Documents requis -->
+    <div class="space-y-3">
+      <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Documents requis pour un prêt</h2>
+
+      <!-- CNI -->
+      <div class="bg-white rounded-xl px-4 py-3 shadow-sm border flex items-center gap-3"
+           [class]="cni() ? 'border-green-200' : 'border-amber-200'">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+             [class]="cni() ? 'bg-green-100' : 'bg-amber-50'">
+          <span class="text-lg">{{ cni() ? '✅' : '🪪' }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-800">Carte Nationale d'Identité</p>
+          @if (cni()) {
+            <p class="text-xs text-gray-500 truncate">{{ cni()!.nomFichier }} · {{ formatSize(cni()!.tailleOctets) }}</p>
+          } @else {
+            <p class="text-xs text-amber-600">À fournir</p>
+          }
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          @if (cni()) {
+            <a [href]="urlFichier(cni()!.id)" target="_blank" class="text-xs text-primary-600 underline">Voir</a>
+            <button (click)="supprimerMien(cni()!.id)" class="text-xs text-red-500 underline">Remplacer</button>
+          }
+        </div>
+      </div>
+
+      <!-- Lettre d'engagement -->
+      <div class="bg-white rounded-xl px-4 py-3 shadow-sm border flex items-center gap-3"
+           [class]="lettreEngag() ? 'border-green-200' : 'border-amber-200'">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+             [class]="lettreEngag() ? 'bg-green-100' : 'bg-amber-50'">
+          <span class="text-lg">{{ lettreEngag() ? '✅' : '📝' }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-800">Lettre d'engagement</p>
+          @if (lettreEngag()) {
+            <p class="text-xs text-gray-500 truncate">{{ lettreEngag()!.nomFichier }} · {{ formatSize(lettreEngag()!.tailleOctets) }}</p>
+          } @else {
+            <p class="text-xs text-amber-600">À fournir</p>
+          }
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          @if (lettreEngag()) {
+            <a [href]="urlFichier(lettreEngag()!.id)" target="_blank" class="text-xs text-primary-600 underline">Voir</a>
+            <button (click)="supprimerMien(lettreEngag()!.id)" class="text-xs text-red-500 underline">Remplacer</button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaire d'upload -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+      <h2 class="text-sm font-semibold text-gray-700">Ajouter / remplacer un document</h2>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Type de document</label>
+        <select [(ngModel)]="selectedType" class="input-field">
+          @for (t of types; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Fichier (PDF ou image, max 10 Mo)</label>
+        <input type="file" accept=".pdf,image/*" (change)="onFileChange($event)"
+               class="block w-full text-sm text-gray-500
+                      file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0
+                      file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700
+                      hover:file:bg-primary-100" />
+      </div>
+
+      @if (selectedFile) {
+        <p class="text-xs text-gray-500">Fichier : {{ selectedFile.name }} ({{ formatSize(selectedFile.size) }})</p>
+      }
+      @if (success()) {
+        <div class="bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2">{{ success() }}</div>
+      }
+      @if (error()) {
+        <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+      }
+
+      <button (click)="upload()" [disabled]="uploading() || !selectedFile" class="btn-primary w-full">
+        @if (uploading()) { Envoi… } @else { Charger le document }
+      </button>
+    </div>
+
+    <!-- Autres documents -->
+    @if (autresDocs().length > 0) {
+      <div class="space-y-2">
+        <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Autres documents</h2>
+        @for (doc of autresDocs(); track doc.id) {
+          <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <span class="text-lg">{{ doc.contentType === 'application/pdf' ? '📄' : '🖼️' }}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800 truncate">{{ doc.nomFichier }}</p>
+              <p class="text-xs text-gray-500">{{ labelType(doc.typeDocument) }} · {{ formatSize(doc.tailleOctets) }}</p>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <a [href]="urlFichier(doc.id)" target="_blank" class="text-xs text-primary-600 underline">Voir</a>
+              <button (click)="supprimerMien(doc.id)" class="text-xs text-red-500 underline">Supprimer</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
 </div>

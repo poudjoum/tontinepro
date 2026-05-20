@@ -1,9 +1,10 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DocumentService } from '../../core/services/document.service';
 import { AuthService } from '../../core/services/auth.service';
 import { MembreService } from '../../core/services/membre.service';
 import { DocumentResponse, TypeDocument } from '../../core/models/document.model';
+import { MembreResponse } from '../../core/models/membre.model';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -12,45 +13,63 @@ import { environment } from '../../../environments/environment';
   templateUrl: './documents.component.html',
 })
 export class DocumentsComponent implements OnInit {
-  private svc     = inject(DocumentService);
-  private auth    = inject(AuthService);
-  private mbrSvc  = inject(MembreService);
+  private svc    = inject(DocumentService);
+  auth           = inject(AuthService);
+  private mbrSvc = inject(MembreService);
 
-  documents = signal<DocumentResponse[]>([]);
+  // ── État commun ────────────────────────────────────────────────────────────
   loading   = signal(true);
   uploading = signal(false);
   error     = signal('');
   success   = signal('');
 
-  membreId     = '';
+  // ── Vue membre ─────────────────────────────────────────────────────────────
+  membreId      = '';
+  documents     = signal<DocumentResponse[]>([]);
   selectedType: TypeDocument = 'CNI';
   selectedFile: File | null = null;
 
-  types: { value: TypeDocument; label: string }[] = [
-    { value: 'CNI',               label: 'Carte Nationale d\'Identité' },
-    { value: 'LETTRE_ENGAGEMENT', label: 'Lettre d\'engagement (prêt)' },
+  cni         = computed(() => this.documents().find(d => d.typeDocument === 'CNI') ?? null);
+  lettreEngag = computed(() => this.documents().find(d => d.typeDocument === 'LETTRE_ENGAGEMENT') ?? null);
+  autresDocs  = computed(() => this.documents().filter(
+    d => d.typeDocument !== 'CNI' && d.typeDocument !== 'LETTRE_ENGAGEMENT'));
+
+  // ── Vue gestionnaire ───────────────────────────────────────────────────────
+  membres         = signal<MembreResponse[]>([]);
+  selectedMembreId = '';
+  docsGest        = signal<DocumentResponse[]>([]);
+  loadingGest     = signal(false);
+
+  cniGest        = computed(() => this.docsGest().find(d => d.typeDocument === 'CNI') ?? null);
+  lettreGest     = computed(() => this.docsGest().find(d => d.typeDocument === 'LETTRE_ENGAGEMENT') ?? null);
+  autresGest     = computed(() => this.docsGest().filter(d =>
+    d.typeDocument !== 'CNI' && d.typeDocument !== 'LETTRE_ENGAGEMENT'));
+
+  readonly types: { value: TypeDocument; label: string }[] = [
+    { value: 'CNI',                  label: 'Carte Nationale d\'Identité (CNI)' },
+    { value: 'LETTRE_ENGAGEMENT',    label: 'Lettre d\'engagement (prêt)' },
     { value: 'JUSTIFICATIF_ABSENCE', label: 'Justificatif d\'absence' },
-    { value: 'AUTRE',             label: 'Autre document' },
+    { value: 'AUTRE',                label: 'Autre document' },
   ];
 
   ngOnInit(): void {
-    if (this.auth.isAdmin()) {
-      this.loading.set(false);
+    if (this.auth.isGestionnaire()) {
+      this.mbrSvc.getAll(undefined, 'ACTIF').subscribe({
+        next: m => { this.membres.set(m); this.loading.set(false); },
+        error: () => this.loading.set(false),
+      });
     } else {
       this.mbrSvc.getMonProfil().subscribe({
-        next: m => { this.membreId = m.id; this.charger(); },
+        next: m => { this.membreId = m.id; this.chargerMesDocs(); },
         error: () => this.loading.set(false),
       });
     }
   }
 
-  charger(): void {
-    if (!this.membreId && !this.auth.isAdmin()) return;
-    const obs = this.auth.isAdmin() && this.membreId
-      ? this.svc.listerParMembre(this.membreId)
-      : this.svc.mesDocuments();
+  // ── Vue membre ─────────────────────────────────────────────────────────────
 
-    obs.subscribe({
+  chargerMesDocs(): void {
+    this.svc.mesDocuments().subscribe({
       next: d => { this.documents.set(d); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
@@ -59,36 +78,57 @@ export class DocumentsComponent implements OnInit {
   onFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.selectedFile = input.files?.[0] ?? null;
+    this.success.set('');
+    this.error.set('');
   }
 
   upload(): void {
-    if (!this.selectedFile) return;
-    const id = this.membreId;
-    if (!id) return;
+    if (!this.selectedFile || !this.membreId) return;
     this.uploading.set(true);
     this.error.set('');
+    this.success.set('');
 
-    this.svc.telecharger(id, this.selectedType, this.selectedFile).subscribe({
+    this.svc.telecharger(this.membreId, this.selectedType, this.selectedFile).subscribe({
       next: doc => {
-        this.documents.update(list => [doc, ...list]);
-        this.success.set('Document téléchargé avec succès.');
+        this.documents.update(list => {
+          const filtered = list.filter(d => d.typeDocument !== doc.typeDocument);
+          return [doc, ...filtered];
+        });
+        this.success.set('Document chargé avec succès.');
         this.selectedFile = null;
         this.uploading.set(false);
       },
       error: e => {
-        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors du téléchargement');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors du chargement');
         this.uploading.set(false);
       },
     });
   }
 
-  supprimer(id: string): void {
+  supprimerMien(id: string): void {
     if (!confirm('Supprimer ce document ?')) return;
     this.svc.supprimer(id).subscribe({
       next: () => this.documents.update(list => list.filter(d => d.id !== id)),
       error: e => this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur suppression'),
     });
   }
+
+  // ── Vue gestionnaire ───────────────────────────────────────────────────────
+
+  onMembreChange(): void {
+    if (!this.selectedMembreId) { this.docsGest.set([]); return; }
+    this.loadingGest.set(true);
+    this.svc.listerParMembre(this.selectedMembreId).subscribe({
+      next: d => { this.docsGest.set(d); this.loadingGest.set(false); },
+      error: () => this.loadingGest.set(false),
+    });
+  }
+
+  membreNom(m: MembreResponse): string {
+    return `${m.prenom} ${m.nom} (${m.matricule})`;
+  }
+
+  // ── Helpers communs ────────────────────────────────────────────────────────
 
   urlFichier(id: string): string {
     return `${environment.apiUrl}/documents/${id}/fichier`;

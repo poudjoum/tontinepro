@@ -7,7 +7,10 @@ import java.util.UUID;
 
 public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
-    List<Document> findAllByMembreId(UUID membreId);
+    List<Document> findAllByMembreIdOrderByCreatedAtDesc(UUID membreId);
 
     List<Document> findAllByMembreIdAndTypeDocument(UUID membreId, Document.TypeDocument typeDocument);
+
+    java.util.Optional<Document> findTopByMembreIdAndTypeDocumentOrderByCreatedAtDesc(
+            UUID membreId, Document.TypeDocument typeDocument);
 }
