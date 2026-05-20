@@ -1,5 +1,5 @@
 <div class="space-y-4">
-  <h1 class="text-xl font-bold text-gray-900">Absences</h1>
+  <h1 class="text-xl font-bold text-gray-900">Absences & Appel</h1>
 
   <!-- Sélection tontine -->
   <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -11,80 +11,146 @@
     </select>
   </div>
 
-  <!-- Formulaire enregistrement -->
-  <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
-    <h2 class="text-sm font-semibold text-gray-700">Enregistrer une absence</h2>
-
-    <div>
-      <label class="block text-xs font-medium text-gray-600 mb-1">Membre</label>
-      <select [(ngModel)]="form.membreId" class="input-field">
-        <option value="">Sélectionner un membre</option>
-        @for (m of membres(); track m.id) {
-          <option [value]="m.id">{{ m.prenom }} {{ m.nom }} ({{ m.matricule }})</option>
-        }
-      </select>
-    </div>
-
-    <div>
-      <label class="block text-xs font-medium text-gray-600 mb-1">Date de réunion</label>
-      <input [(ngModel)]="form.dateReunion" type="date" class="input-field" />
-    </div>
-
-    <div class="flex items-center gap-3">
-      <input [(ngModel)]="form.justifiee" type="checkbox" id="justifiee"
-             class="w-4 h-4 rounded text-primary-600" />
-      <label for="justifiee" class="text-sm text-gray-700">Absence justifiée</label>
-    </div>
-
-    @if (!form.justifiee) {
-      <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg px-3 py-2">
-        Une sanction sera générée automatiquement si le montant de l'amende est configuré.
-      </div>
-    }
-
-    <div>
-      <label class="block text-xs font-medium text-gray-600 mb-1">Motif (optionnel)</label>
-      <input [(ngModel)]="form.motif" type="text" class="input-field"
-             placeholder="Motif de l'absence…" />
-    </div>
-
-    @if (success()) {
-      <div class="bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2">{{ success() }}</div>
-    }
-    @if (error()) {
-      <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
-    }
-
-    <button (click)="enregistrer()" [disabled]="saving() || !form.membreId" class="btn-primary w-full">
-      @if (saving()) { Enregistrement… } @else { Enregistrer l'absence }
+  <!-- Tabs -->
+  <div class="flex bg-gray-100 rounded-xl p-1 gap-1">
+    <button (click)="mode.set('appel')"
+            [class]="mode()==='appel' ? 'flex-1 py-2 rounded-lg bg-white text-primary-600 font-semibold text-sm shadow-sm' : 'flex-1 py-2 text-gray-500 text-sm'">
+      📋 Appel de présence
+    </button>
+    <button (click)="mode.set('absence')"
+            [class]="mode()==='absence' ? 'flex-1 py-2 rounded-lg bg-white text-primary-600 font-semibold text-sm shadow-sm' : 'flex-1 py-2 text-gray-500 text-sm'">
+      ✍️ Absence individuelle
     </button>
   </div>
+
+  <!-- Alertes -->
+  @if (success()) {
+    <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-3">{{ success() }}</div>
+  }
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{{ error() }}</div>
+  }
+
+  <!-- ══════════ APPEL DE PRÉSENCE ══════════ -->
+  @if (mode() === 'appel') {
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-4">
+      <div>
+        <h2 class="text-sm font-semibold text-gray-700">Appel de présence</h2>
+        <p class="text-xs text-gray-500 mt-0.5">
+          Cochez les membres présents. Les absents reçoivent automatiquement une sanction si l'amende est configurée.
+        </p>
+      </div>
+
+      <!-- Date -->
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Date de la réunion</label>
+        <input [(ngModel)]="appelDate" type="date" class="input-field" />
+      </div>
+
+      <!-- Actions rapides -->
+      <div class="flex gap-2">
+        <button (click)="tousPresents()" class="text-xs px-3 py-1.5 rounded-lg border border-green-300 text-green-700 bg-green-50">
+          ✓ Tous présents
+        </button>
+        <button (click)="tousAbsents()" class="text-xs px-3 py-1.5 rounded-lg border border-red-300 text-red-600 bg-red-50">
+          ✗ Tous absents
+        </button>
+      </div>
+
+      <!-- Liste membres avec toggle présence -->
+      <div class="space-y-2">
+        @for (m of membres(); track m.id) {
+          <button (click)="togglePresent(m.id)"
+                  class="w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-colors"
+                  [class]="estPresent(m.id)
+                    ? 'border-green-200 bg-green-50'
+                    : 'border-red-200 bg-red-50'">
+            <div>
+              <p class="text-sm font-medium text-gray-800">{{ m.prenom }} {{ m.nom }}</p>
+              <p class="text-xs text-gray-500">{{ m.matricule }}</p>
+            </div>
+            <span class="text-lg">{{ estPresent(m.id) ? '✅' : '❌' }}</span>
+          </button>
+        } @empty {
+          <p class="text-center text-sm text-gray-400 py-4">Aucun membre actif</p>
+        }
+      </div>
+
+      @if (membres().length > 0) {
+        <div class="text-xs text-gray-500 text-center">
+          {{ presentsSet.size }} présent(s) · {{ membres().length - presentsSet.size }} absent(s)
+        </div>
+        <button (click)="lancerAppel()" [disabled]="saving()" class="btn-primary w-full">
+          @if (saving()) { Enregistrement… } @else { Valider l'appel de présence }
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ══════════ ABSENCE INDIVIDUELLE ══════════ -->
+  @if (mode() === 'absence') {
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+      <h2 class="text-sm font-semibold text-gray-700">Enregistrer une absence individuelle</h2>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Membre</label>
+        <select [(ngModel)]="form.membreId" class="input-field">
+          <option value="">Sélectionner un membre</option>
+          @for (m of membres(); track m.id) {
+            <option [value]="m.id">{{ m.prenom }} {{ m.nom }} ({{ m.matricule }})</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Date de réunion</label>
+        <input [(ngModel)]="form.dateReunion" type="date" class="input-field" />
+      </div>
+
+      <div class="flex items-center gap-3">
+        <input [(ngModel)]="form.justifiee" type="checkbox" id="justifiee"
+               class="w-4 h-4 rounded text-primary-600" />
+        <label for="justifiee" class="text-sm text-gray-700">Absence justifiée</label>
+      </div>
+
+      @if (!form.justifiee) {
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg px-3 py-2">
+          Une sanction sera générée automatiquement si le montant de l'amende est configuré.
+        </div>
+      }
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Motif (optionnel)</label>
+        <input [(ngModel)]="form.motif" type="text" class="input-field" placeholder="Motif de l'absence…" />
+      </div>
+
+      <button (click)="enregistrer()" [disabled]="saving() || !form.membreId" class="btn-primary w-full">
+        @if (saving()) { Enregistrement… } @else { Enregistrer l'absence }
+      </button>
+    </div>
+  }
 
   <!-- Historique -->
   @if (loading()) {
     <div class="text-center py-6 text-gray-400">Chargement…</div>
-  } @else {
+  } @else if (absences().length > 0) {
     <div class="space-y-2">
-      <p class="text-xs text-gray-500 px-1">{{ absences().length }} absence(s)</p>
+      <p class="text-xs text-gray-500 px-1 font-semibold">Historique — {{ absences().length }} absence(s)</p>
       @for (a of absences(); track a.id) {
-        <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-gray-800">{{ a.membrePrenom }} {{ a.membreNom }}</p>
-              <p class="text-xs text-gray-500">{{ a.membreMatricule }} · {{ a.dateReunion }}</p>
-            </div>
-            @if (a.justifiee) {
-              <span class="badge-green">Justifiée</span>
-            } @else {
-              <span class="badge-red">Non justifiée</span>
+        <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-800">{{ a.membrePrenom }} {{ a.membreNom }}</p>
+            <p class="text-xs text-gray-500">{{ a.membreMatricule }} · {{ a.dateReunion }}</p>
+            @if (a.motif) {
+              <p class="text-xs text-gray-400 italic mt-0.5">{{ a.motif }}</p>
             }
           </div>
-          @if (a.motif) {
-            <p class="text-xs text-gray-500 mt-1 italic">{{ a.motif }}</p>
+          @if (a.justifiee) {
+            <span class="badge-success flex-shrink-0">Justifiée</span>
+          } @else {
+            <span class="badge-danger flex-shrink-0">Non justifiée</span>
           }
         </div>
-      } @empty {
-        <p class="text-center text-sm text-gray-400 py-6">Aucune absence enregistrée</p>
       }
     </div>
   }

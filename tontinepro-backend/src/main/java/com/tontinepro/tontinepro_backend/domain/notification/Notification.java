@@ -60,6 +60,8 @@ public class Notification {
         // Auth
         BIENVENUE,
         // Adhésion
-        DEMANDE_ADHESION
+        DEMANDE_ADHESION,
+        // Sanction
+        SANCTION_INFLIGEE
     }
 }

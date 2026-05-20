@@ -1,13 +1,19 @@
 package com.tontinepro.tontinepro_backend.api.absence;
 
 import com.tontinepro.tontinepro_backend.api.absence.dto.AbsenceResponse;
+import com.tontinepro.tontinepro_backend.api.absence.dto.AppelPresenceRequest;
+import com.tontinepro.tontinepro_backend.api.absence.dto.AppelPresenceResult;
 import com.tontinepro.tontinepro_backend.api.absence.dto.EnregistrerAbsenceRequest;
+import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.domain.absence.Absence;
 import com.tontinepro.tontinepro_backend.domain.absence.AbsenceRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
+import com.tontinepro.tontinepro_backend.domain.notification.Notification;
 import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
 import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
+import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
+import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
 import com.tontinepro.tontinepro_backend.domain.user.User;
 import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +33,8 @@ public class AbsenceService {
     private final MembreRepository membreRepository;
     private final UserRepository userRepository;
     private final SanctionRepository sanctionRepository;
+    private final TontineRepository tontineRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public AbsenceResponse enregistrer(EnregistrerAbsenceRequest request, String enregistrePar) {
@@ -53,18 +62,95 @@ public class AbsenceService {
         // Générer automatiquement une sanction si l'absence n'est pas justifiée
         BigDecimal montantAmende = membre.getTontine().getMontantAmende();
         if (!request.justifiee() && montantAmende != null && montantAmende.compareTo(BigDecimal.ZERO) > 0) {
-            Sanction sanction = Sanction.builder()
+            Sanction sanction = sanctionRepository.save(Sanction.builder()
                     .membre(membre)
                     .tontine(membre.getTontine())
                     .typeSanction(Sanction.TypeSanction.ABSENCE_REUNION)
                     .montant(montantAmende)
                     .motif("Absence non justifiée à la réunion du " + request.dateReunion())
                     .referenceId(absence.getId())
-                    .build();
-            sanctionRepository.save(sanction);
+                    .build());
+
+            notificationService.notifier(membre.getUser(),
+                    Notification.Type.SANCTION_INFLIGEE,
+                    "Sanction pour absence",
+                    "Une sanction de %s FCFA a été enregistrée pour absence non justifiée à la réunion du %s."
+                            .formatted(montantAmende, request.dateReunion()),
+                    sanction.getId(), "SANCTION");
         }
 
         return AbsenceResponse.from(absence);
+    }
+
+    /**
+     * Appel de présence groupé pour une réunion.
+     * Les membres actifs NON présents dans la liste sont automatiquement marqués absents.
+     */
+    @Transactional
+    public AppelPresenceResult appelPresence(AppelPresenceRequest request, String enregistrePar) {
+        Tontine tontine = tontineRepository.findById(request.tontineId())
+                .orElseThrow(() -> new IllegalArgumentException("Tontine introuvable"));
+
+        User auteur = userRepository.findByEmail(enregistrePar)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        List<Membre> membresActifs = membreRepository.findAllByTontineIdAndStatut(
+                tontine.getId(), Membre.Statut.ACTIF);
+
+        BigDecimal montantAmende = tontine.getMontantAmende();
+
+        int presentsCount = 0;
+        int absentsCount = 0;
+        int sanctionsCount = 0;
+        List<AbsenceResponse> absencesCreees = new ArrayList<>();
+
+        for (Membre membre : membresActifs) {
+            boolean estPresent = request.membresPresentsIds().contains(membre.getId());
+            if (estPresent) {
+                presentsCount++;
+                continue;
+            }
+
+            // Déjà enregistré pour cette réunion → skip
+            if (absenceRepository.existsByMembreIdAndDateReunion(membre.getId(), request.dateReunion())) {
+                absentsCount++;
+                continue;
+            }
+
+            Absence absence = absenceRepository.save(Absence.builder()
+                    .membre(membre)
+                    .tontine(tontine)
+                    .dateReunion(request.dateReunion())
+                    .justifiee(false)
+                    .motif("Absence enregistrée via appel de présence")
+                    .enregistreePar(auteur)
+                    .build());
+
+            absencesCreees.add(AbsenceResponse.from(absence));
+            absentsCount++;
+
+            if (montantAmende != null && montantAmende.compareTo(BigDecimal.ZERO) > 0) {
+                Sanction sanction = sanctionRepository.save(Sanction.builder()
+                        .membre(membre)
+                        .tontine(tontine)
+                        .typeSanction(Sanction.TypeSanction.ABSENCE_REUNION)
+                        .montant(montantAmende)
+                        .motif("Absence non justifiée à la réunion du " + request.dateReunion())
+                        .referenceId(absence.getId())
+                        .build());
+
+                notificationService.notifier(membre.getUser(),
+                        Notification.Type.SANCTION_INFLIGEE,
+                        "Sanction pour absence",
+                        "Une sanction de %s FCFA a été enregistrée pour absence à la réunion du %s."
+                                .formatted(montantAmende, request.dateReunion()),
+                        sanction.getId(), "SANCTION");
+                sanctionsCount++;
+            }
+        }
+
+        return new AppelPresenceResult(
+                membresActifs.size(), presentsCount, absentsCount, sanctionsCount, absencesCreees);
     }
 
     @Transactional(readOnly = true)

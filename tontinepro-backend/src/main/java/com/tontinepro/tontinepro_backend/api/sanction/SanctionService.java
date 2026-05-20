@@ -1,9 +1,11 @@
 package com.tontinepro.tontinepro_backend.api.sanction;
 
+import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.api.sanction.dto.CreerSanctionRequest;
 import com.tontinepro.tontinepro_backend.api.sanction.dto.SanctionResponse;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
+import com.tontinepro.tontinepro_backend.domain.notification.Notification;
 import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
 import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class SanctionService {
 
     private final SanctionRepository sanctionRepository;
     private final MembreRepository membreRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public SanctionResponse creer(CreerSanctionRequest request) {
@@ -33,7 +36,16 @@ public class SanctionService {
                 .motif(request.motif())
                 .build();
 
-        return SanctionResponse.from(sanctionRepository.save(sanction));
+        SanctionResponse response = SanctionResponse.from(sanctionRepository.save(sanction));
+
+        notificationService.notifier(membre.getUser(),
+                Notification.Type.SANCTION_INFLIGEE,
+                "Sanction enregistrée",
+                "Une sanction de %s FCFA a été enregistrée à votre encontre. Motif : %s"
+                        .formatted(request.montant(), request.motif() != null ? request.motif() : "Non précisé"),
+                response.id(), "SANCTION");
+
+        return response;
     }
 
     @Transactional

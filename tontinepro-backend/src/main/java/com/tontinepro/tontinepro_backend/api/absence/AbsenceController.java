@@ -1,6 +1,8 @@
 package com.tontinepro.tontinepro_backend.api.absence;
 
 import com.tontinepro.tontinepro_backend.api.absence.dto.AbsenceResponse;
+import com.tontinepro.tontinepro_backend.api.absence.dto.AppelPresenceRequest;
+import com.tontinepro.tontinepro_backend.api.absence.dto.AppelPresenceResult;
 import com.tontinepro.tontinepro_backend.api.absence.dto.EnregistrerAbsenceRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,6 +34,17 @@ public class AbsenceController {
             @AuthenticationPrincipal UserDetails principal
     ) {
         return absenceService.enregistrer(request, principal.getUsername());
+    }
+
+    @PostMapping("/appel-presence")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') or @sec.isCenseur(authentication.name)")
+    @Operation(summary = "Appel de présence groupé — marque automatiquement les absents et génère les sanctions")
+    public AppelPresenceResult appelPresence(
+            @Valid @RequestBody AppelPresenceRequest request,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        return absenceService.appelPresence(request, principal.getUsername());
     }
 
     @GetMapping

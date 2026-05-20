@@ -125,6 +125,11 @@ export const routes: Routes = [
           import('./features/suivi/suivi.component').then(m => m.SuiviComponent),
       },
       {
+        path: 'sanctions',
+        loadComponent: () =>
+          import('./features/sanctions/sanctions.component').then(m => m.SanctionsComponent),
+      },
+      {
         path: 'profil',
         loadComponent: () =>
           import('./features/profil/profil.component').then(m => m.ProfilComponent),

@@ -12,4 +12,6 @@ public interface SanctionRepository extends JpaRepository<Sanction, UUID> {
     List<Sanction> findAllByMembreId(UUID membreId);
 
     List<Sanction> findAllByTontineIdAndPayee(UUID tontineId, boolean payee);
+
+    boolean existsByReferenceIdAndTypeSanction(UUID referenceId, Sanction.TypeSanction typeSanction);
 }

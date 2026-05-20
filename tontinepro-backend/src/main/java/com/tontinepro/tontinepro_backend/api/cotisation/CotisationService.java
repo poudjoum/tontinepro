@@ -9,10 +9,13 @@ import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.notification.Notification;
+import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
+import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +27,7 @@ public class CotisationService {
     private final CotisationRepository cotisationRepository;
     private final MembreRepository membreRepository;
     private final NotificationService notificationService;
+    private final SanctionRepository sanctionRepository;
 
     @Transactional
     public CotisationResponse create(CreateCotisationRequest request) {
@@ -135,6 +139,29 @@ public class CotisationService {
 
         cotisation.setStatut(Cotisation.Statut.EN_RETARD);
         CotisationResponse response = CotisationResponse.from(cotisationRepository.save(cotisation));
+
+        // Générer automatiquement une sanction RETARD_COTISATION (idempotent — une seule par cotisation)
+        BigDecimal penalite = cotisation.getTontine().getMontantPenaliteRetard();
+        if (penalite != null && penalite.compareTo(BigDecimal.ZERO) > 0
+                && !sanctionRepository.existsByReferenceIdAndTypeSanction(
+                        cotisation.getId(), Sanction.TypeSanction.RETARD_COTISATION)) {
+
+            Sanction sanction = sanctionRepository.save(Sanction.builder()
+                    .membre(cotisation.getMembre())
+                    .tontine(cotisation.getTontine())
+                    .typeSanction(Sanction.TypeSanction.RETARD_COTISATION)
+                    .montant(penalite)
+                    .motif("Retard de cotisation %02d/%d".formatted(cotisation.getMois(), cotisation.getAnnee()))
+                    .referenceId(cotisation.getId())
+                    .build());
+
+            notificationService.notifier(cotisation.getMembre().getUser(),
+                    Notification.Type.SANCTION_INFLIGEE,
+                    "Sanction pour retard de cotisation",
+                    "Une sanction de %s FCFA a été enregistrée pour retard de cotisation %02d/%d."
+                            .formatted(penalite, cotisation.getMois(), cotisation.getAnnee()),
+                    sanction.getId(), "SANCTION");
+        }
 
         notificationService.notifier(cotisation.getMembre().getUser(),
                 Notification.Type.COTISATION_EN_RETARD,

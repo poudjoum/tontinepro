@@ -17,3 +17,17 @@ export interface EnregistrerAbsenceRequest {
   justifiee: boolean;
   motif?: string;
 }
+
+export interface AppelPresenceRequest {
+  tontineId: string;
+  dateReunion: string;
+  membresPresentsIds: string[];
+}
+
+export interface AppelPresenceResult {
+  totalMembres: number;
+  presentsCount: number;
+  absentsCount: number;
+  sanctionsGenerees: number;
+  absencesCreees: AbsenceResponse[];
+}
