@@ -26,7 +26,7 @@ export class AppComponent implements OnInit {
       filter(e => e instanceof NavigationEnd)
     ).subscribe((e: any) => {
       if (this.checked) return;
-      if (!this.auth.isLoggedIn() || this.auth.isGestionnaire()) return;
+      if (!this.auth.isLoggedIn() || this.auth.isGestionnaire() || this.auth.isSuperAdmin()) return;
       if (this.publicPaths.some(p => e.url.startsWith(p))) return;
 
       // MEMBRE connecté → vérifier profil une seule fois

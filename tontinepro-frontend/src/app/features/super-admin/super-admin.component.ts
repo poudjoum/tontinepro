@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import {
@@ -21,6 +21,9 @@ export class SuperAdminComponent implements OnInit {
   saving     = signal(false);
   error      = signal('');
   success    = signal('');
+
+  nbActives     = computed(() => this.tontines().filter(t => t.actif).length);
+  totalMembres  = computed(() => this.tontines().reduce((s, t) => s + t.nombreMembresActifs, 0));
 
   // Panneau redevance ouvert pour une tontine
   redevancePanelId = signal<string | null>(null);

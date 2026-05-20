@@ -45,13 +45,11 @@
           <p class="text-[10px] text-gray-500 mt-0.5">Tontines</p>
         </div>
         <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 text-center">
-          <p class="text-2xl font-bold text-green-600">{{ tontines().filter(t => t.actif).length }}</p>
+          <p class="text-2xl font-bold text-green-600">{{ nbActives() }}</p>
           <p class="text-[10px] text-gray-500 mt-0.5">Actives</p>
         </div>
         <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 text-center">
-          <p class="text-2xl font-bold text-gray-900">
-            {{ tontines().reduce((s, t) => s + t.nombreMembresActifs, 0) }}
-          </p>
+          <p class="text-2xl font-bold text-gray-900">{{ totalMembres() }}</p>
           <p class="text-[10px] text-gray-500 mt-0.5">Membres</p>
         </div>
       </div>
