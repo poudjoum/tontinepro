@@ -51,6 +51,9 @@ logging:
     org.flywaydb: INFO
     org.hibernate.SQL: WARN
 
+app:
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:8090}
+
 server:
   port: 8080
   compression:
