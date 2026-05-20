@@ -65,6 +65,9 @@ export interface SessionCotisationsStatutResponse {
   nbEnRetard: number;
   nbAbsents: number;
   complete: boolean;
+  montantCotisationDefaut: number | null;
+  montantFondAideDefaut: number | null;
+  modeContributionAide: string;
   membres: MembreCotisationStatut[];
 }
 

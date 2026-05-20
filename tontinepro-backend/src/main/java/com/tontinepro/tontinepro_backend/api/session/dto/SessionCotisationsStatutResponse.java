@@ -14,6 +14,12 @@ public record SessionCotisationsStatutResponse(
         int nbEnRetard,
         int nbAbsents,
         boolean complete,
+        /** Montant cotisation tontine par défaut (montantCotisationMin de la tontine). */
+        java.math.BigDecimal montantCotisationDefaut,
+        /** Montant fond d'aide mensuel par défaut (null si mode != MENSUEL). */
+        java.math.BigDecimal montantFondAideDefaut,
+        /** Mode de contribution au fond d'aide. */
+        String modeContributionAide,
         List<MembreCotisationStatut> membres
 ) {
     public record MembreCotisationStatut(

@@ -451,12 +451,17 @@ public class SessionService {
             } else {
                 BigDecimal montant = tontine.getMontantCotisationMin() != null
                         ? tontine.getMontantCotisationMin() : BigDecimal.ZERO;
+                // Pré-remplir montantFondAide si mode MENSUEL
+                BigDecimal fondAide = (tontine.getModeContributionAide() == Tontine.ModeContributionAide.MENSUEL
+                        && tontine.getMontantCotisationAide() != null)
+                        ? tontine.getMontantCotisationAide() : BigDecimal.ZERO;
                 Cotisation c = cotisationRepository.save(Cotisation.builder()
                         .membre(membre)
                         .tontine(tontine)
                         .mois(mois)
                         .annee(annee)
                         .montant(montant)
+                        .montantFondAide(fondAide)
                         .build());
                 result.add(c);
             }
@@ -509,10 +514,18 @@ public class SessionService {
         }
 
         int total = ordres.size();
+        Tontine tontine = session.getTontine();
+        BigDecimal fondAideDefaut = (tontine.getModeContributionAide() == Tontine.ModeContributionAide.MENSUEL
+                && tontine.getMontantCotisationAide() != null)
+                ? tontine.getMontantCotisationAide() : null;
+
         return new SessionCotisationsStatutResponse(
                 sessionId, session.getNumero(), mois, annee,
                 total, nbPayes, nbEnAttente, nbEnRetard, nbAbsents,
                 nbPayes == total && total > 0,
+                tontine.getMontantCotisationMin(),
+                fondAideDefaut,
+                tontine.getModeContributionAide().name(),
                 membres
         );
     }

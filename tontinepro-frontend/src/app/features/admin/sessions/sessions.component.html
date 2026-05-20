@@ -110,7 +110,7 @@
                            disabled:opacity-50">
               @if (saving()) { … } @else { 🔄 Synchroniser membres }
             </button>
-            <button (click)="ouvrirSaisieSeance(session); chargerStatut(session)" [disabled]="saving()"
+            <button (click)="ouvrirSaisieSeance(session)" [disabled]="saving()"
                     class="col-span-2 py-2 text-sm font-medium rounded-lg border border-primary-400
                            text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors
                            disabled:opacity-50">
@@ -186,31 +186,41 @@
               <button (click)="afficherSaisie.set(false)" class="text-xs text-primary-600">✕</button>
             </div>
 
+            <!-- Info montants par défaut -->
+            <div class="px-4 bg-white rounded-xl mx-4 py-2 text-[11px] text-primary-700 flex gap-4">
+              <span>Cotisation : <strong>{{ statutCotisations()!.montantCotisationDefaut | number:'1.0-0' }} FCFA</strong></span>
+              @if (statutCotisations()!.montantFondAideDefaut) {
+                <span>Fond du mois : <strong>{{ statutCotisations()!.montantFondAideDefaut | number:'1.0-0' }} FCFA</strong></span>
+              }
+            </div>
+
             <!-- En-têtes colonnes -->
-            <div class="px-4 grid grid-cols-[1fr_80px_80px_80px] gap-2 text-[10px] font-semibold text-primary-800 uppercase tracking-wide">
+            <div class="px-4 grid grid-cols-[1fr_85px_85px_70px] gap-2 text-[10px] font-semibold text-primary-800 uppercase tracking-wide">
               <span>Membre</span>
-              <span class="text-center">Tontine</span>
-              <span class="text-center">Fonds mois</span>
+              <span class="text-center">Tontine (FCFA)</span>
+              <span class="text-center">Fond mois</span>
               <span class="text-center">Réf.</span>
             </div>
 
-            <div class="space-y-1 px-4 pb-1">
+            <div class="space-y-1.5 px-4 pb-1">
               @for (m of statutCotisations()!.membres; track m.membreId) {
                 @if (m.cotisationId && m.statutCotisation !== 'PAYEE') {
-                  <div class="grid grid-cols-[1fr_80px_80px_80px] gap-2 items-center">
+                  <div class="grid grid-cols-[1fr_85px_85px_70px] gap-2 items-center">
                     <div class="min-w-0">
                       <p class="text-xs font-medium text-gray-800 truncate">{{ m.prenom }} {{ m.nom }}</p>
-                      <p class="text-[10px] text-gray-400">{{ m.matricule }}</p>
+                      <p class="text-[10px] text-gray-400">
+                        Total : {{ ((saisieData[m.cotisationId!]?.montantTontine || 0) + (saisieData[m.cotisationId!]?.montantFondAide || 0)) | number:'1.0-0' }} FCFA
+                      </p>
                     </div>
-                    <input type="number" min="0" placeholder="0"
+                    <input type="number" min="0"
                            [(ngModel)]="saisieData[m.cotisationId!].montantTontine"
-                           class="text-xs border border-gray-300 rounded px-1.5 py-1.5 w-full text-center" />
-                    <input type="number" min="0" placeholder="0"
+                           class="text-xs border border-primary-300 rounded px-1.5 py-2 w-full text-center font-semibold" />
+                    <input type="number" min="0"
                            [(ngModel)]="saisieData[m.cotisationId!].montantFondAide"
-                           class="text-xs border border-gray-300 rounded px-1.5 py-1.5 w-full text-center" />
+                           class="text-xs border border-gray-300 rounded px-1.5 py-2 w-full text-center" />
                     <input type="text" placeholder="Réf"
                            [(ngModel)]="saisieData[m.cotisationId!].ref"
-                           class="text-xs border border-gray-300 rounded px-1.5 py-1.5 w-full" />
+                           class="text-xs border border-gray-300 rounded px-1.5 py-2 w-full" />
                   </div>
                 } @else if (m.statutCotisation === 'PAYEE') {
                   <div class="flex items-center justify-between text-xs text-gray-400 py-1">

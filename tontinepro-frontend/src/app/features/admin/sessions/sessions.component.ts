@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgIf } from '@angular/common';
 import { SessionService } from '../../../core/services/session.service';
 import { TontineService } from '../../../core/services/tontine.service';
 import {
@@ -268,17 +268,32 @@ export class SessionsComponent implements OnInit {
   // ── Saisie de séance ────────────────────────────────────────────────────────
 
   ouvrirSaisieSeance(session: SessionResponse): void {
-    this.afficherSaisie.set(true);
-    this.saisieResultat.set(null);
+    // Charger le statut d'abord, puis initialiser la saisie avec les montants par défaut
+    this.saving.set(true);
     this.error.set('');
-    // Initialiser les champs avec les montants par défaut depuis les cotisations
-    if (this.statutCotisations()) {
-      this.statutCotisations()!.membres.forEach(m => {
-        if (m.cotisationId && m.statutCotisation !== 'PAYEE') {
-          this.saisieData[m.cotisationId] = { montantTontine: 0, montantFondAide: 0, ref: '' };
-        }
-      });
-    }
+    this.saisieResultat.set(null);
+    this.sessionSvc.cotisationsStatut(session.id).subscribe({
+      next: s => {
+        this.statutCotisations.set(s);
+        this.afficherStatut.set(false);
+        // Initialiser saisieData avec montants pré-remplis depuis la tontine
+        this.saisieData = {};
+        const defCot    = s.montantCotisationDefaut ?? 0;
+        const defFond   = s.montantFondAideDefaut   ?? 0;
+        s.membres.forEach(m => {
+          if (m.cotisationId && m.statutCotisation !== 'PAYEE') {
+            this.saisieData[m.cotisationId] = {
+              montantTontine: defCot,
+              montantFondAide: defFond,
+              ref: ''
+            };
+          }
+        });
+        this.afficherSaisie.set(true);
+        this.saving.set(false);
+      },
+      error: e => { this.error.set(e.error?.detail ?? 'Erreur chargement statut'); this.saving.set(false); },
+    });
   }
 
   validerSaisieSeance(session: SessionResponse): void {
@@ -287,12 +302,16 @@ export class SessionsComponent implements OnInit {
 
     const paiements = statut.membres
       .filter(m => m.cotisationId && m.statutCotisation !== 'PAYEE')
-      .map(m => ({
-        cotisationId: m.cotisationId!,
-        montantTontine:    this.saisieData[m.cotisationId!]?.montantTontine || undefined,
-        montantFondAide:   this.saisieData[m.cotisationId!]?.montantFondAide || undefined,
-        referencePaiement: this.saisieData[m.cotisationId!]?.ref || undefined,
-      }));
+      .map(m => {
+        const d = this.saisieData[m.cotisationId!];
+        return {
+          cotisationId:      m.cotisationId!,
+          // Envoyer les montants même à 0 (undefined = utiliser la valeur déjà sur la cotisation)
+          montantTontine:    d?.montantTontine != null ? d.montantTontine : undefined,
+          montantFondAide:   d?.montantFondAide != null ? d.montantFondAide : undefined,
+          referencePaiement: d?.ref || undefined,
+        };
+      });
 
     if (paiements.length === 0) {
       this.error.set('Aucun paiement à enregistrer.'); return;
