@@ -42,6 +42,11 @@ export class SessionsComponent implements OnInit {
   statutCotisations = signal<SessionCotisationsStatutResponse | null>(null);
   afficherStatut = signal(false);
 
+  // Saisie de séance
+  afficherSaisie = signal(false);
+  saisieData: Record<string, { montantTontine: number; montantFondAide: number; ref: string }> = {};
+  saisieResultat = signal<{ totalEnregistres: number; montantTontineCollecte: number; montantFondAideCollecte: number } | null>(null);
+
   // Validation bénéfice
   montantValide: { [id: string]: number } = {};
 
@@ -258,6 +263,57 @@ export class SessionsComponent implements OnInit {
       },
       error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur recalibrage.'); this.saving.set(false); },
     });
+  }
+
+  // ── Saisie de séance ────────────────────────────────────────────────────────
+
+  ouvrirSaisieSeance(session: SessionResponse): void {
+    this.afficherSaisie.set(true);
+    this.saisieResultat.set(null);
+    this.error.set('');
+    // Initialiser les champs avec les montants par défaut depuis les cotisations
+    if (this.statutCotisations()) {
+      this.statutCotisations()!.membres.forEach(m => {
+        if (m.cotisationId && m.statutCotisation !== 'PAYEE') {
+          this.saisieData[m.cotisationId] = { montantTontine: 0, montantFondAide: 0, ref: '' };
+        }
+      });
+    }
+  }
+
+  validerSaisieSeance(session: SessionResponse): void {
+    const statut = this.statutCotisations();
+    if (!statut) return;
+
+    const paiements = statut.membres
+      .filter(m => m.cotisationId && m.statutCotisation !== 'PAYEE')
+      .map(m => ({
+        cotisationId: m.cotisationId!,
+        montantTontine:    this.saisieData[m.cotisationId!]?.montantTontine || undefined,
+        montantFondAide:   this.saisieData[m.cotisationId!]?.montantFondAide || undefined,
+        referencePaiement: this.saisieData[m.cotisationId!]?.ref || undefined,
+      }));
+
+    if (paiements.length === 0) {
+      this.error.set('Aucun paiement à enregistrer.'); return;
+    }
+
+    this.saving.set(true); this.error.set('');
+    this.sessionSvc.saisirPaiementsSeance(session.id, paiements).subscribe({
+      next: r => {
+        this.saisieResultat.set(r);
+        this.success.set(`${r.totalEnregistres} paiement(s) enregistré(s).`);
+        this.saving.set(false);
+        this.afficherSaisie.set(false);
+        this.chargerStatut(session);
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur saisie'); this.saving.set(false); },
+    });
+  }
+
+  fcfaSeance(n: number | null | undefined): string {
+    if (!n) return '0';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n);
   }
 
   ouvrirSession(s: SessionResponse): void { this.sessionOuverte.set(s); }

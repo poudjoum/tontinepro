@@ -110,6 +110,12 @@
                            disabled:opacity-50">
               @if (saving()) { … } @else { 🔄 Synchroniser membres }
             </button>
+            <button (click)="ouvrirSaisieSeance(session); chargerStatut(session)" [disabled]="saving()"
+                    class="col-span-2 py-2 text-sm font-medium rounded-lg border border-primary-400
+                           text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors
+                           disabled:opacity-50">
+              @if (saving()) { … } @else { ✏️ Saisie de séance }
+            </button>
             <button (click)="cloturerSession(session)" [disabled]="saving()"
                     class="col-span-2 py-2 text-sm font-medium rounded-lg border border-gray-300
                            text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors
@@ -163,6 +169,63 @@
                   </span>
                 </div>
               }
+            </div>
+          </div>
+        }
+
+        <!-- ════ SAISIE DE SÉANCE ════ -->
+        @if (afficherSaisie() && statutCotisations()) {
+          <div class="border border-primary-200 rounded-xl bg-primary-50 space-y-3 overflow-hidden">
+            <div class="px-4 pt-4 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-primary-900">Saisie de séance</h3>
+                <p class="text-xs text-primary-700 mt-0.5">
+                  Entrez les montants payés par chaque membre (tontine + fonds du mois).
+                </p>
+              </div>
+              <button (click)="afficherSaisie.set(false)" class="text-xs text-primary-600">✕</button>
+            </div>
+
+            <!-- En-têtes colonnes -->
+            <div class="px-4 grid grid-cols-[1fr_80px_80px_80px] gap-2 text-[10px] font-semibold text-primary-800 uppercase tracking-wide">
+              <span>Membre</span>
+              <span class="text-center">Tontine</span>
+              <span class="text-center">Fonds mois</span>
+              <span class="text-center">Réf.</span>
+            </div>
+
+            <div class="space-y-1 px-4 pb-1">
+              @for (m of statutCotisations()!.membres; track m.membreId) {
+                @if (m.cotisationId && m.statutCotisation !== 'PAYEE') {
+                  <div class="grid grid-cols-[1fr_80px_80px_80px] gap-2 items-center">
+                    <div class="min-w-0">
+                      <p class="text-xs font-medium text-gray-800 truncate">{{ m.prenom }} {{ m.nom }}</p>
+                      <p class="text-[10px] text-gray-400">{{ m.matricule }}</p>
+                    </div>
+                    <input type="number" min="0" placeholder="0"
+                           [(ngModel)]="saisieData[m.cotisationId!].montantTontine"
+                           class="text-xs border border-gray-300 rounded px-1.5 py-1.5 w-full text-center" />
+                    <input type="number" min="0" placeholder="0"
+                           [(ngModel)]="saisieData[m.cotisationId!].montantFondAide"
+                           class="text-xs border border-gray-300 rounded px-1.5 py-1.5 w-full text-center" />
+                    <input type="text" placeholder="Réf"
+                           [(ngModel)]="saisieData[m.cotisationId!].ref"
+                           class="text-xs border border-gray-300 rounded px-1.5 py-1.5 w-full" />
+                  </div>
+                } @else if (m.statutCotisation === 'PAYEE') {
+                  <div class="flex items-center justify-between text-xs text-gray-400 py-1">
+                    <span class="truncate">{{ m.prenom }} {{ m.nom }}</span>
+                    <span class="badge-success text-[10px]">✓ Payé</span>
+                  </div>
+                }
+              }
+            </div>
+
+            <div class="px-4 pb-4">
+              <button (click)="validerSaisieSeance(sessionOuverte()!)" [disabled]="saving()"
+                      class="btn-primary w-full text-sm py-2.5">
+                @if (saving()) { Enregistrement… } @else { Enregistrer tous les paiements }
+              </button>
             </div>
           </div>
         }

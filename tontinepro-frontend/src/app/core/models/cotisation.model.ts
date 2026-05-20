@@ -21,4 +21,6 @@ export interface CotisationResponse {
 export interface EnregistrerPaiementRequest {
   datePaiement?: string;
   referencePaiement?: string;
+  montantTontine?: number;
+  montantFondAide?: number;
 }

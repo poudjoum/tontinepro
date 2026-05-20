@@ -72,6 +72,21 @@ export class SessionService {
     );
   }
 
+  saisirPaiementsSeance(sessionId: string, paiements: Array<{
+    cotisationId: string;
+    referencePaiement?: string;
+    montantTontine?: number;
+    montantFondAide?: number;
+  }>) {
+    return this.http.post<{
+      totalDemandes: number;
+      totalEnregistres: number;
+      totalDejaPayes: number;
+      montantTontineCollecte: number;
+      montantFondAideCollecte: number;
+    }>(`${this.api}/${sessionId}/saisir-paiements-seance`, { paiements });
+  }
+
   cloturerSession(sessionId: string, forcer = false) {
     return this.http.post<SessionResponse>(`${this.api}/${sessionId}/cloturer`, null, {
       params: { forcer: String(forcer) }

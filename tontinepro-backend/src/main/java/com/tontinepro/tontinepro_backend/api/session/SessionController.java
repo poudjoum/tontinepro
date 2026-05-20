@@ -101,6 +101,17 @@ public class SessionController {
         return sessionService.recalibrerMembres(id);
     }
 
+    @PostMapping("/{id}/saisir-paiements-seance")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Saisie groupée des paiements d'une séance (cotisation + fonds du mois) par le Secrétaire")
+    public SaisieSeanceResult saisirPaiementsSeance(
+            @PathVariable UUID id,
+            @Valid @RequestBody SaisirPaiementsSeanceRequest request
+    ) {
+        return sessionService.saisirPaiementsSeance(id, request);
+    }
+
     @PostMapping("/{id}/cloturer")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Clôturer une session (passe à TERMINEE). forcer=true permet de clôturer même si des membres n'ont pas bénéficié")

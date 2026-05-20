@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { CotisationService } from '../../core/services/cotisation.service';
 import { CotisationResponse } from '../../core/models/cotisation.model';
@@ -8,6 +9,7 @@ const MOIS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
 
 @Component({
   selector: 'app-cotisations',
+  imports: [FormsModule],
   templateUrl: './cotisations.component.html',
 })
 export class CotisationsComponent implements OnInit {
@@ -20,6 +22,8 @@ export class CotisationsComponent implements OnInit {
   submitting   = signal(false);
   paiementId   = signal<string | null>(null);
   paiementRef  = signal('');
+  paiementMontant  = signal(0);
+  paiementFondAide = signal(0);
 
   mois  = signal(new Date().getMonth() + 1);
   annee = signal(new Date().getFullYear());
@@ -36,7 +40,7 @@ export class CotisationsComponent implements OnInit {
   charger(): void {
     this.loading.set(true);
     this.error.set('');
-    const obs = this.auth.isAdmin()
+    const obs = this.auth.isGestionnaire()
       ? this.svc.getAll(this.mois(), this.annee())
       : this.svc.getMesCotisations();
     obs.subscribe({
@@ -55,14 +59,27 @@ export class CotisationsComponent implements OnInit {
     this.charger();
   }
 
-  ouvrirPaiement(id: string): void { this.paiementId.set(id); this.paiementRef.set(''); }
+  ouvrirPaiement(id: string, montantDefaut = 0): void {
+    this.paiementId.set(id);
+    this.paiementRef.set('');
+    this.paiementMontant.set(montantDefaut);
+    this.paiementFondAide.set(0);
+  }
 
   validerPaiement(): void {
     const id = this.paiementId();
     if (!id || this.submitting()) return;
     this.submitting.set(true);
-    this.svc.enregistrerPaiement(id, { referencePaiement: this.paiementRef() || undefined }).subscribe({
-      next: u => { this.cotisations.update(l => l.map(c => c.id === id ? u : c)); this.paiementId.set(null); this.submitting.set(false); },
+    this.svc.enregistrerPaiement(id, {
+      referencePaiement: this.paiementRef() || undefined,
+      montantTontine:    this.paiementMontant() > 0 ? this.paiementMontant() : undefined,
+      montantFondAide:   this.paiementFondAide() > 0 ? this.paiementFondAide() : undefined,
+    }).subscribe({
+      next: u => {
+        this.cotisations.update(l => l.map(c => c.id === id ? u : c));
+        this.paiementId.set(null);
+        this.submitting.set(false);
+      },
       error: e => { this.error.set(e.message ?? 'Erreur'); this.submitting.set(false); },
     });
   }

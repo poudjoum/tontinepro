@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.session;
 
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
+import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
@@ -31,6 +32,7 @@ public class SessionService {
     private final MembreRepository membreRepository;
     private final CotisationRepository cotisationRepository;
     private final PeriodiciteService periodiciteService;
+    private final NotificationService notificationService;
 
     @Transactional
     public SessionResponse creerSession(CreerSessionRequest request) {
@@ -513,6 +515,67 @@ public class SessionService {
                 nbPayes == total && total > 0,
                 membres
         );
+    }
+
+    /**
+     * Saisie groupée des paiements d'une séance.
+     * Pour chaque cotisation fournie : enregistre le montant tontine + fond d'aide
+     * et passe le statut à PAYEE. Les cotisations déjà PAYEE sont ignorées.
+     * Seul l'Admin (Secrétaire/Président) peut effectuer cette opération.
+     */
+    @Transactional
+    public SaisieSeanceResult saisirPaiementsSeance(UUID sessionId,
+                                                     SaisirPaiementsSeanceRequest request) {
+        // Vérifier que la session existe et est en cours
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+        if (session.getStatut() != SessionTontine.Statut.EN_COURS) {
+            throw new IllegalStateException("La session n'est pas en cours");
+        }
+
+        int enregistres = 0;
+        int dejaPayes   = 0;
+        BigDecimal totalTontine  = BigDecimal.ZERO;
+        BigDecimal totalFondAide = BigDecimal.ZERO;
+
+        for (SaisirPaiementsSeanceRequest.PaiementMembre pm : request.paiements()) {
+            Cotisation cot = cotisationRepository.findById(pm.cotisationId())
+                    .orElse(null);
+            if (cot == null) continue;
+
+            if (cot.getStatut() == Cotisation.Statut.PAYEE) {
+                dejaPayes++;
+                continue;
+            }
+
+            if (pm.montantTontine() != null) {
+                cot.setMontant(pm.montantTontine());
+            }
+            if (pm.montantFondAide() != null) {
+                cot.setMontantFondAide(pm.montantFondAide());
+            }
+            cot.setStatut(Cotisation.Statut.PAYEE);
+            cot.setDatePaiement(pm.datePaiement() != null
+                    ? pm.datePaiement() : java.time.OffsetDateTime.now());
+            cot.setReferencePaiement(pm.referencePaiement());
+            cotisationRepository.save(cot);
+
+            totalTontine  = totalTontine.add(cot.getMontant());
+            totalFondAide = totalFondAide.add(
+                    cot.getMontantFondAide() != null ? cot.getMontantFondAide() : BigDecimal.ZERO);
+            enregistres++;
+
+            // Notifier le membre
+            notificationService.notifier(cot.getMembre().getUser(),
+                    com.tontinepro.tontinepro_backend.domain.notification.Notification.Type.COTISATION_PAYEE,
+                    "Cotisation enregistrée",
+                    "Votre cotisation de %02d/%d (%s FCFA) a été saisie par le Secrétaire."
+                            .formatted(cot.getMois(), cot.getAnnee(), cot.getMontant()),
+                    cot.getId(), "COTISATION");
+        }
+
+        return new SaisieSeanceResult(
+                request.paiements().size(), enregistres, dejaPayes, totalTontine, totalFondAide);
     }
 
     /**
