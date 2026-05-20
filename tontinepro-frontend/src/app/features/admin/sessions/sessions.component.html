@@ -21,16 +21,24 @@
     @if (!sessionEnCours()) {
       <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
         <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Nouvelle session</h2>
-        <div class="flex gap-2 items-end">
-          <div class="flex-1">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Date de début</label>
             <input [(ngModel)]="dateDebut" name="dateDebut" type="date" class="input-field" />
           </div>
-          <button (click)="creerSession()" [disabled]="saving()"
-                  class="btn-primary whitespace-nowrap">
-            @if (saving()) { Création… } @else { Créer la session }
-          </button>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Cible membres</label>
+            <input [(ngModel)]="cibleMembres" type="number" min="1" class="input-field"
+                   placeholder="Ex: 12" />
+          </div>
         </div>
+        <p class="text-[11px] text-gray-400">
+          La cible définit le nombre de membres visé pour cette session.
+          Vous pouvez la lancer même si la cible n'est pas encore atteinte.
+        </p>
+        <button (click)="creerSession()" [disabled]="saving()" class="btn-primary w-full">
+          @if (saving()) { Création… } @else { Lancer la session }
+        </button>
       </section>
     }
 
@@ -52,7 +60,26 @@
             <div>Du {{ session.dateDebut | date:'dd/MM/yyyy' }}
               @if (session.dateFin) { au {{ session.dateFin | date:'dd/MM/yyyy' }} }
             </div>
-            <div>{{ session.nombreMembres }} membre(s)</div>
+            <div class="flex items-center gap-1 justify-end">
+              <span class="font-semibold text-gray-700">{{ session.nombreMembres }}</span>
+              @if (session.cibleMembres) {
+                <span>/ {{ session.cibleMembres }} membres</span>
+              } @else {
+                <span>membres</span>
+              }
+            </div>
+            @if (session.cibleMembres && session.nombreMembres < session.cibleMembres) {
+              <div class="mt-1">
+                <div class="w-24 bg-gray-100 rounded-full h-1.5 ml-auto">
+                  <div class="bg-primary-500 h-1.5 rounded-full"
+                       [style.width.%]="(session.nombreMembres / session.cibleMembres) * 100">
+                  </div>
+                </div>
+                <p class="text-[10px] text-amber-600 mt-0.5">
+                  {{ session.cibleMembres - session.nombreMembres }} membre(s) attendus
+                </p>
+              </div>
+            }
           </div>
         </div>
 

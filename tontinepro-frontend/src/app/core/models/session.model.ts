@@ -21,6 +21,7 @@ export interface SessionResponse {
   dateProchaineTontine: string | null;
   statut: StatutSession;
   nombreMembres: number;
+  cibleMembres: number | null;
   potReserve: number;
   beneficiaires: OrdreBeneficiaireResponse[];
 }
@@ -28,6 +29,7 @@ export interface SessionResponse {
 export interface CreerSessionRequest {
   tontineId: string;
   dateDebut: string;
+  cibleMembres?: number;
   ordreMembreIds?: string[];
 }
 

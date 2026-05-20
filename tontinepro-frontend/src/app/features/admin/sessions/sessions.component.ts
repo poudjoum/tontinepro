@@ -30,6 +30,7 @@ export class SessionsComponent implements OnInit {
   modeDate     = signal(false);
 
   dateDebut = '';
+  cibleMembres: number | null = null;
   sessionOuverte = signal<SessionResponse | null>(null);
 
   // Bilan
@@ -83,7 +84,11 @@ export class SessionsComponent implements OnInit {
     if (!this.dateDebut) { this.error.set('Veuillez saisir une date de début.'); return; }
     this.saving.set(true);
     this.error.set('');
-    this.sessionSvc.creerSession({ tontineId: this.tontineId(), dateDebut: this.dateDebut }).subscribe({
+    this.sessionSvc.creerSession({
+      tontineId: this.tontineId(),
+      dateDebut: this.dateDebut,
+      cibleMembres: this.cibleMembres ?? undefined,
+    }).subscribe({
       next: session => {
         this.sessions.update(list => [session, ...list]);
         this.sessionOuverte.set(session);

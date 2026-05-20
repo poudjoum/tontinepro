@@ -1,0 +1,72 @@
+<div class="space-y-4">
+  <!-- Header -->
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Démarrer votre tontine</h1>
+    @if (tontine()) {
+      <p class="text-sm text-primary-600 font-medium mt-0.5">{{ tontine()!.nom }}</p>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-10 text-gray-400">Chargement…</div>
+  } @else {
+
+    <!-- Barre de progression -->
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-2">
+      <div class="flex items-center justify-between text-sm">
+        <span class="font-semibold text-gray-700">Progression</span>
+        <span class="font-bold text-primary-600">{{ progression() }}%</span>
+      </div>
+      <div class="w-full bg-gray-100 rounded-full h-2.5">
+        <div class="bg-primary-600 h-2.5 rounded-full transition-all duration-500"
+             [style.width.%]="progression()"></div>
+      </div>
+      @if (progression() === 100) {
+        <p class="text-xs text-green-600 font-medium">✅ Votre tontine est prête à fonctionner !</p>
+      } @else {
+        <p class="text-xs text-gray-500">
+          {{ etapesCompletes() }} / {{ etapes().length }} étapes complétées
+        </p>
+      }
+    </div>
+
+    <!-- Liste des étapes -->
+    <div class="space-y-3">
+      @for (etape of etapes(); track etape.id; let i = $index) {
+        <a [routerLink]="etape.route"
+           [class]="'block bg-white rounded-xl p-4 shadow-sm border transition-all ' +
+             (etape.complete ? 'border-green-200 opacity-75' : 'border-gray-100 active:scale-98')">
+          <div class="flex items-start gap-3">
+
+            <!-- Numéro / Check -->
+            <div [class]="'w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold ' +
+              (etape.complete ? 'bg-green-100 text-green-700' : 'bg-primary-100 text-primary-700')">
+              @if (etape.complete) { ✓ } @else { {{ i + 1 }} }
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">{{ etape.icone }}</span>
+                <p [class]="'text-sm font-semibold ' + (etape.complete ? 'text-gray-500 line-through' : 'text-gray-900')">
+                  {{ etape.titre }}
+                </p>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5 ml-7">{{ etape.desc }}</p>
+            </div>
+
+            @if (!etape.complete) {
+              <svg class="w-5 h-5 text-gray-300 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            }
+          </div>
+        </a>
+      }
+    </div>
+
+    <!-- Lien vers le hub -->
+    <a routerLink="/admin" class="block text-center text-sm text-primary-600 font-medium pt-2">
+      ← Retour au hub admin
+    </a>
+  }
+</div>

@@ -70,6 +70,7 @@ public class SessionService {
                 .dateFin(dateFin)
                 .dateProchaineTontine(dateProchaine)
                 .nombreMembres(nombreMembres)
+                .cibleMembres(request.cibleMembres())
                 .build();
 
         session = sessionRepository.save(session);

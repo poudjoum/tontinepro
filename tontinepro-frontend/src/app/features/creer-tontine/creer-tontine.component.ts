@@ -73,8 +73,7 @@ export class CreerTontineComponent {
       }).subscribe({
         next: () => {
           this.submitting.set(false);
-          // Recharger le profil et aller dans l'admin
-          this.router.navigate(['/admin']);
+          this.router.navigate(['/admin/onboarding']);
         },
         error: e => { this.error.set(e.error?.message ?? 'Erreur création'); this.submitting.set(false); },
       });
@@ -95,7 +94,7 @@ export class CreerTontineComponent {
         next: auth => {
           this.authSvc.saveAuth(auth);
           this.submitting.set(false);
-          this.router.navigate(['/admin']);
+          this.router.navigate(['/admin/onboarding']);
         },
         error: e => { this.error.set(e.error?.message ?? 'Erreur création'); this.submitting.set(false); },
       });

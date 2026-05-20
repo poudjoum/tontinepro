@@ -16,6 +16,7 @@ public record SessionResponse(
         LocalDate dateProchaineTontine,
         SessionTontine.Statut statut,
         int nombreMembres,
+        Integer cibleMembres,
         BigDecimal potReserve,
         List<OrdreBeneficiaireResponse> beneficiaires
 ) {
@@ -29,6 +30,7 @@ public record SessionResponse(
                 s.getDateProchaineTontine(),
                 s.getStatut(),
                 s.getNombreMembres(),
+                s.getCibleMembres(),
                 s.getPotReserve(),
                 beneficiaires
         );

@@ -15,7 +15,23 @@ interface AdminCard {
   template: `
     <div class="space-y-4">
       <h1 class="text-xl font-bold text-gray-900">Administration</h1>
-      <p class="text-sm text-gray-500">Gérez votre tontine depuis ce tableau de bord.</p>
+
+      <!-- Démarrage rapide -->
+      <a routerLink="/admin/onboarding"
+         class="block bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-4 text-white shadow">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🚀</span>
+          <div>
+            <p class="font-bold text-sm">Guide de démarrage</p>
+            <p class="text-xs text-primary-200 mt-0.5">
+              Documents, configuration, membres, bureau, session
+            </p>
+          </div>
+          <svg class="w-5 h-5 text-primary-200 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
 
       <div class="grid grid-cols-2 gap-3">
         @for (card of cards; track card.route) {
@@ -38,10 +54,17 @@ export class AdminComponent {
   cards: AdminCard[] = [
     {
       title: 'Configuration',
-      desc: 'Taux, périodes, amendes',
+      desc: 'Taux, périodes, fonds d\'aide',
       route: '/admin/configuration',
       icon: '⚙️',
       color: 'bg-blue-50',
+    },
+    {
+      title: 'Documents',
+      desc: 'Statuts, règlement intérieur',
+      route: '/admin/documents-tontine',
+      icon: '📄',
+      color: 'bg-gray-50',
     },
     {
       title: 'Membres',

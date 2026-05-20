@@ -48,6 +48,10 @@ public class SessionTontine {
     @Column(name = "nombre_membres", nullable = false)
     private int nombreMembres;
 
+    /** Objectif de membres visé avant démarrage de la session (optionnel). */
+    @Column(name = "cible_membres")
+    private Integer cibleMembres;
+
     @Column(name = "pot_reserve", nullable = false, precision = 15, scale = 2)
     @Builder.Default
     private BigDecimal potReserve = BigDecimal.ZERO;

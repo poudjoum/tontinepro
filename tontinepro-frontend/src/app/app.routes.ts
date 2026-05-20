@@ -168,6 +168,16 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/admin/sessions/sessions.component').then(m => m.SessionsComponent),
           },
+          {
+            path: 'documents-tontine',
+            loadComponent: () =>
+              import('./features/admin/documents-tontine/documents-tontine.component').then(m => m.DocumentsTontineComponent),
+          },
+          {
+            path: 'onboarding',
+            loadComponent: () =>
+              import('./features/admin/onboarding/onboarding.component').then(m => m.OnboardingComponent),
+          },
         ],
       },
     ],
