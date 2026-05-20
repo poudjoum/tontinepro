@@ -337,8 +337,23 @@ export class SessionsComponent implements OnInit {
 
   ouvrirSession(s: SessionResponse): void { this.sessionOuverte.set(s); }
 
+  /**
+   * Prochain bénéficiaire = premier non-bénéficié trié par dateBenefice ASC,
+   * puis par ordre si dates identiques ou absentes.
+   */
   prochainBeneficiaire(session: SessionResponse): OrdreBeneficiaireResponse | null {
-    return session.beneficiaires.find(b => !b.beneficie) ?? null;
+    return this.beneficiairesTriesParDate(session).find(b => !b.beneficie) ?? null;
+  }
+
+  /** Liste triée par dateBenefice ASC (nulls en dernier), puis par ordre. */
+  beneficiairesTriesParDate(session: SessionResponse): OrdreBeneficiaireResponse[] {
+    return [...session.beneficiaires].sort((a, b) => {
+      if (!a.dateBenefice && !b.dateBenefice) return a.ordre - b.ordre;
+      if (!a.dateBenefice) return 1;
+      if (!b.dateBenefice) return -1;
+      const diff = new Date(a.dateBenefice).getTime() - new Date(b.dateBenefice).getTime();
+      return diff !== 0 ? diff : a.ordre - b.ordre;
+    });
   }
 
   joursRestants(dateStr: string | null): string {

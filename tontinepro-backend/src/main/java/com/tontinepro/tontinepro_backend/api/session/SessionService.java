@@ -107,14 +107,9 @@ public class SessionService {
 
     @Transactional(readOnly = true)
     public List<SessionResponse> listerSessions(UUID tontineId) {
+        // Utiliser getById pour que les dates manquantes soient comblées dans chaque session
         return sessionRepository.findAllByTontineIdOrderByNumeroDesc(tontineId).stream()
-                .map(s -> {
-                    List<OrdreBeneficiaireResponse> beneficiaires = ordreBeneficiaireRepository
-                            .findAllBySessionIdOrderByOrdre(s.getId()).stream()
-                            .map(OrdreBeneficiaireResponse::from)
-                            .toList();
-                    return SessionResponse.from(s, beneficiaires);
-                })
+                .map(s -> getById(s.getId()))
                 .toList();
     }
 
@@ -122,10 +117,42 @@ public class SessionService {
     public SessionResponse getById(UUID id) {
         SessionTontine session = sessionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + id));
-        List<OrdreBeneficiaireResponse> beneficiaires = ordreBeneficiaireRepository
-                .findAllBySessionIdOrderByOrdre(id).stream()
-                .map(OrdreBeneficiaireResponse::from)
-                .toList();
+
+        List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(id);
+
+        // Calculer les dates attendues pour chaque position afin de combler les dates nulles
+        // (membres ajoutés via recalibrer ou mode DATE_MANUELLE avec dates non saisies)
+        List<LocalDate> datesCalculees = periodiciteService.calculerDatesBenefice(
+                session.getTontine(), session.getDateDebut(), ordres.size());
+
+        List<OrdreBeneficiaireResponse> beneficiaires = new ArrayList<>();
+        for (int i = 0; i < ordres.size(); i++) {
+            OrdreBeneficiaire ob = ordres.get(i);
+            LocalDate dateEffective = ob.getDateBenefice() != null
+                    ? ob.getDateBenefice()
+                    : (i < datesCalculees.size() ? datesCalculees.get(i) : null);
+
+            // Si la date calculée est null (mode DATE_MANUELLE), utiliser dateDebut + position
+            if (dateEffective == null && i < datesCalculees.size() && datesCalculees.get(i) == null) {
+                // Extrapoler depuis le dernier membre qui a une date, ou dateDebut
+                LocalDate base = session.getDateDebut();
+                dateEffective = base; // fallback minimal
+            }
+
+            beneficiaires.add(new OrdreBeneficiaireResponse(
+                    ob.getId(),
+                    ob.getMembre().getId(),
+                    ob.getMembre().getNom(),
+                    ob.getMembre().getPrenom(),
+                    ob.getMembre().getMatricule(),
+                    ob.getOrdre(),
+                    dateEffective,
+                    ob.getMontantRecu(),
+                    ob.isBeneficie()
+            ));
+        }
+
         return SessionResponse.from(session, beneficiaires);
     }
 
@@ -215,18 +242,17 @@ public class SessionService {
         ob.setDateBenefice(request.dateBenefice());
         ordreBeneficiaireRepository.save(ob);
 
-        // Mettre à jour dateProchaineTontine si c'est le prochain bénéficiaire
+        // Après mise à jour, recalculer dateProchaineTontine = date la plus proche
+        // parmi les membres non encore bénéficiés (tri par date, nulls last)
         SessionTontine session = ob.getSession();
         List<OrdreBeneficiaire> tous = ordreBeneficiaireRepository
                 .findAllBySessionIdOrderByOrdre(sessionId);
         tous.stream()
-                .filter(o -> !o.isBeneficie())
-                .min(Comparator.comparingInt(OrdreBeneficiaire::getOrdre))
+                .filter(o -> !o.isBeneficie() && o.getDateBenefice() != null)
+                .min(Comparator.comparing(OrdreBeneficiaire::getDateBenefice))
                 .ifPresent(prochain -> {
-                    if (prochain.getId().equals(ordreBeneficiaireId)) {
-                        session.setDateProchaineTontine(request.dateBenefice());
-                        sessionRepository.save(session);
-                    }
+                    session.setDateProchaineTontine(prochain.getDateBenefice());
+                    sessionRepository.save(session);
                 });
 
         return getById(sessionId);

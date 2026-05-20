@@ -372,7 +372,7 @@
             <span class="text-[11px] text-gray-400">{{ session.nombreMembres }} tour(s)</span>
           </div>
 
-          @for (ob of session.beneficiaires; track ob.id) {
+          @for (ob of beneficiairesTriesParDate(session); track ob.id) {
             <div [class]="'rounded-lg border p-3 space-y-2 ' +
               (ob.beneficie ? 'bg-gray-50 border-gray-200' :
                prochainBeneficiaire(session)?.id === ob.id ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-200')">
