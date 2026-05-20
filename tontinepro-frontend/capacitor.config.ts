@@ -8,9 +8,8 @@ const config: CapacitorConfig = {
   webDir: 'dist/tontinepro-frontend/browser',
 
   server: {
-    androidScheme: 'http',
-    // Cleartext autorisé pour le réseau LAN (192.168.x.x non-HTTPS)
-    cleartext: true,
+    // HTTPS via Cloudflare Tunnel (tontinepro.tontinepro.uk.com)
+    androidScheme: 'https',
   },
 
   android: {
