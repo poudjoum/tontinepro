@@ -29,10 +29,13 @@ export class DocumentsComponent implements OnInit {
   selectedType: TypeDocument = 'CNI';
   selectedFile: File | null = null;
 
-  cni         = computed(() => this.documents().find(d => d.typeDocument === 'CNI') ?? null);
-  lettreEngag = computed(() => this.documents().find(d => d.typeDocument === 'LETTRE_ENGAGEMENT') ?? null);
-  autresDocs  = computed(() => this.documents().filter(
-    d => d.typeDocument !== 'CNI' && d.typeDocument !== 'LETTRE_ENGAGEMENT'));
+  cni              = computed(() => this.documents().find(d => d.typeDocument === 'CNI') ?? null);
+  lettreEngag      = computed(() => this.documents().find(d => d.typeDocument === 'LETTRE_ENGAGEMENT') ?? null);
+  planLocalisation = computed(() => this.documents().find(d => d.typeDocument === 'PLAN_LOCALISATION') ?? null);
+  reconnDette      = computed(() => this.documents().find(d => d.typeDocument === 'RECONNAISSANCE_DETTE') ?? null);
+  autresDocs       = computed(() => this.documents().filter(d =>
+    d.typeDocument !== 'CNI' && d.typeDocument !== 'LETTRE_ENGAGEMENT' &&
+    d.typeDocument !== 'PLAN_LOCALISATION' && d.typeDocument !== 'RECONNAISSANCE_DETTE'));
 
   // ── Vue gestionnaire ───────────────────────────────────────────────────────
   membres         = signal<MembreResponse[]>([]);
@@ -42,12 +45,17 @@ export class DocumentsComponent implements OnInit {
 
   cniGest        = computed(() => this.docsGest().find(d => d.typeDocument === 'CNI') ?? null);
   lettreGest     = computed(() => this.docsGest().find(d => d.typeDocument === 'LETTRE_ENGAGEMENT') ?? null);
+  planGest       = computed(() => this.docsGest().find(d => d.typeDocument === 'PLAN_LOCALISATION') ?? null);
+  reconnGest     = computed(() => this.docsGest().find(d => d.typeDocument === 'RECONNAISSANCE_DETTE') ?? null);
   autresGest     = computed(() => this.docsGest().filter(d =>
-    d.typeDocument !== 'CNI' && d.typeDocument !== 'LETTRE_ENGAGEMENT'));
+    d.typeDocument !== 'CNI' && d.typeDocument !== 'LETTRE_ENGAGEMENT' &&
+    d.typeDocument !== 'PLAN_LOCALISATION' && d.typeDocument !== 'RECONNAISSANCE_DETTE'));
 
   readonly types: { value: TypeDocument; label: string }[] = [
     { value: 'CNI',                  label: 'Carte Nationale d\'Identité (CNI)' },
-    { value: 'LETTRE_ENGAGEMENT',    label: 'Lettre d\'engagement (prêt)' },
+    { value: 'LETTRE_ENGAGEMENT',    label: 'Lettre d\'engagement' },
+    { value: 'PLAN_LOCALISATION',    label: 'Plan de localisation (prêt)' },
+    { value: 'RECONNAISSANCE_DETTE', label: 'Lettre de reconnaissance de dette (prêt)' },
     { value: 'JUSTIFICATIF_ABSENCE', label: 'Justificatif d\'absence' },
     { value: 'AUTRE',                label: 'Autre document' },
   ];

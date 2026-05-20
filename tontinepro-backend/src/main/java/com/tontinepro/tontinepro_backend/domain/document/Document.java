@@ -47,6 +47,8 @@ public class Document {
     public enum TypeDocument {
         CNI,
         LETTRE_ENGAGEMENT,
+        PLAN_LOCALISATION,
+        RECONNAISSANCE_DETTE,
         JUSTIFICATIF_ABSENCE,
         AUTRE
     }

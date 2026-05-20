@@ -115,6 +115,29 @@
 
       <!-- Formulaire demande -->
       @if (vue() === 'demande') {
+
+        <!-- Avertissement documents manquants -->
+        @if (!docsCompletsPourPret()) {
+          <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 space-y-2">
+            <p class="text-sm font-semibold text-amber-800">Documents requis manquants</p>
+            <p class="text-xs text-amber-700">
+              Vous devez fournir les documents suivants avant de soumettre une demande de prêt :
+            </p>
+            <ul class="text-xs text-amber-700 space-y-1 ml-3">
+              @if (!hasPlanLocalisation()) {
+                <li>• Plan de localisation</li>
+              }
+              @if (!hasReconnDette()) {
+                <li>• Lettre de reconnaissance de dette (adressée au Président)</li>
+              }
+            </ul>
+            <a routerLink="/documents"
+               class="inline-block mt-1 text-xs font-semibold text-amber-900 underline">
+              Charger mes documents →
+            </a>
+          </div>
+        }
+
         <div class="card space-y-4">
           <h2 class="font-semibold text-gray-900">Nouvelle demande de prêt</h2>
           <div>
@@ -129,10 +152,14 @@
                    (input)="demDuree.set(+$any($event.target).value)"
                    placeholder="12" class="input-field">
           </div>
-          <button (click)="soumettreDemande()" [disabled]="demMontant() <= 0 || submitting()"
+          <button (click)="soumettreDemande()"
+                  [disabled]="demMontant() <= 0 || submitting() || !docsCompletsPourPret()"
                   class="btn-primary">
             {{ submitting() ? 'Envoi…' : 'Soumettre la demande' }}
           </button>
+          @if (!docsCompletsPourPret()) {
+            <p class="text-xs text-center text-amber-600">Le bouton sera actif une fois vos documents chargés.</p>
+          }
         </div>
       }
 

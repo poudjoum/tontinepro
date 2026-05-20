@@ -1,8 +1,11 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { PretService } from '../../core/services/pret.service';
 import { MembreService } from '../../core/services/membre.service';
+import { DocumentService } from '../../core/services/document.service';
 import { PretResponse, EcheancePretResponse, SimulationPretResponse } from '../../core/models/pret.model';
+import { DocumentResponse } from '../../core/models/document.model';
 
 type VueMembre = 'liste' | 'demande' | 'simulation';
 type FiltreAdmin = '' | 'DEMANDE' | 'EN_COURS' | 'SOLDE' | 'REJETE';
@@ -18,12 +21,14 @@ const STATUT_BADGE: Record<string, string> = {
 
 @Component({
   selector: 'app-prets',
+  imports: [RouterLink],
   templateUrl: './prets.component.html',
 })
 export class PretsComponent implements OnInit {
   auth = inject(AuthService);
   private svc = inject(PretService);
   private membreSvc = inject(MembreService);
+  private docSvc = inject(DocumentService);
 
   prets       = signal<PretResponse[]>([]);
   echeances   = signal<EcheancePretResponse[]>([]);
@@ -31,6 +36,11 @@ export class PretsComponent implements OnInit {
   loading     = signal(true);
   submitting  = signal(false);
   error       = signal('');
+  mesDocs     = signal<DocumentResponse[]>([]);
+
+  hasPlanLocalisation   = computed(() => this.mesDocs().some(d => d.typeDocument === 'PLAN_LOCALISATION'));
+  hasReconnDette        = computed(() => this.mesDocs().some(d => d.typeDocument === 'RECONNAISSANCE_DETTE'));
+  docsCompletsPourPret  = computed(() => this.hasPlanLocalisation() && this.hasReconnDette());
 
   // Membre
   vue         = signal<VueMembre>('liste');
@@ -50,6 +60,7 @@ export class PretsComponent implements OnInit {
     this.charger();
     if (!this.auth.isAdmin()) {
       this.membreSvc.getMonProfil().subscribe(m => this.tontineId.set(m.tontineId));
+      this.docSvc.mesDocuments().subscribe({ next: d => this.mesDocs.set(d), error: () => {} });
     }
   }
 

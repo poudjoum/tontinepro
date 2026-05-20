@@ -85,6 +85,55 @@
           </div>
         </div>
 
+        <!-- Documents pour prêt -->
+        <div class="space-y-3">
+          <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Documents pour demande de prêt</h2>
+
+          <!-- Plan de localisation -->
+          <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [class]="planGest() ? 'bg-green-100' : 'bg-gray-100'">
+              <span class="text-lg">📍</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800">Plan de localisation</p>
+              @if (planGest()) {
+                <p class="text-xs text-gray-500 truncate">{{ planGest()!.nomFichier }} · {{ formatSize(planGest()!.tailleOctets) }}</p>
+              } @else {
+                <p class="text-xs text-red-500">Non fourni</p>
+              }
+            </div>
+            @if (planGest()) {
+              <a [href]="urlFichier(planGest()!.id)" target="_blank"
+                 class="text-xs text-primary-600 font-medium flex-shrink-0">Voir →</a>
+            } @else {
+              <span class="text-xs text-gray-300 flex-shrink-0">—</span>
+            }
+          </div>
+
+          <!-- Reconnaissance de dette -->
+          <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                 [class]="reconnGest() ? 'bg-green-100' : 'bg-gray-100'">
+              <span class="text-lg">🤝</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800">Lettre de reconnaissance de dette</p>
+              @if (reconnGest()) {
+                <p class="text-xs text-gray-500 truncate">{{ reconnGest()!.nomFichier }} · {{ formatSize(reconnGest()!.tailleOctets) }}</p>
+              } @else {
+                <p class="text-xs text-red-500">Non fournie</p>
+              }
+            </div>
+            @if (reconnGest()) {
+              <a [href]="urlFichier(reconnGest()!.id)" target="_blank"
+                 class="text-xs text-primary-600 font-medium flex-shrink-0">Voir →</a>
+            } @else {
+              <span class="text-xs text-gray-300 flex-shrink-0">—</span>
+            }
+          </div>
+        </div>
+
         <!-- Autres documents -->
         @if (autresGest().length > 0) {
           <div class="space-y-2">
@@ -163,6 +212,58 @@
           @if (lettreEngag()) {
             <a [href]="urlFichier(lettreEngag()!.id)" target="_blank" class="text-xs text-primary-600 underline">Voir</a>
             <button (click)="supprimerMien(lettreEngag()!.id)" class="text-xs text-red-500 underline">Remplacer</button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents pour un prêt -->
+    <div class="space-y-3">
+      <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Documents requis pour un prêt</h2>
+      <p class="text-xs text-gray-400 -mt-1">Adresser la lettre de reconnaissance de dette au Président de la tontine.</p>
+
+      <!-- Plan de localisation -->
+      <div class="bg-white rounded-xl px-4 py-3 shadow-sm border flex items-center gap-3"
+           [class]="planLocalisation() ? 'border-green-200' : 'border-amber-200'">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+             [class]="planLocalisation() ? 'bg-green-100' : 'bg-amber-50'">
+          <span class="text-lg">{{ planLocalisation() ? '✅' : '📍' }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-800">Plan de localisation</p>
+          @if (planLocalisation()) {
+            <p class="text-xs text-gray-500 truncate">{{ planLocalisation()!.nomFichier }} · {{ formatSize(planLocalisation()!.tailleOctets) }}</p>
+          } @else {
+            <p class="text-xs text-amber-600">À fournir avant toute demande de prêt</p>
+          }
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          @if (planLocalisation()) {
+            <a [href]="urlFichier(planLocalisation()!.id)" target="_blank" class="text-xs text-primary-600 underline">Voir</a>
+            <button (click)="supprimerMien(planLocalisation()!.id)" class="text-xs text-red-500 underline">Remplacer</button>
+          }
+        </div>
+      </div>
+
+      <!-- Reconnaissance de dette -->
+      <div class="bg-white rounded-xl px-4 py-3 shadow-sm border flex items-center gap-3"
+           [class]="reconnDette() ? 'border-green-200' : 'border-amber-200'">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+             [class]="reconnDette() ? 'bg-green-100' : 'bg-amber-50'">
+          <span class="text-lg">{{ reconnDette() ? '✅' : '🤝' }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-800">Lettre de reconnaissance de dette</p>
+          @if (reconnDette()) {
+            <p class="text-xs text-gray-500 truncate">{{ reconnDette()!.nomFichier }} · {{ formatSize(reconnDette()!.tailleOctets) }}</p>
+          } @else {
+            <p class="text-xs text-amber-600">À adresser au Président · requis avant toute demande de prêt</p>
+          }
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          @if (reconnDette()) {
+            <a [href]="urlFichier(reconnDette()!.id)" target="_blank" class="text-xs text-primary-600 underline">Voir</a>
+            <button (click)="supprimerMien(reconnDette()!.id)" class="text-xs text-red-500 underline">Remplacer</button>
           }
         </div>
       </div>

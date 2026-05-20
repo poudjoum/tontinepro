@@ -2,6 +2,8 @@ package com.tontinepro.tontinepro_backend.api.pret;
 
 import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.api.pret.dto.*;
+import com.tontinepro.tontinepro_backend.domain.document.Document;
+import com.tontinepro.tontinepro_backend.domain.document.DocumentRepository;
 import com.tontinepro.tontinepro_backend.domain.notification.Notification;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
@@ -36,6 +38,7 @@ public class PretService {
     private final UserRepository userRepository;
     private final TontineRepository tontineRepository;
     private final NotificationService notificationService;
+    private final DocumentRepository documentRepository;
 
     // ── Membre ───────────────────────────────────────────────────────────
 
@@ -47,6 +50,9 @@ public class PretService {
         if (membre.getStatut() != Membre.Statut.ACTIF) {
             throw new IllegalArgumentException("Seuls les membres actifs peuvent demander un prêt");
         }
+
+        // Vérifier les documents obligatoires pour un prêt
+        verifierDocumentsPret(membre.getId());
 
         BigDecimal taux = membre.getTontine().getTauxInteretPret();
         BigDecimal montantTotal = calculerMontantTotal(request.montantPrincipal(), taux, request.dureeMois());
@@ -352,6 +358,34 @@ public class PretService {
     private void verifierAccesPret(Pret pret, String email) {
         if (email != null && !pret.getMembre().getUser().getEmail().equals(email)) {
             throw new IllegalArgumentException("Accès non autorisé à ce prêt");
+        }
+    }
+
+    /**
+     * Vérifie que le membre a fourni les deux documents obligatoires pour une demande de prêt :
+     * plan de localisation et lettre de reconnaissance de dette.
+     */
+    private void verifierDocumentsPret(UUID membreId) {
+        boolean hasPlan = !documentRepository
+                .findAllByMembreIdAndTypeDocument(membreId, Document.TypeDocument.PLAN_LOCALISATION)
+                .isEmpty();
+        boolean hasReconnaissance = !documentRepository
+                .findAllByMembreIdAndTypeDocument(membreId, Document.TypeDocument.RECONNAISSANCE_DETTE)
+                .isEmpty();
+
+        if (!hasPlan && !hasReconnaissance) {
+            throw new IllegalArgumentException(
+                    "Vous devez fournir votre plan de localisation et votre lettre de reconnaissance de dette " +
+                    "avant de soumettre une demande de prêt.");
+        }
+        if (!hasPlan) {
+            throw new IllegalArgumentException(
+                    "Vous devez fournir votre plan de localisation avant de soumettre une demande de prêt.");
+        }
+        if (!hasReconnaissance) {
+            throw new IllegalArgumentException(
+                    "Vous devez fournir votre lettre de reconnaissance de dette (adressée au Président) " +
+                    "avant de soumettre une demande de prêt.");
         }
     }
 }
