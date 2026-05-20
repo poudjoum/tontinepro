@@ -58,6 +58,8 @@ public class Notification {
         // Épargne
         EPARGNE_DEPOT, EPARGNE_RETRAIT, EPARGNE_INTERETS,
         // Auth
-        BIENVENUE
+        BIENVENUE,
+        // Adhésion
+        DEMANDE_ADHESION
     }
 }

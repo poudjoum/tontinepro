@@ -207,8 +207,8 @@
   </div>
 }
 
-<!-- Utilisateur connecté mais sans profil membre (nouveau compte) -->
-@if (!loading() && !error() && !admin() && !membre()) {
+<!-- Utilisateur connecté mais sans profil membre (nouveau compte ou profil non trouvé) -->
+@if (!loading() && (sansProfil() || (!admin() && !membre()))) {
   <div class="space-y-6 text-center pt-6">
     <div class="w-20 h-20 rounded-3xl bg-primary-100 flex items-center justify-center mx-auto">
       <span class="text-4xl">🏦</span>

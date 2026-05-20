@@ -7,19 +7,17 @@
     <!-- Header -->
     <div class="bg-primary-600 text-white px-4 pt-safe-top pb-6">
       <a routerLink="/tontines" class="text-primary-200 text-sm mb-3 block">← Retour</a>
-      <div class="flex items-start justify-between gap-2">
-        <div>
-          <h1 class="text-xl font-bold">{{ tontine()!.nom }}</h1>
-          @if (tontine()!.typeAcces === 'RESTREINTE') {
-            <span class="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-400 text-amber-900">
-              Groupe restreint
-            </span>
-          } @else {
-            <span class="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-400 text-green-900">
-              Ouverte à tous
-            </span>
-          }
-        </div>
+      <div>
+        <h1 class="text-xl font-bold">{{ tontine()!.nom }}</h1>
+        @if (tontine()!.typeAcces === 'RESTREINTE') {
+          <span class="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-400 text-amber-900">
+            Groupe restreint
+          </span>
+        } @else {
+          <span class="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-400 text-green-900">
+            Ouverte à tous
+          </span>
+        }
       </div>
     </div>
 
@@ -42,7 +40,7 @@
 
       <!-- Paramètres -->
       <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <h2 class="text-sm font-semibold text-gray-700 mb-3">Paramètres</h2>
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Paramètres financiers</h2>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div>
             <p class="text-xs text-gray-500">Cotisation min</p>
@@ -55,11 +53,11 @@
             </div>
           }
           <div>
-            <p class="text-xs text-gray-500">Taux intérêt prêt</p>
+            <p class="text-xs text-gray-500">Intérêt prêt</p>
             <p class="font-semibold text-gray-900">{{ tontine()!.tauxInteretPret }} %</p>
           </div>
           <div>
-            <p class="text-xs text-gray-500">Taux intérêt épargne</p>
+            <p class="text-xs text-gray-500">Intérêt épargne</p>
             <p class="font-semibold text-gray-900">{{ tontine()!.tauxInteretEpargne }} %</p>
           </div>
         </div>
@@ -68,7 +66,7 @@
       <!-- Documents officiels -->
       @if (documents().length > 0) {
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <h2 class="text-sm font-semibold text-gray-700 mb-3">Documents officiels</h2>
+          <h2 class="text-sm font-semibold text-gray-700 mb-3">📄 Documents officiels</h2>
           <div class="space-y-2">
             @for (doc of documents(); track doc.id) {
               <a [href]="urlDoc(doc.id)" target="_blank"
@@ -78,78 +76,166 @@
                   <p class="text-sm font-medium text-gray-800">{{ labelDoc(doc.typeDocument) }}</p>
                   <p class="text-xs text-gray-500 truncate">{{ doc.nomFichier }}</p>
                 </div>
-                <span class="text-xs text-primary-600 flex-shrink-0">Consulter →</span>
+                <span class="text-xs text-primary-600 flex-shrink-0">Lire →</span>
               </a>
             }
           </div>
         </div>
       }
 
-      <!-- Formulaire de demande -->
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- ACTION selon le contexte                           -->
+      <!-- ════════════════════════════════════════════════════ -->
+
       @if (!submitted()) {
-        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
-          <h2 class="text-base font-bold text-gray-900">Faire une demande d'adhésion</h2>
-          <p class="text-xs text-gray-500">
-            Votre demande sera examinée par le Secrétaire de la tontine.
-            Vous serez contacté(e) par email.
-          </p>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Prénom *</label>
-              <input [(ngModel)]="form.prenom" type="text" class="input-field" placeholder="Prénom" />
+        <!-- CAS 1 : connecté + tontine OUVERTE → rejoindre directement -->
+        @if (auth.isLoggedIn() && tontine()!.typeAcces === 'OUVERTE') {
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-primary-200 space-y-3">
+            <h2 class="text-base font-bold text-gray-900">Rejoindre cette tontine</h2>
+            <p class="text-xs text-gray-500">
+              Votre adhésion est immédiate. Vous devrez ensuite télécharger votre CNI
+              et votre lettre d'engagement depuis votre profil.
+            </p>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Prénom *</label>
+                <input [(ngModel)]="rejoindreForm.prenom" type="text" class="input-field" placeholder="Prénom" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Nom *</label>
+                <input [(ngModel)]="rejoindreForm.nom" type="text" class="input-field" placeholder="Nom" />
+              </div>
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Nom *</label>
-              <input [(ngModel)]="form.nom" type="text" class="input-field" placeholder="Nom" />
+              <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
+              <input [(ngModel)]="rejoindreForm.telephone" type="tel" class="input-field" placeholder="+237 6XX XXX XXX" />
             </div>
+
+            @if (error()) {
+              <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+            }
+
+            <button (click)="rejoindreDirectement()"
+                    [disabled]="submitting() || !rejoindreForm.nom || !rejoindreForm.prenom"
+                    class="btn-primary w-full">
+              @if (submitting()) { Adhésion en cours… } @else { Rejoindre maintenant }
+            </button>
+          </div>
+        }
+
+        <!-- CAS 2 : connecté + tontine RESTREINTE → notifier les admins -->
+        @if (auth.isLoggedIn() && tontine()!.typeAcces === 'RESTREINTE') {
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-amber-200 space-y-3">
+            <h2 class="text-base font-bold text-gray-900">Demander à rejoindre</h2>
+            <div class="bg-amber-50 rounded-xl p-3 text-sm text-amber-800">
+              <p class="font-medium">Tontine réservée à un groupe spécifique</p>
+              <p class="text-xs mt-0.5">
+                En cliquant sur "Notifier", les administrateurs de la tontine recevront
+                votre demande et devront vous valider.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Prénom *</label>
+                <input [(ngModel)]="rejoindreForm.prenom" type="text" class="input-field" placeholder="Prénom" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Nom *</label>
+                <input [(ngModel)]="rejoindreForm.nom" type="text" class="input-field" placeholder="Nom" />
+              </div>
+            </div>
+
+            @if (error()) {
+              <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+            }
+
+            <button (click)="notifierAdmins()"
+                    [disabled]="submitting() || !rejoindreForm.nom || !rejoindreForm.prenom"
+                    class="btn-primary w-full bg-amber-600 hover:bg-amber-700">
+              @if (submitting()) { Envoi… } @else { 🔔 Notifier les administrateurs }
+            </button>
+          </div>
+        }
+
+        <!-- CAS 3 : non connecté → formulaire de demande classique -->
+        @if (!auth.isLoggedIn()) {
+          <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-3">
+            <h2 class="text-base font-bold text-gray-900">Faire une demande d'adhésion</h2>
+            <p class="text-xs text-gray-500">
+              Votre demande sera examinée par le Secrétaire.
+              Vous recevrez une réponse par email.
+            </p>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Prénom *</label>
+                <input [(ngModel)]="demandeForm.prenom" type="text" class="input-field" placeholder="Prénom" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Nom *</label>
+                <input [(ngModel)]="demandeForm.nom" type="text" class="input-field" placeholder="Nom" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Email *</label>
+              <input [(ngModel)]="demandeForm.email" type="email" class="input-field" placeholder="votre@email.com" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
+              <input [(ngModel)]="demandeForm.telephone" type="tel" class="input-field" placeholder="+237 6XX XXX XXX" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Motivation</label>
+              <textarea [(ngModel)]="demandeForm.motivation" rows="2" class="input-field resize-none"
+                        placeholder="Pourquoi souhaitez-vous rejoindre cette tontine ?"></textarea>
+            </div>
+
+            @if (error()) {
+              <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+            }
+
+            <button (click)="soumettre()"
+                    [disabled]="submitting() || !demandeForm.nom || !demandeForm.prenom || !demandeForm.email"
+                    class="btn-primary w-full">
+              @if (submitting()) { Envoi… } @else { Envoyer ma demande }
+            </button>
           </div>
 
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Email *</label>
-            <input [(ngModel)]="form.email" type="email" class="input-field" placeholder="votre@email.com" />
+          <div class="text-center">
+            <a routerLink="/auth/login" class="text-sm text-primary-600 font-medium">
+              Déjà membre ? Se connecter →
+            </a>
           </div>
+        }
 
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
-            <input [(ngModel)]="form.telephone" type="tel" class="input-field" placeholder="+237 6XX XXX XXX" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Motivation</label>
-            <textarea [(ngModel)]="form.motivation" rows="3" class="input-field resize-none"
-                      placeholder="Pourquoi souhaitez-vous rejoindre cette tontine ?"></textarea>
-          </div>
-
-          @if (error()) {
-            <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
-          }
-
-          <button (click)="soumettre()"
-                  [disabled]="submitting() || !form.nom || !form.prenom || !form.email"
-                  class="btn-primary w-full">
-            @if (submitting()) { Envoi en cours… } @else { Envoyer ma demande }
-          </button>
-        </div>
       } @else {
+        <!-- Succès -->
         <div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center space-y-2">
           <div class="text-4xl">✅</div>
-          <h2 class="text-base font-bold text-green-800">Demande envoyée !</h2>
-          <p class="text-sm text-green-700">
-            Votre demande a été reçue. Le Secrétaire de la tontine vous contactera
-            à l'adresse <strong>{{ form.email }}</strong>.
-          </p>
+          @if (auth.isLoggedIn() && tontine()!.typeAcces === 'OUVERTE') {
+            <h2 class="text-base font-bold text-green-800">Adhésion confirmée !</h2>
+            <p class="text-sm text-green-700">
+              Vous êtes maintenant membre de <strong>{{ tontine()!.nom }}</strong>.
+              Pensez à télécharger votre CNI et votre lettre d'engagement.
+            </p>
+            <a routerLink="/documents" class="block btn-primary mt-3">
+              Télécharger mes documents →
+            </a>
+          } @else {
+            <h2 class="text-base font-bold text-green-800">Demande envoyée !</h2>
+            <p class="text-sm text-green-700">
+              Les administrateurs ont été notifiés et traiteront votre demande.
+            </p>
+          }
           <a routerLink="/tontines" class="block text-sm text-primary-600 font-medium mt-2">
             ← Retour aux tontines
           </a>
         </div>
       }
 
-      <div class="text-center pb-4">
-        <a routerLink="/auth/login" class="text-sm text-primary-600 font-medium">
-          Déjà membre ? Se connecter →
-        </a>
-      </div>
     </div>
   }
 </div>

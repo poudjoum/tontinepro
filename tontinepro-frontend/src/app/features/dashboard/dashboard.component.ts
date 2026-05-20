@@ -19,8 +19,8 @@ export class DashboardComponent implements OnInit {
   membre   = signal<MembreDashboard | null>(null);
   admin    = signal<AdminDashboard | null>(null);
   error    = signal('');
+  sansProfil = signal(false); // user connecté mais sans profil membre (→ Bienvenue)
 
-  // Compteur de chargement : deux appels possibles (admin + membre)
   private pendingCalls = signal(0);
   loading = computed(() => this.pendingCalls() > 0);
 
@@ -36,8 +36,17 @@ export class DashboardComponent implements OnInit {
     }
 
     this.svc.getMembreDashboard().subscribe({
-      next:  d => { this.membre.set(d); this.pendingCalls.update(n => n - 1); },
-      error: () => { this.pendingCalls.update(n => n - 1); },
+      next:  d => {
+        this.membre.set(d);
+        this.pendingCalls.update(n => n - 1);
+      },
+      error: e => {
+        // 400/404 = pas de profil membre ; on affiche le panneau "Bienvenue"
+        if (e.status === 400 || e.status === 404) {
+          this.sansProfil.set(true);
+        }
+        this.pendingCalls.update(n => n - 1);
+      },
     });
   }
 

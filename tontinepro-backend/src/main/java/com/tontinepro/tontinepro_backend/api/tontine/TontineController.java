@@ -1,6 +1,8 @@
 package com.tontinepro.tontinepro_backend.api.tontine;
 
+import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
 import com.tontinepro.tontinepro_backend.api.tontine.dto.CreateTontineRequest;
+import com.tontinepro.tontinepro_backend.api.tontine.dto.RejoindreOuvertRequest;
 import com.tontinepro.tontinepro_backend.api.tontine.dto.TontineResponse;
 import com.tontinepro.tontinepro_backend.api.tontine.dto.UpdateTontineConfigRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +11,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,9 +34,8 @@ public class TontineController {
         return tontineService.create(request);
     }
 
-    /** Public — tontines visibles pour les candidats à l'adhésion */
     @GetMapping("/publiques")
-    @Operation(summary = "Lister les tontines disponibles (public, sans authentification)")
+    @Operation(summary = "Lister les tontines disponibles (public)")
     public List<TontineResponse> listPubliques() {
         return tontineService.listPubliques();
     }
@@ -47,6 +50,21 @@ public class TontineController {
     @Operation(summary = "Détails d'une tontine")
     public TontineResponse getById(@PathVariable UUID id) {
         return tontineService.getById(id);
+    }
+
+    /**
+     * Rejoindre directement une tontine OUVERTE (sans demande d'approbation).
+     * Authentification requise — le compte doit déjà exister.
+     */
+    @PostMapping("/{id}/rejoindre")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Rejoindre directement une tontine ouverte (utilisateur connecté)")
+    public MembreResponse rejoindreOuverte(
+            @PathVariable UUID id,
+            @Valid @RequestBody RejoindreOuvertRequest request,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        return tontineService.rejoindreOuverte(id, request, principal.getUsername());
     }
 
     @PatchMapping("/{id}/config")

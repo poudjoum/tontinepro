@@ -62,7 +62,12 @@ public class DemandeService {
                 .motivation(request.motivation())
                 .build();
 
-        return DemandeResponse.from(demandeRepository.save(demande));
+        DemandeAdhesion saved = demandeRepository.save(demande);
+
+        // Notifier les admins de la tontine (Secrétaire, Président)
+        notifierAdminsTontine(tontine, saved);
+
+        return DemandeResponse.from(saved);
     }
 
     @Transactional
@@ -150,5 +155,33 @@ public class DemandeService {
             demandes = demandeRepository.findAll();
         }
         return demandes.stream().map(DemandeResponse::from).toList();
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────────
+
+    private void notifierAdminsTontine(Tontine tontine, DemandeAdhesion demande) {
+        List<Membre> tousLesMembres = membreRepository.findAllByTontineId(tontine.getId())
+                .stream().filter(m -> m.getStatut() == Membre.Statut.ACTIF).toList();
+
+        // Chercher Secrétaire et Président en priorité, sinon tout membre actif
+        List<Membre> destinataires = tousLesMembres.stream()
+                .filter(m -> m.getFonction() == Membre.Fonction.SECRETAIRE ||
+                             m.getFonction() == Membre.Fonction.PRESIDENT)
+                .toList();
+
+        // Fallback : si aucun bureau, notifier le premier membre actif (créateur = Secrétaire fondateur)
+        if (destinataires.isEmpty() && !tousLesMembres.isEmpty()) {
+            destinataires = List.of(tousLesMembres.get(0));
+        }
+
+        String message = String.format(
+                "%s %s (%s) souhaite rejoindre la tontine \"%s\". " +
+                "Connectez-vous pour valider ou rejeter cette demande.",
+                demande.getPrenom(), demande.getNom(), demande.getEmail(), tontine.getNom());
+
+        for (Membre m : destinataires) {
+            notificationService.notifier(m.getUser(), Notification.Type.DEMANDE_ADHESION,
+                    "Nouvelle demande d'adhésion", message, demande.getId(), "DEMANDE");
+        }
     }
 }

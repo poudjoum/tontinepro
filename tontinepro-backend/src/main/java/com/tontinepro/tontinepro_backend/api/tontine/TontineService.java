@@ -1,12 +1,20 @@
 package com.tontinepro.tontinepro_backend.api.tontine;
 
+import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
 import com.tontinepro.tontinepro_backend.api.tontine.dto.CreateTontineRequest;
+import com.tontinepro.tontinepro_backend.api.tontine.dto.RejoindreOuvertRequest;
 import com.tontinepro.tontinepro_backend.api.tontine.dto.TontineResponse;
 import com.tontinepro.tontinepro_backend.api.tontine.dto.UpdateTontineConfigRequest;
 import com.tontinepro.tontinepro_backend.domain.aide.FondsAide;
 import com.tontinepro.tontinepro_backend.domain.aide.FondsAideRepository;
+import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargne;
+import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargneRepository;
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
+import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
+import com.tontinepro.tontinepro_backend.domain.user.User;
+import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +28,9 @@ public class TontineService {
 
     private final TontineRepository tontineRepository;
     private final FondsAideRepository fondsAideRepository;
+    private final MembreRepository membreRepository;
+    private final UserRepository userRepository;
+    private final CompteEpargneRepository compteEpargneRepository;
 
     @Transactional
     public TontineResponse create(CreateTontineRequest request) {
@@ -76,6 +87,45 @@ public class TontineService {
     public List<TontineResponse> listPubliques() {
         return tontineRepository.findAllByActifTrueAndVisibleTrue()
                 .stream().map(TontineResponse::from).toList();
+    }
+
+    /**
+     * Rejoindre directement une tontine OUVERTE sans demande d'approbation.
+     * Le membre est créé immédiatement avec statut ACTIF.
+     */
+    @Transactional
+    public MembreResponse rejoindreOuverte(UUID tontineId, RejoindreOuvertRequest request, String email) {
+        Tontine tontine = tontineRepository.findById(tontineId)
+                .orElseThrow(() -> new IllegalArgumentException("Tontine introuvable"));
+
+        if (!tontine.isActif()) {
+            throw new IllegalArgumentException("Cette tontine n'est plus active");
+        }
+        if (tontine.getTypeAcces() == Tontine.TypeAcces.RESTREINTE) {
+            throw new IllegalArgumentException(
+                    "Cette tontine est restreinte à un groupe spécifique. Contactez l'administrateur.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        if (membreRepository.existsByUserIdAndTontineId(user.getId(), tontineId)) {
+            throw new IllegalArgumentException("Vous êtes déjà membre de cette tontine");
+        }
+
+        String matricule = "MBR-" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+
+        Membre membre = membreRepository.save(Membre.builder()
+                .user(user)
+                .tontine(tontine)
+                .nom(request.nom())
+                .prenom(request.prenom())
+                .matricule(matricule)
+                .build());
+
+        compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());
+
+        return MembreResponse.from(membre);
     }
 
     @Transactional

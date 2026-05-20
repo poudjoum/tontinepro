@@ -26,6 +26,11 @@ export class TontineService {
     return this.http.patch<TontineResponse>(`${this.api}/${id}/config`, request);
   }
 
+  /** Rejoindre directement une tontine ouverte (utilisateur connecté) */
+  rejoindreOuverte(tontineId: string, request: { nom: string; prenom: string; telephone?: string }) {
+    return this.http.post<any>(`${this.api}/${tontineId}/rejoindre`, request);
+  }
+
   /** Création libre-service (public) : crée compte + tontine en une étape */
   creerAvecCompte(request: {
     email: string; password: string; nom: string; prenom: string; telephone?: string;
