@@ -108,6 +108,11 @@ export const routes: Routes = [
           import('./features/notifications/notifications.component').then(m => m.NotificationsComponent),
       },
       {
+        path: 'suivi',
+        loadComponent: () =>
+          import('./features/suivi/suivi.component').then(m => m.SuiviComponent),
+      },
+      {
         path: 'profil',
         loadComponent: () =>
           import('./features/profil/profil.component').then(m => m.ProfilComponent),

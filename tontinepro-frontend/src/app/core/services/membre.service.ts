@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { MembreResponse } from '../models/membre.model';
+import { SuiviMois } from '../models/suivi.model';
 
 @Injectable({ providedIn: 'root' })
 export class MembreService {
@@ -30,5 +31,11 @@ export class MembreService {
 
   updateFonction(id: string, fonction: string) {
     return this.http.patch<MembreResponse>(`${this.api}/${id}/fonction`, { fonction });
+  }
+
+  getSuivi(annee?: number) {
+    const params: Record<string, string> = {};
+    if (annee) params['annee'] = String(annee);
+    return this.http.get<SuiviMois[]>(`${this.api}/me/suivi`, { params });
   }
 }

@@ -1,0 +1,202 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- Header -->
+  <div class="bg-primary-600 text-white px-4 pt-safe-top pb-5">
+    <a routerLink="/dashboard" class="text-primary-200 text-sm mb-3 block">← Retour</a>
+    <h1 class="text-xl font-bold">Mon suivi mensuel</h1>
+    <p class="text-primary-200 text-sm mt-0.5">Cotisations · Épargne · Sanctions · Prêts</p>
+  </div>
+
+  <div class="px-4 py-4 space-y-4">
+
+    <!-- Sélecteur d'année -->
+    <div class="flex gap-2">
+      @for (a of annees; track a) {
+        <button (click)="changeAnnee(a)"
+                [class]="a === annee()
+                  ? 'px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold'
+                  : 'px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm text-gray-700'">
+          {{ a }}
+        </button>
+      }
+    </div>
+
+    <!-- Chargement -->
+    @if (loading()) {
+      <div class="flex items-center justify-center py-12">
+        <svg class="animate-spin w-7 h-7 text-primary-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+      </div>
+    }
+
+    <!-- Erreur -->
+    @if (!loading() && error()) {
+      <div class="card border border-red-200 bg-red-50 text-red-700 text-sm text-center py-6">
+        {{ error() }}
+      </div>
+    }
+
+    <!-- Aucune donnée -->
+    @if (!loading() && !error() && suivi().length === 0) {
+      <div class="card text-center py-10 space-y-2">
+        <p class="text-3xl">📭</p>
+        <p class="font-semibold text-gray-700">Aucune activité en {{ annee() }}</p>
+        <p class="text-sm text-gray-400">Vos transactions apparaîtront ici mois par mois.</p>
+      </div>
+    }
+
+    <!-- Timeline mensuelle -->
+    @for (mois of suivi(); track mois.mois) {
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+
+        <!-- En-tête du mois (cliquable) -->
+        <button (click)="toggle(mois.mois)"
+                class="w-full flex items-center justify-between px-4 py-3 text-left">
+          <div>
+            <span class="font-semibold text-gray-900">{{ moisNom(mois.mois) }} {{ mois.annee }}</span>
+            <div class="flex flex-wrap gap-1.5 mt-1">
+              @if (mois.cotisations.length > 0) {
+                <span class="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">
+                  💰 {{ mois.cotisations.length }}
+                </span>
+              }
+              @if (mois.echeancesPret.length > 0) {
+                <span class="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium">
+                  📋 {{ mois.echeancesPret.length }}
+                </span>
+              }
+              @if (mois.mouvementsEpargne.length > 0) {
+                <span class="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">
+                  🏦 {{ mois.mouvementsEpargne.length }}
+                </span>
+              }
+              @if (mois.sanctions.length > 0) {
+                <span class="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 font-medium">
+                  ⚠️ {{ mois.sanctions.length }}
+                </span>
+              }
+              @if (mois.contributions.length > 0) {
+                <span class="inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full bg-orange-50 text-orange-700 font-medium">
+                  🤝 {{ mois.contributions.length }}
+                </span>
+              }
+            </div>
+          </div>
+          <span class="text-gray-400 text-sm">{{ isExpanded(mois.mois) ? '▲' : '▼' }}</span>
+        </button>
+
+        <!-- Détail du mois -->
+        @if (isExpanded(mois.mois)) {
+          <div class="border-t border-gray-100 divide-y divide-gray-50">
+
+            <!-- Cotisations -->
+            @for (c of mois.cotisations; track c.id) {
+              <div class="px-4 py-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm">💰</span>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900">Cotisation</p>
+                    <p class="text-xs text-gray-500 truncate">{{ c.tontineNom }}</p>
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <p class="text-sm font-semibold text-gray-900">{{ fcfa(c.montant) }}</p>
+                  <span [class]="badgeCotisation(c.statut)" class="text-xs">{{ statutCotisation(c.statut) }}</span>
+                </div>
+              </div>
+            }
+
+            <!-- Contributions fond d'aide -->
+            @for (c of mois.contributions; track c.id) {
+              <div class="px-4 py-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm">🤝</span>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900">Fonds d'aide</p>
+                    <p class="text-xs text-gray-500 truncate">{{ c.tontineNom }}</p>
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <p class="text-sm font-semibold text-gray-900">{{ fcfa(c.montant) }}</p>
+                  <span [class]="c.statut === 'PAYEE' ? 'badge-success' : 'badge-warning'" class="text-xs">
+                    {{ c.statut === 'PAYEE' ? 'Payée' : 'À payer' }}
+                  </span>
+                </div>
+              </div>
+            }
+
+            <!-- Échéances prêt -->
+            @for (e of mois.echeancesPret; track e.id) {
+              <div class="px-4 py-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm">📋</span>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900">Remboursement #{{ e.numeroEcheance }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ e.tontineNom }}</p>
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <p class="text-sm font-semibold text-gray-900">{{ fcfa(e.montantTotal) }}</p>
+                  <span [class]="badgeEcheance(e.statut)" class="text-xs">{{ statutEcheance(e.statut) }}</span>
+                </div>
+              </div>
+            }
+
+            <!-- Mouvements épargne -->
+            @for (m of mois.mouvementsEpargne; track m.id) {
+              <div class="px-4 py-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-8 h-8 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm">🏦</span>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900">{{ libelleMouvement(m.typeMouvement) }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ m.tontineNom }}</p>
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <p class="text-sm font-semibold" [class]="colorMouvement(m.typeMouvement)">
+                    {{ signeMouvement(m.typeMouvement) }} {{ fcfa(m.montant) }}
+                  </p>
+                  <p class="text-xs text-gray-400">Solde : {{ fcfa(m.soldeApres) }}</p>
+                </div>
+              </div>
+            }
+
+            <!-- Sanctions -->
+            @for (s of mois.sanctions; track s.id) {
+              <div class="px-4 py-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-sm">⚠️</span>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-900">{{ libelleSanction(s.typeSanction) }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ s.motif ?? s.tontineNom }}</p>
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <p class="text-sm font-semibold text-red-600">{{ fcfa(s.montant) }}</p>
+                  <span [class]="s.payee ? 'badge-success' : 'badge-danger'" class="text-xs">
+                    {{ s.payee ? 'Réglée' : 'Non réglée' }}
+                  </span>
+                </div>
+              </div>
+            }
+
+          </div>
+        }
+
+      </div>
+    }
+
+  </div>
+</div>

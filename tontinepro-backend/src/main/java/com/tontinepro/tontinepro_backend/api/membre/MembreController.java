@@ -3,6 +3,7 @@ package com.tontinepro.tontinepro_backend.api.membre;
 import com.tontinepro.tontinepro_backend.api.membre.dto.CreateMembreRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.InscriptionDirecteRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
+import com.tontinepro.tontinepro_backend.api.membre.dto.SuiviMoisResponse;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreFonctionRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreStatutRequest;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
@@ -16,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class MembreController {
 
     private final MembreService membreService;
+    private final SuiviService suiviService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -84,6 +87,16 @@ public class MembreController {
             @Valid @RequestBody UpdateMembreFonctionRequest request
     ) {
         return membreService.updateFonction(id, request);
+    }
+
+    @GetMapping("/me/suivi")
+    @Operation(summary = "Suivi mensuel du membre connecté (cotisations, épargne, sanctions, prêts)")
+    public List<SuiviMoisResponse> getMonSuivi(
+            @RequestParam(required = false) Integer annee,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        int anneeEffective = annee != null ? annee : LocalDate.now().getYear();
+        return suiviService.getSuiviAnnuel(principal.getUsername(), anneeEffective);
     }
 }
 
