@@ -109,6 +109,19 @@ public class MembreService {
                 .orElseThrow(() -> new IllegalArgumentException("Membre introuvable : " + id));
 
         membre.setFonction(request.fonction());
+
+        // Synchroniser User.Role avec la nouvelle fonction du bureau
+        User.Role newRole = switch (request.fonction()) {
+            case PRESIDENT  -> User.Role.ADMIN;
+            case SECRETAIRE -> User.Role.SECRETAIRE;
+            default         -> User.Role.MEMBRE;
+        };
+        User user = membre.getUser();
+        if (user.getRole() != newRole) {
+            user.setRole(newRole);
+            userRepository.save(user);
+        }
+
         return MembreResponse.from(membreRepository.save(membre));
     }
 
