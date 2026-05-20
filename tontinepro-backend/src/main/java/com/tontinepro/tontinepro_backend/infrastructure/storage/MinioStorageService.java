@@ -90,7 +90,7 @@ public class MinioStorageService {
         }
     }
 
-    private void assurerBucket(String bucket) throws Exception {
+    private void assurerBucket(String bucket) throws io.minio.errors.MinioException, IOException, NoSuchAlgorithmException, InvalidKeyException {
         boolean existe = minioClient.bucketExists(
                 BucketExistsArgs.builder().bucket(bucket).build()
         );
