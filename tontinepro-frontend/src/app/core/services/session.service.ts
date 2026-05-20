@@ -7,6 +7,7 @@ import {
   SessionCotisationsStatutResponse,
   OrdreBeneficiaireResponse,
   MonTourResponse,
+  MonBeneficeResponse,
   CreerSessionRequest,
   MiseAJourDateRequest,
   ValiderBeneficeRequest,
@@ -69,6 +70,16 @@ export class SessionService {
       `${this.api}/${sessionId}/beneficiaires/${ordreBeneficiaireId}/date`,
       { dateBenefice }
     );
+  }
+
+  cloturerSession(sessionId: string, forcer = false) {
+    return this.http.post<SessionResponse>(`${this.api}/${sessionId}/cloturer`, null, {
+      params: { forcer: String(forcer) }
+    });
+  }
+
+  mesBenefices() {
+    return this.http.get<MonBeneficeResponse[]>(`${this.api}/mes-benefices`);
   }
 
   genererCotisations(sessionId: string) {

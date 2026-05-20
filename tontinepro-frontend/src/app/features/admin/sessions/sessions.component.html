@@ -110,6 +110,12 @@
                            disabled:opacity-50">
               @if (saving()) { … } @else { 🔄 Synchroniser membres }
             </button>
+            <button (click)="cloturerSession(session)" [disabled]="saving()"
+                    class="col-span-2 py-2 text-sm font-medium rounded-lg border border-gray-300
+                           text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors
+                           disabled:opacity-50">
+              @if (saving()) { … } @else { 🔒 Clôturer la session }
+            </button>
           </div>
         }
 

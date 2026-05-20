@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface OrdreBeneficiaireRepository extends JpaRepository<OrdreBeneficiaire, UUID> {
 
     List<OrdreBeneficiaire> findAllBySessionIdOrderByOrdre(UUID sessionId);
+
+    List<OrdreBeneficiaire> findAllByMembreIdAndBeneficieTrueOrderByCreatedAtDesc(UUID membreId);
 }

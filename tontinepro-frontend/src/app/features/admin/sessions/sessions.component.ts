@@ -220,6 +220,32 @@ export class SessionsComponent implements OnInit {
     });
   }
 
+  cloturerSession(session: SessionResponse, forcer = false): void {
+    const msg = forcer
+      ? 'Forcer la clôture même si des membres n\'ont pas bénéficié ?'
+      : 'Clôturer définitivement cette session ?';
+    if (!confirm(msg)) return;
+    this.saving.set(true); this.error.set('');
+    this.sessionSvc.cloturerSession(session.id, forcer).subscribe({
+      next: updated => {
+        this.sessions.update(list => list.map(s => s.id === updated.id ? updated : s));
+        this.sessionOuverte.set(updated);
+        this.success.set(`Session n°${updated.numero} clôturée.`);
+        this.saving.set(false);
+      },
+      error: e => {
+        const msg = e.error?.detail ?? e.error?.message ?? 'Erreur clôture';
+        // Si erreur "membres pas encore bénéficiés", proposer le forçage
+        if (msg.includes('bénéficié') && !forcer) {
+          this.error.set(msg + ' — Cliquez sur "Forcer la clôture" pour ignorer.');
+        } else {
+          this.error.set(msg);
+        }
+        this.saving.set(false);
+      },
+    });
+  }
+
   recalibrer(session: SessionResponse): void {
     this.saving.set(true);
     this.error.set('');

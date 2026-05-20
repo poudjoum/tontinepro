@@ -68,6 +68,16 @@ export interface SessionCotisationsStatutResponse {
   membres: MembreCotisationStatut[];
 }
 
+export interface MonBeneficeResponse {
+  sessionId: string;
+  sessionNumero: number;
+  tontineNom: string;
+  ordre: number;
+  totalMembres: number;
+  dateBenefice: string | null;
+  montantRecu: number | null;
+}
+
 export interface MonTourResponse {
   sessionId: string;
   sessionNumero: number;

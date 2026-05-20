@@ -515,6 +515,54 @@ public class SessionService {
         );
     }
 
+    /**
+     * Clôture une session : passe son statut à TERMINEE.
+     * Avertit si des membres n'ont pas encore bénéficié (mais laisse l'admin forcer).
+     */
+    @Transactional
+    public SessionResponse cloturerSession(UUID sessionId, boolean forcer) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+
+        if (session.getStatut() == SessionTontine.Statut.TERMINEE) {
+            throw new IllegalStateException("Cette session est déjà clôturée");
+        }
+
+        List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(sessionId);
+        long nonBeneficies = ordres.stream().filter(ob -> !ob.isBeneficie()).count();
+
+        if (nonBeneficies > 0 && !forcer) {
+            throw new IllegalStateException(
+                    nonBeneficies + " membre(s) n'ont pas encore bénéficié. "
+                    + "Utilisez forcer=true pour clôturer quand même.");
+        }
+
+        session.setStatut(SessionTontine.Statut.TERMINEE);
+        return getById(sessionRepository.save(session).getId());
+    }
+
+    /**
+     * Historique des bénéfices reçus par le membre connecté (toutes sessions confondues).
+     */
+    @Transactional(readOnly = true)
+    public List<MonBeneficeResponse> mesBenefices(String email) {
+        Membre membre = membreRepository.findByUserEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
+
+        return ordreBeneficiaireRepository
+                .findAllByMembreIdAndBeneficieTrueOrderByCreatedAtDesc(membre.getId()).stream()
+                .map(ob -> new MonBeneficeResponse(
+                        ob.getSession().getId(),
+                        ob.getSession().getNumero(),
+                        ob.getSession().getTontine().getNom(),
+                        ob.getOrdre(),
+                        ob.getSession().getNombreMembres(),
+                        ob.getDateBenefice(),
+                        ob.getMontantRecu()))
+                .toList();
+    }
+
     // ─── helpers ───────────────────────────────────────────────────────────────
 
     private List<Membre> construireOrdre(List<Membre> membres, List<UUID> ordreMembreIds) {

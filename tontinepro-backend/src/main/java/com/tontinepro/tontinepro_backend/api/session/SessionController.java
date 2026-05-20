@@ -2,6 +2,7 @@ package com.tontinepro.tontinepro_backend.api.session;
 
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
+import com.tontinepro.tontinepro_backend.api.session.dto.MonBeneficeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -98,6 +99,21 @@ public class SessionController {
     @Operation(summary = "Ajouter les nouveaux membres a la session et recalculer dateFin")
     public SessionResponse recalibrerMembres(@PathVariable UUID id) {
         return sessionService.recalibrerMembres(id);
+    }
+
+    @PostMapping("/{id}/cloturer")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Clôturer une session (passe à TERMINEE). forcer=true permet de clôturer même si des membres n'ont pas bénéficié")
+    public SessionResponse cloturerSession(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "false") boolean forcer) {
+        return sessionService.cloturerSession(id, forcer);
+    }
+
+    @GetMapping("/mes-benefices")
+    @Operation(summary = "Historique des bénéfices reçus par le membre connecté")
+    public List<MonBeneficeResponse> mesBenefices(@AuthenticationPrincipal UserDetails principal) {
+        return sessionService.mesBenefices(principal.getUsername());
     }
 
     @PostMapping("/{id}/generer-cotisations")

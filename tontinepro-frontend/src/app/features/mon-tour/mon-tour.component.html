@@ -1,0 +1,128 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- Header -->
+  <div class="bg-primary-600 text-white px-4 pt-safe-top pb-5">
+    <a routerLink="/dashboard" class="text-primary-200 text-sm mb-3 block">← Retour</a>
+    <h1 class="text-xl font-bold">Mon tour de bénéfice</h1>
+    <p class="text-primary-200 text-sm mt-0.5">Votre position dans la session en cours</p>
+  </div>
+
+  <div class="px-4 py-4 space-y-4">
+
+    @if (loading()) {
+      <div class="flex items-center justify-center py-12">
+        <svg class="animate-spin w-7 h-7 text-primary-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+      </div>
+    }
+
+    @if (!loading()) {
+
+      <!-- Session en cours -->
+      @if (tour()) {
+        <div class="bg-white rounded-2xl shadow-sm border overflow-hidden"
+             [class]="tour()!.beneficie ? 'border-green-200' : 'border-primary-200'">
+
+          <!-- Pastille de statut -->
+          <div class="px-5 pt-5 pb-4 space-y-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Session n°{{ tour()!.sessionNumero }}</p>
+                <p class="text-base font-semibold text-gray-800 mt-0.5">{{ tour()!.tontineNom }}</p>
+              </div>
+              @if (tour()!.beneficie) {
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 flex-shrink-0">
+                  ✅ Bénéficié
+                </span>
+              } @else {
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-primary-100 text-primary-700 flex-shrink-0">
+                  En attente
+                </span>
+              }
+            </div>
+
+            <!-- Position -->
+            <div class="text-center py-3">
+              <p class="text-5xl font-black text-primary-600">{{ tour()!.ordre }}</p>
+              <p class="text-sm text-gray-500 mt-1">sur {{ tour()!.totalMembres }} membres</p>
+              @if (!tour()!.beneficie) {
+                <p class="text-xs text-gray-400 mt-0.5">
+                  {{ tour()!.ordre - 1 }} membre(s) passent avant vous
+                </p>
+              }
+            </div>
+
+            <!-- Barre de progression -->
+            <div>
+              <div class="flex justify-between text-xs text-gray-500 mb-1.5">
+                <span>Progression de la session</span>
+                <span>{{ progressPct() }}%</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2.5">
+                <div class="h-2.5 rounded-full transition-all"
+                     [class]="tour()!.beneficie ? 'bg-green-500' : 'bg-primary-500'"
+                     [style.width.%]="progressPct()">
+                </div>
+              </div>
+            </div>
+
+            <!-- Date prévue -->
+            <div class="bg-gray-50 rounded-xl px-4 py-3 flex items-center justify-between">
+              <div>
+                <p class="text-xs text-gray-400">Date prévue</p>
+                <p class="font-semibold text-gray-900 text-sm mt-0.5">
+                  {{ formatDate(tour()!.dateBenefice) }}
+                </p>
+              </div>
+              @if (joursRestants(tour()!.dateBenefice); as jr) {
+                @if (!tour()!.beneficie) {
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full"
+                        [class]="jr === 'Aujourd\'hui !' ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'">
+                    {{ jr }}
+                  </span>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <!-- Aucune session en cours -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center space-y-2">
+          <p class="text-3xl">📭</p>
+          <p class="font-semibold text-gray-700">Aucune session active</p>
+          <p class="text-sm text-gray-400">
+            Votre tontine n'a pas de session en cours.<br>
+            Contactez votre Secrétaire pour en créer une.
+          </p>
+        </div>
+      }
+
+      <!-- Historique des bénéfices reçus -->
+      @if (benefices().length > 0) {
+        <div class="space-y-3">
+          <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide px-1">
+            Historique — {{ benefices().length }} bénéfice(s) reçu(s)
+          </h2>
+          @for (b of benefices(); track b.sessionId) {
+            <div class="bg-white rounded-xl px-4 py-3.5 shadow-sm border border-gray-100">
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-900">{{ fcfa(b.montantRecu) }}</p>
+                  <p class="text-xs text-gray-500 mt-0.5">
+                    Session n°{{ b.sessionNumero }} · Tour {{ b.ordre }}/{{ b.totalMembres }}
+                  </p>
+                  <p class="text-xs text-gray-400 mt-0.5">{{ formatDate(b.dateBenefice) }}</p>
+                </div>
+                <span class="badge-success flex-shrink-0">✓ Reçu</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+    }
+
+  </div>
+</div>
