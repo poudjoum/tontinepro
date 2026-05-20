@@ -43,6 +43,16 @@ export interface ReordonnerBeneficiairesRequest {
   ordreMembreIds: string[];
 }
 
+export interface MonTourResponse {
+  sessionId: string;
+  sessionNumero: number;
+  ordre: number;
+  totalMembres: number;
+  dateBenefice: string | null;
+  beneficie: boolean;
+  tontineNom: string;
+}
+
 export interface LignePaiementMembre {
   membreId: string;
   matricule: string;

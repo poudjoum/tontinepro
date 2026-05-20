@@ -4,6 +4,8 @@ import { environment } from '../../../environments/environment';
 import {
   SessionResponse,
   SessionBilanResponse,
+  OrdreBeneficiaireResponse,
+  MonTourResponse,
   CreerSessionRequest,
   MiseAJourDateRequest,
   ValiderBeneficeRequest,
@@ -50,5 +52,20 @@ export class SessionService {
 
   recalibrerMembres(sessionId: string) {
     return this.http.post<SessionResponse>(`${this.api}/${sessionId}/recalibrer`, {});
+  }
+
+  echeancier(sessionId: string) {
+    return this.http.get<OrdreBeneficiaireResponse[]>(`${this.api}/${sessionId}/echeancier`);
+  }
+
+  monTour() {
+    return this.http.get<MonTourResponse>(`${this.api}/mon-tour`);
+  }
+
+  mettreAJourDateBenefice(sessionId: string, ordreBeneficiaireId: string, dateBenefice: string) {
+    return this.http.patch<SessionResponse>(
+      `${this.api}/${sessionId}/beneficiaires/${ordreBeneficiaireId}/date`,
+      { dateBenefice }
+    );
   }
 }

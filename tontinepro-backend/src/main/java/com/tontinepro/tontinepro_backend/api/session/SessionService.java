@@ -192,6 +192,79 @@ public class SessionService {
     }
 
     /**
+     * Modifie la date de bénéfice d'un membre dans la session.
+     * Interdit si le membre a déjà bénéficié.
+     */
+    @Transactional
+    public SessionResponse mettreAJourDateBenefice(UUID sessionId, UUID ordreBeneficiaireId,
+                                                    MettreAJourDateBeneficeRequest request) {
+        OrdreBeneficiaire ob = ordreBeneficiaireRepository.findById(ordreBeneficiaireId)
+                .orElseThrow(() -> new IllegalArgumentException("Entrée introuvable : " + ordreBeneficiaireId));
+
+        if (!ob.getSession().getId().equals(sessionId)) {
+            throw new IllegalArgumentException("Cette entrée n'appartient pas à la session " + sessionId);
+        }
+        if (ob.isBeneficie()) {
+            throw new IllegalStateException("Ce membre a déjà bénéficié — impossible de modifier sa date");
+        }
+
+        ob.setDateBenefice(request.dateBenefice());
+        ordreBeneficiaireRepository.save(ob);
+
+        // Mettre à jour dateProchaineTontine si c'est le prochain bénéficiaire
+        SessionTontine session = ob.getSession();
+        List<OrdreBeneficiaire> tous = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(sessionId);
+        tous.stream()
+                .filter(o -> !o.isBeneficie())
+                .min(Comparator.comparingInt(OrdreBeneficiaire::getOrdre))
+                .ifPresent(prochain -> {
+                    if (prochain.getId().equals(ordreBeneficiaireId)) {
+                        session.setDateProchaineTontine(request.dateBenefice());
+                        sessionRepository.save(session);
+                    }
+                });
+
+        return getById(sessionId);
+    }
+
+    /**
+     * Retourne le calendrier de tour pour le membre connecté dans la session active.
+     */
+    @Transactional(readOnly = true)
+    public MonTourResponse monTour(String email) {
+        Membre membre = membreRepository.findByUserEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
+
+        // Chercher la session en cours de la tontine du membre
+        return sessionRepository
+                .findTopByTontineIdOrderByNumeroDesc(membre.getTontine().getId())
+                .flatMap(session -> ordreBeneficiaireRepository
+                        .findAllBySessionIdOrderByOrdre(session.getId()).stream()
+                        .filter(ob -> ob.getMembre().getId().equals(membre.getId()))
+                        .findFirst()
+                        .map(ob -> new MonTourResponse(
+                                session.getId(),
+                                session.getNumero(),
+                                ob.getOrdre(),
+                                session.getNombreMembres(),
+                                ob.getDateBenefice(),
+                                ob.isBeneficie(),
+                                session.getTontine().getNom()
+                        )))
+                .orElseThrow(() -> new IllegalArgumentException("Aucune session active pour votre tontine"));
+    }
+
+    /**
+     * Retourne l'écheancier complet d'une session (tous les bénéficiaires avec dates).
+     */
+    @Transactional(readOnly = true)
+    public List<OrdreBeneficiaireResponse> echeancier(UUID sessionId) {
+        return ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId)
+                .stream().map(OrdreBeneficiaireResponse::from).toList();
+    }
+
+    /**
      * Ajoute à la session les membres actifs qui n'y figurent pas encore,
      * recalcule dateFin et met à jour nombreMembres.
      * Les membres déjà présents conservent leur ordre et leur statut.

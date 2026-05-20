@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +25,7 @@ public class SessionController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "CrÃ©er une nouvelle session de tontine")
+    @Operation(summary = "Creer une nouvelle session de tontine")
     public SessionResponse creerSession(@Valid @RequestBody CreerSessionRequest request) {
         return sessionService.creerSession(request);
     }
@@ -35,23 +37,48 @@ public class SessionController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "DÃ©tails d'une session avec la liste ordonnÃ©e des bÃ©nÃ©ficiaires")
+    @Operation(summary = "Details d'une session avec la liste ordonnee des beneficiaires")
     public SessionResponse getById(@PathVariable UUID id) {
         return sessionService.getById(id);
     }
 
+    /** Calendrier d'echéances complet d'une session */
+    @GetMapping("/{id}/echeancier")
+    @Operation(summary = "Calendrier d'echeances de la session (tous les beneficiaires avec dates)")
+    public List<OrdreBeneficiaireResponse> echeancier(@PathVariable UUID id) {
+        return sessionService.echeancier(id);
+    }
+
+    /** Mon tour — vue membre */
+    @GetMapping("/mon-tour")
+    @Operation(summary = "Ma date de passage dans la session en cours (vue membre)")
+    public MonTourResponse monTour(@AuthenticationPrincipal UserDetails principal) {
+        return sessionService.monTour(principal.getUsername());
+    }
+
     @PatchMapping("/{id}/prochaine-date")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Mettre Ã  jour la prochaine date de tontine (mode DATE_MANUELLE)")
+    @Operation(summary = "Mettre a jour la prochaine date de tontine (mode DATE_MANUELLE)")
     public SessionResponse mettreAJourProchainDate(
             @PathVariable UUID id,
             @Valid @RequestBody MiseAJourDateRequest request) {
         return sessionService.mettreAJourProchainDate(id, request);
     }
 
+    /** Modifier la date de benefice d'un membre specifique */
+    @PatchMapping("/{id}/beneficiaires/{ordreBeneficiaireId}/date")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Modifier la date de passage d'un beneficiaire (avant echeance)")
+    public SessionResponse mettreAJourDateBenefice(
+            @PathVariable UUID id,
+            @PathVariable UUID ordreBeneficiaireId,
+            @Valid @RequestBody MettreAJourDateBeneficeRequest request) {
+        return sessionService.mettreAJourDateBenefice(id, ordreBeneficiaireId, request);
+    }
+
     @PatchMapping("/{id}/beneficiaires/reordonner")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "RÃ©ordonner la liste des bÃ©nÃ©ficiaires d'une session")
+    @Operation(summary = "Reordonner la liste des beneficiaires d'une session")
     public SessionResponse reordonnerBeneficiaires(
             @PathVariable UUID id,
             @Valid @RequestBody ReordonnerBeneficiairesRequest request) {
@@ -60,21 +87,21 @@ public class SessionController {
 
     @GetMapping("/{id}/bilan")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Bilan financier : pot tontine, fonds collecté, déduction bénéficiaire")
+    @Operation(summary = "Bilan financier : pot tontine, fonds collecte, deduction beneficiaire")
     public SessionBilanResponse calculerBilan(@PathVariable UUID id) {
         return sessionService.calculerBilan(id);
     }
 
     @PostMapping("/{id}/recalibrer")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Ajouter les nouveaux membres à la session et recalculer dateFin")
+    @Operation(summary = "Ajouter les nouveaux membres a la session et recalculer dateFin")
     public SessionResponse recalibrerMembres(@PathVariable UUID id) {
         return sessionService.recalibrerMembres(id);
     }
 
     @PostMapping("/{id}/valider-benefice/{ordreBeneficiaireId}")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Valider le bÃ©nÃ©fice d'un membre dans la session")
+    @Operation(summary = "Valider le benefice d'un membre dans la session")
     public SessionResponse validerBenefice(
             @PathVariable UUID id,
             @PathVariable UUID ordreBeneficiaireId,
@@ -82,4 +109,3 @@ public class SessionController {
         return sessionService.validerBenefice(id, ordreBeneficiaireId, request);
     }
 }
-
