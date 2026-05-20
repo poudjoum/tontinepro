@@ -93,4 +93,23 @@ public class AuthController {
         twoFaService.desactiver(principal.getUsername(), request.code());
         return ResponseEntity.noContent().build();
     }
+
+    // ── Réinitialisation mot de passe (lien envoyé par le super admin) ───
+
+    @GetMapping("/reset-password/verify")
+    @Operation(summary = "Vérifier la validité d'un token de réinitialisation (public)")
+    public java.util.Map<String, Object> verifierToken(@RequestParam String token) {
+        boolean valide = authService.verifierResetToken(token);
+        return java.util.Map.of("valide", valide);
+    }
+
+    @PostMapping("/reset-password/confirmer")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Confirmer le nouveau mot de passe avec le token de réinitialisation (public)")
+    public ResponseEntity<Void> confirmerResetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        authService.confirmerResetPassword(request.token(), request.nouveauMotDePasse());
+        return ResponseEntity.noContent().build();
+    }
 }

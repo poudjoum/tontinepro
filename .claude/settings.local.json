@@ -21,7 +21,9 @@
       "Bash(npx cap *)",
       "Bash(ssh *)",
       "Bash(mvn compile *)",
-      "PowerShell(Get-Command *)"
+      "PowerShell(Get-Command *)",
+      "Bash(Get-ChildItem -Path \"D:\\\\ProjetSpring\\\\tontinepro\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
   }
 }

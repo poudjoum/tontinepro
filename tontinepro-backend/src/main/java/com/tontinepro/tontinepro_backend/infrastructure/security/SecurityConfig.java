@@ -40,6 +40,9 @@ public class SecurityConfig {
         "/api/v1/tontines/*/demandes",
         "/api/v1/tontines/*/documents-officiels",
         "/api/v1/tontines/*/documents-officiels/*/fichier",
+        // Reset mot de passe (lien envoyé par super admin)
+        "/api/v1/auth/reset-password/verify",
+        "/api/v1/auth/reset-password/confirmer",
         "/v3/api-docs/**",
         "/swagger-ui/**",
         "/swagger-ui.html"

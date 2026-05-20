@@ -18,6 +18,7 @@ export class AuthService {
 
   readonly isLoggedIn    = computed(() => !!this._auth()?.accessToken);
   readonly currentUser   = computed(() => this._auth());
+  readonly isSuperAdmin  = computed(() => this._auth()?.role === 'SUPER_ADMIN');
   readonly isAdmin       = computed(() => this._auth()?.role === 'ADMIN');
   readonly isSecretaire  = computed(() => this._auth()?.role === 'SECRETAIRE');
   readonly isGestionnaire = computed(() =>

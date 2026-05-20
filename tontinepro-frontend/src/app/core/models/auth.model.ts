@@ -15,7 +15,7 @@ export interface AuthResponse {
   tokenType: string;
   expiresIn: number;
   email: string;
-  role: 'ADMIN' | 'SECRETAIRE' | 'MEMBRE' | 'INVITE';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'SECRETAIRE' | 'MEMBRE' | 'INVITE';
   twoFaEnabled: boolean;
 }
 

@@ -1,0 +1,177 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- Header super admin -->
+  <div class="bg-gray-900 text-white px-4 pt-safe-top pb-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-xs text-gray-400 font-medium uppercase tracking-widest">TontinePro</p>
+        <h1 class="text-lg font-bold mt-0.5">Super Admin</h1>
+      </div>
+      <button (click)="logout()" class="text-xs text-gray-400 border border-gray-700 rounded-lg px-3 py-1.5">
+        Déconnexion
+      </button>
+    </div>
+  </div>
+
+  <div class="px-4 py-4 space-y-4">
+
+    <!-- Alertes -->
+    @if (success()) {
+      <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-3">
+        {{ success() }}
+      </div>
+    }
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+        {{ error() }}
+      </div>
+    }
+
+    <!-- Chargement -->
+    @if (loading()) {
+      <div class="flex items-center justify-center py-12">
+        <svg class="animate-spin w-7 h-7 text-gray-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+      </div>
+    }
+
+    <!-- Stats globales -->
+    @if (!loading()) {
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 text-center">
+          <p class="text-2xl font-bold text-gray-900">{{ tontines().length }}</p>
+          <p class="text-[10px] text-gray-500 mt-0.5">Tontines</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 text-center">
+          <p class="text-2xl font-bold text-green-600">{{ tontines().filter(t => t.actif).length }}</p>
+          <p class="text-[10px] text-gray-500 mt-0.5">Actives</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 text-center">
+          <p class="text-2xl font-bold text-gray-900">
+            {{ tontines().reduce((s, t) => s + t.nombreMembresActifs, 0) }}
+          </p>
+          <p class="text-[10px] text-gray-500 mt-0.5">Membres</p>
+        </div>
+      </div>
+    }
+
+    <!-- Liste des tontines -->
+    @if (!loading()) {
+      @for (t of tontines(); track t.id) {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+
+          <!-- En-tête tontine -->
+          <div class="px-4 py-3 flex items-start justify-between gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-sm font-semibold text-gray-900">{{ t.nom }}</h2>
+                <span [class]="'text-[10px] font-medium px-2 py-0.5 rounded-full ' +
+                  (t.actif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600')">
+                  {{ t.actif ? 'Active' : 'Désactivée' }}
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">{{ t.nombreMembresActifs }} membre(s) actif(s)</p>
+              @if (t.emailPresident) {
+                <p class="text-[10px] text-gray-400 mt-0.5">Président : {{ t.emailPresident }}</p>
+              }
+              @if (t.emailSecretaire) {
+                <p class="text-[10px] text-gray-400">Secrétaire : {{ t.emailSecretaire }}</p>
+              }
+            </div>
+
+            <!-- Redevance badge -->
+            @if (t.redevance) {
+              <div class="flex-shrink-0 text-right">
+                <p class="text-xs font-semibold text-gray-800">{{ fcfa(t.redevance.montant) }}</p>
+                <p class="text-[10px] text-gray-400">{{ t.redevance.periodicite === 'MENSUEL' ? '/mois' : '/an' }}</p>
+                <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                      [class]="statutBadge(t.redevance.statut)">
+                  {{ statutLabel(t.redevance.statut) }}
+                </span>
+              </div>
+            } @else {
+              <span class="text-[10px] text-gray-400 flex-shrink-0">Non configurée</span>
+            }
+          </div>
+
+          <!-- Actions -->
+          <div class="border-t border-gray-50 px-4 py-2.5 flex gap-2 flex-wrap">
+            <button (click)="toggleActif(t)" [disabled]="saving()"
+                    class="text-xs font-medium px-3 py-1.5 rounded-lg border disabled:opacity-50"
+                    [class]="t.actif
+                      ? 'border-red-200 text-red-600 bg-red-50 hover:bg-red-100'
+                      : 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'">
+              {{ t.actif ? 'Désactiver' : 'Activer' }}
+            </button>
+
+            <button (click)="ouvrirRedevance(t)" [disabled]="saving()"
+                    class="text-xs font-medium px-3 py-1.5 rounded-lg border border-blue-200
+                           text-blue-700 bg-blue-50 hover:bg-blue-100 disabled:opacity-50">
+              💳 Redevance
+            </button>
+
+            <button (click)="reinitialiserMotDePasse(t)" [disabled]="saving()"
+                    class="text-xs font-medium px-3 py-1.5 rounded-lg border border-amber-200
+                           text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50">
+              🔑 Réinit. mot de passe
+            </button>
+          </div>
+
+          <!-- Panneau configuration redevance -->
+          @if (redevancePanelId() === t.id) {
+            <div class="border-t border-gray-100 bg-blue-50 px-4 py-4 space-y-3">
+              <h3 class="text-xs font-semibold text-blue-800">Configurer la redevance</h3>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Montant (FCFA)</label>
+                  <input [(ngModel)]="revForm.montant" type="number" min="0" class="input-field" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Périodicité</label>
+                  <select [(ngModel)]="revForm.periodicite" class="input-field">
+                    <option value="MENSUEL">Mensuelle</option>
+                    <option value="ANNUEL">Annuelle</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Statut</label>
+                  <select [(ngModel)]="revForm.statut" class="input-field">
+                    <option value="A_JOUR">À jour</option>
+                    <option value="EN_RETARD">En retard</option>
+                    <option value="GRATUIT">Gratuit</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Prochain paiement</label>
+                  <input [(ngModel)]="revForm.prochainPaiement" type="date" class="input-field" />
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button (click)="sauvegarderRedevance(t)" [disabled]="saving()"
+                        class="btn-primary text-xs py-2 flex-1">
+                  @if (saving()) { … } @else { Enregistrer }
+                </button>
+                <button (click)="redevancePanelId.set(null)"
+                        class="text-xs px-3 py-2 border border-gray-300 rounded-lg text-gray-600">
+                  Annuler
+                </button>
+              </div>
+            </div>
+          }
+
+        </div>
+      }
+
+      @if (tontines().length === 0) {
+        <div class="card text-center py-10 text-gray-400 text-sm">
+          Aucune tontine sur la plateforme.
+        </div>
+      }
+    }
+
+  </div>
+</div>

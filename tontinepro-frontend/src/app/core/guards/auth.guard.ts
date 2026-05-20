@@ -14,3 +14,10 @@ export const adminGuard: CanActivateFn = () => {
   if (auth.isGestionnaire()) return true;
   return router.createUrlTree(['/dashboard']);
 };
+
+export const superAdminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.isSuperAdmin()) return true;
+  return router.createUrlTree([auth.isLoggedIn() ? '/dashboard' : '/auth/login']);
+};

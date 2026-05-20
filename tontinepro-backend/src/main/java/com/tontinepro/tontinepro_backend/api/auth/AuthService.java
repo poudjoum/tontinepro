@@ -7,8 +7,8 @@ import com.tontinepro.tontinepro_backend.api.auth.dto.RegisterRequest;
 import com.tontinepro.tontinepro_backend.api.auth.dto.ValiderTwoFaRequest;
 import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.domain.notification.Notification;
-
-import java.util.UUID;
+import com.tontinepro.tontinepro_backend.domain.user.PasswordResetToken;
+import com.tontinepro.tontinepro_backend.domain.user.PasswordResetTokenRepository;
 import com.tontinepro.tontinepro_backend.domain.user.RefreshToken;
 import com.tontinepro.tontinepro_backend.domain.user.RefreshTokenRepository;
 import com.tontinepro.tontinepro_backend.domain.user.User;
@@ -38,6 +38,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository resetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
@@ -162,6 +163,33 @@ public class AuthService {
 
         refreshTokenRepository.save(token);
         return raw;
+    }
+
+    @Transactional(readOnly = true)
+    public boolean verifierResetToken(String token) {
+        return resetTokenRepository.findByToken(token)
+                .map(t -> !t.isUsed() && !t.isExpire())
+                .orElse(false);
+    }
+
+    @Transactional
+    public void confirmerResetPassword(String token, String nouveauMotDePasse) {
+        PasswordResetToken prt = resetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Token invalide"));
+
+        if (prt.isUsed()) {
+            throw new IllegalArgumentException("Ce lien a déjà été utilisé");
+        }
+        if (prt.isExpire()) {
+            throw new IllegalArgumentException("Ce lien a expiré. Contactez votre administrateur.");
+        }
+
+        User user = prt.getUser();
+        user.setHashedPassword(passwordEncoder.encode(nouveauMotDePasse));
+        userRepository.save(user);
+
+        prt.setUsed(true);
+        resetTokenRepository.save(prt);
     }
 
     private static String sha256(String input) {

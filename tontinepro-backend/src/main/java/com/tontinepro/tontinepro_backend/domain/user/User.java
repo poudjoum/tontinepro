@@ -54,6 +54,7 @@ public class User {
     private OffsetDateTime updatedAt;
 
     public enum Role {
+        SUPER_ADMIN, // Opérateur plateforme — gère toutes les tontines
         ADMIN,       // Président — accès total
         SECRETAIRE,  // Secrétaire — gestion quotidienne
         MEMBRE,

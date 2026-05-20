@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
-import { adminGuard } from './core/guards/auth.guard';
+import { authGuard, adminGuard, superAdminGuard } from './core/guards/auth.guard';
 import { notConfiguredGuard } from './core/guards/setup.guard';
 import { ShellComponent } from './layout/shell.component';
 
@@ -67,8 +66,21 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/auth/two-fa/two-fa.component').then(m => m.TwoFaComponent),
       },
+      {
+        path: 'reset-password',
+        loadComponent: () =>
+          import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
+      },
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
+  },
+
+  // Super Admin — interface plateforme (sans shell tontine)
+  {
+    path: 'super-admin',
+    canActivate: [superAdminGuard],
+    loadComponent: () =>
+      import('./features/super-admin/super-admin.component').then(m => m.SuperAdminComponent),
   },
 
   // App protégée — avec Shell (header + bottom-nav)

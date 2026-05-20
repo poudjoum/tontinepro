@@ -17,6 +17,10 @@ export class PostAuthNavService {
   private router = inject(Router);
 
   navigateAfterLogin(): void {
+    if (this.auth.isSuperAdmin()) {
+      this.router.navigate(['/super-admin']);
+      return;
+    }
     if (this.auth.isGestionnaire()) {
       this.router.navigate(['/dashboard']);
       return;
