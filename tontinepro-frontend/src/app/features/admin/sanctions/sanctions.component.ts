@@ -79,7 +79,7 @@ export class SanctionsComponent implements OnInit {
         this.saving.set(false);
       },
       error: e => {
-        this.error.set(e.error?.message ?? 'Erreur création');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur création');
         this.saving.set(false);
       },
     });

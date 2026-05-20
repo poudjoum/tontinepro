@@ -92,7 +92,7 @@ export class MembresAdminComponent implements OnInit {
         this.inscribing.set(false);
       },
       error: e => {
-        this.error.set(e.error?.message ?? 'Erreur lors de l\'inscription');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors de l\'inscription');
         this.inscribing.set(false);
       },
     });
@@ -103,7 +103,7 @@ export class MembresAdminComponent implements OnInit {
     this.saving.set(id);
     this.mbrSvc.updateFonction(id, val).subscribe({
       next: updated => { this.membres.update(list => list.map(m => m.id === id ? updated : m)); this.saving.set(null); },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur'); this.saving.set(null); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur'); this.saving.set(null); },
     });
   }
 
@@ -111,7 +111,7 @@ export class MembresAdminComponent implements OnInit {
     this.saving.set(id);
     this.mbrSvc.updateStatut(id, statut).subscribe({
       next: updated => { this.membres.update(list => list.map(m => m.id === id ? updated : m)); this.saving.set(null); },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur'); this.saving.set(null); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur'); this.saving.set(null); },
     });
   }
 

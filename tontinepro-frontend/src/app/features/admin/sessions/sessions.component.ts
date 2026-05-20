@@ -96,7 +96,7 @@ export class SessionsComponent implements OnInit {
         this.dateDebut = '';
         this.saving.set(false);
       },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur création.'); this.saving.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur création.'); this.saving.set(false); },
     });
   }
 
@@ -112,7 +112,7 @@ export class SessionsComponent implements OnInit {
         delete this.montantValide[ob.id];
         this.saving.set(false);
       },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur validation.'); this.saving.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur validation.'); this.saving.set(false); },
     });
   }
 
@@ -127,7 +127,7 @@ export class SessionsComponent implements OnInit {
         this.nouvelleDateProchaine = '';
         this.saving.set(false);
       },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur date.'); this.saving.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur date.'); this.saving.set(false); },
     });
   }
 
@@ -154,7 +154,7 @@ export class SessionsComponent implements OnInit {
         this.success.set('Date de passage mise à jour.');
         this.saving.set(false);
       },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur mise à jour date.'); this.saving.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur mise à jour date.'); this.saving.set(false); },
     });
   }
 
@@ -165,7 +165,7 @@ export class SessionsComponent implements OnInit {
     this.error.set('');
     this.sessionSvc.calculerBilan(session.id).subscribe({
       next: b => { this.bilan.set(b); this.afficherBilan.set(true); this.saving.set(false); },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur bilan'); this.saving.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur bilan'); this.saving.set(false); },
     });
   }
 
@@ -179,7 +179,7 @@ export class SessionsComponent implements OnInit {
         this.success.set(`Session recalibrée — ${updated.nombreMembres} membre(s).`);
         this.saving.set(false);
       },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur recalibrage.'); this.saving.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur recalibrage.'); this.saving.set(false); },
     });
   }
 

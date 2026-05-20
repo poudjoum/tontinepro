@@ -61,7 +61,7 @@ export class RejoindreComponent implements OnInit {
         this.router.navigate(['/dashboard']);
       },
       error: e => {
-        this.error.set(e.error?.message ?? 'Erreur lors de l\'adhésion');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors de l\'adhésion');
         this.joining.set(false);
       },
     });

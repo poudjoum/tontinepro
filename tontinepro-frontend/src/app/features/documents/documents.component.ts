@@ -76,7 +76,7 @@ export class DocumentsComponent implements OnInit {
         this.uploading.set(false);
       },
       error: e => {
-        this.error.set(e.error?.message ?? 'Erreur lors du téléchargement');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors du téléchargement');
         this.uploading.set(false);
       },
     });
@@ -86,7 +86,7 @@ export class DocumentsComponent implements OnInit {
     if (!confirm('Supprimer ce document ?')) return;
     this.svc.supprimer(id).subscribe({
       next: () => this.documents.update(list => list.filter(d => d.id !== id)),
-      error: e => this.error.set(e.error?.message ?? 'Erreur suppression'),
+      error: e => this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur suppression'),
     });
   }
 

@@ -75,7 +75,7 @@ export class ConfigurationComponent implements OnInit {
         this.loading.set(false);
       },
       error: e => {
-        this.error.set(e.error?.message ?? 'Erreur lors du chargement');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors du chargement');
         this.loading.set(false);
       },
     });
@@ -95,7 +95,7 @@ export class ConfigurationComponent implements OnInit {
         this.saving.set(false);
       },
       error: e => {
-        this.error.set(e.error?.message ?? 'Erreur lors de la sauvegarde');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors de la sauvegarde');
         this.saving.set(false);
       },
     });

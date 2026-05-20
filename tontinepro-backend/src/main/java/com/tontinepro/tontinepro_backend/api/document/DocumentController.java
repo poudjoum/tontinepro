@@ -5,7 +5,7 @@ import com.tontinepro.tontinepro_backend.domain.document.Document;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,33 +15,33 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/documents")
 @RequiredArgsConstructor
-@Tag(name = "Documents")
+@Tag(name = "Documents membres")
 public class DocumentController {
 
     private final DocumentService documentService;
 
     @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "TÃ©lÃ©charger un document (membre sur son propre profil, ou admin)")
+    @Operation(summary = "Télécharger un document membre (PDF ou image, max 10 Mo)")
     public DocumentResponse telecharger(
             @RequestParam UUID membreId,
             @RequestParam Document.TypeDocument typeDocument,
             @RequestParam("fichier") MultipartFile fichier,
             @AuthenticationPrincipal UserDetails principal
-    ) throws IOException {
+    ) {
         return documentService.telecharger(membreId, typeDocument, fichier, principal.getUsername());
     }
 
     @GetMapping("/membre/{membreId}")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Lister les documents d'un membre (Admin / PrÃ©sident / SecrÃ©taire)")
+    @Operation(summary = "Lister les documents d'un membre (Admin / Secrétaire)")
     public List<DocumentResponse> listerParMembre(@PathVariable UUID membreId) {
         return documentService.listerParMembre(membreId);
     }
@@ -53,15 +53,19 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}/fichier")
-    @Operation(summary = "TÃ©lÃ©charger le fichier d'un document (propriÃ©taire ou Admin)")
-    public ResponseEntity<Resource> telechargerFichier(
+    @Operation(summary = "Télécharger un fichier document (propriétaire ou Admin)")
+    public ResponseEntity<InputStreamResource> telechargerFichier(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails principal
-    ) throws IOException {
-        Resource resource = documentService.telechargerFichier(id, principal.getUsername());
+    ) {
+        InputStream stream = documentService.telechargerFichier(id, principal.getUsername());
+        String contentType = documentService.getContentType(id);
+        String nomFichier  = documentService.getNomFichier(id);
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + nomFichier + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, contentType)
+                .body(new InputStreamResource(stream));
     }
 
     @DeleteMapping("/{id}")
@@ -70,8 +74,7 @@ public class DocumentController {
     public void supprimer(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails principal
-    ) throws IOException {
+    ) {
         documentService.supprimer(id, principal.getUsername());
     }
 }
-

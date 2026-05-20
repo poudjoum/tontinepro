@@ -75,7 +75,7 @@ export class CreerTontineComponent {
           this.submitting.set(false);
           this.router.navigate(['/admin/onboarding']);
         },
-        error: e => { this.error.set(e.error?.message ?? 'Erreur création'); this.submitting.set(false); },
+        error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur création'); this.submitting.set(false); },
       });
     } else {
       // Création depuis zéro (compte + tontine)
@@ -96,7 +96,7 @@ export class CreerTontineComponent {
           this.submitting.set(false);
           this.router.navigate(['/admin/onboarding']);
         },
-        error: e => { this.error.set(e.error?.message ?? 'Erreur création'); this.submitting.set(false); },
+        error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur création'); this.submitting.set(false); },
       });
     }
   }

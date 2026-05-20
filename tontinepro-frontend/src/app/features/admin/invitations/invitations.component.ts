@@ -59,7 +59,7 @@ export class InvitationsComponent implements OnInit {
         this.generating.set(false);
       },
       error: e => {
-        this.error.set(e.error?.message ?? 'Erreur lors de la génération');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors de la génération');
         this.generating.set(false);
       },
     });

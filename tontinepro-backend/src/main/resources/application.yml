@@ -59,5 +59,7 @@ app:
     secret: ${JWT_SECRET:changeme-dev-secret-must-be-at-least-32-chars-long}
     access-token-expiration-ms: ${JWT_ACCESS_EXP_MS:900000}      # 15 min
     refresh-token-expiration-ms: ${JWT_REFRESH_EXP_MS:604800000} # 7 jours
-  upload:
-    dir: ${UPLOAD_DIR:uploads/documents}
+  minio:
+    endpoint:   ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:tontinepro}
+    secret-key: ${MINIO_SECRET_KEY:changeme-minio-secret}

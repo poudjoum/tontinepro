@@ -49,7 +49,7 @@ export class TontineDetailComponent implements OnInit {
       motivation: this.form.motivation || undefined,
     }).subscribe({
       next: () => { this.submitted.set(true); this.submitting.set(false); },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur lors de la soumission'); this.submitting.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors de la soumission'); this.submitting.set(false); },
     });
   }
 

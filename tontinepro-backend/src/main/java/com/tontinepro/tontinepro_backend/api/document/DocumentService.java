@@ -5,18 +5,14 @@ import com.tontinepro.tontinepro_backend.domain.document.Document;
 import com.tontinepro.tontinepro_backend.domain.document.DocumentRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
+import com.tontinepro.tontinepro_backend.infrastructure.config.MinioConfig;
+import com.tontinepro.tontinepro_backend.infrastructure.storage.MinioStorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,15 +20,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DocumentService {
 
-    @Value("${app.upload.dir:uploads/documents}")
-    private String uploadDir;
-
     private final DocumentRepository documentRepository;
     private final MembreRepository membreRepository;
+    private final MinioStorageService minioStorage;
 
     @Transactional
     public DocumentResponse telecharger(UUID membreId, Document.TypeDocument type,
-                                        MultipartFile fichier, String uploader) throws IOException {
+                                        MultipartFile fichier, String uploader) {
         Membre membre = membreRepository.findById(membreId)
                 .orElseThrow(() -> new IllegalArgumentException("Membre introuvable : " + membreId));
 
@@ -44,21 +38,24 @@ public class DocumentService {
             throw new IllegalArgumentException("Fichier trop volumineux (max 10 Mo)");
         }
 
-        String ext = fichier.getOriginalFilename() != null
-                ? fichier.getOriginalFilename().substring(fichier.getOriginalFilename().lastIndexOf('.'))
-                : ".bin";
+        // Vérifier droits : propriétaire ou admin (sans profil membre)
+        membreRepository.findByUserEmail(uploader).ifPresent(m -> {
+            if (!m.getId().equals(membreId)) {
+                throw new IllegalArgumentException("Vous ne pouvez télécharger que vos propres documents");
+            }
+        });
 
-        String nomStockage = UUID.randomUUID() + ext;
-        Path dir = Paths.get(uploadDir, membreId.toString());
-        Files.createDirectories(dir);
-        Path dest = dir.resolve(nomStockage);
-        Files.copy(fichier.getInputStream(), dest);
+        String objectKey = minioStorage.stocker(
+                MinioConfig.BUCKET_MEMBRES,
+                "membres/" + membreId + "/" + type.name().toLowerCase(),
+                fichier
+        );
 
         Document doc = Document.builder()
                 .membre(membre)
                 .typeDocument(type)
                 .nomFichier(fichier.getOriginalFilename())
-                .cheminStockage(dest.toString())
+                .cheminStockage(objectKey)  // on stocke l'objectKey MinIO
                 .tailleOctets(fichier.getSize())
                 .contentType(contentType)
                 .build();
@@ -81,28 +78,34 @@ public class DocumentService {
     }
 
     @Transactional(readOnly = true)
-    public Resource telechargerFichier(UUID documentId, String email) throws IOException {
+    public InputStream telechargerFichier(UUID documentId, String email) {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document introuvable : " + documentId));
 
-        // Users without a Membre profile are admins — they can access all documents.
-        // Members can only access their own documents.
+        // Vérification d'accès : propriétaire ou admin
         membreRepository.findByUserEmail(email).ifPresent(membre -> {
             if (!membre.getId().equals(doc.getMembre().getId())) {
                 throw new IllegalArgumentException("Accès refusé à ce document");
             }
         });
 
-        Path path = Paths.get(doc.getCheminStockage());
-        Resource resource = new UrlResource(path.toUri());
-        if (!resource.exists()) {
-            throw new IllegalArgumentException("Fichier introuvable sur le serveur");
-        }
-        return resource;
+        return minioStorage.telecharger(MinioConfig.BUCKET_MEMBRES, doc.getCheminStockage());
+    }
+
+    public String getContentType(UUID documentId) {
+        return documentRepository.findById(documentId)
+                .map(Document::getContentType)
+                .orElse("application/octet-stream");
+    }
+
+    public String getNomFichier(UUID documentId) {
+        return documentRepository.findById(documentId)
+                .map(Document::getNomFichier)
+                .orElse("document");
     }
 
     @Transactional
-    public void supprimer(UUID documentId, String email) throws IOException {
+    public void supprimer(UUID documentId, String email) {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document introuvable : " + documentId));
 
@@ -111,7 +114,7 @@ public class DocumentService {
             throw new IllegalArgumentException("Vous ne pouvez supprimer que vos propres documents");
         }
 
-        Files.deleteIfExists(Paths.get(doc.getCheminStockage()));
+        minioStorage.supprimer(MinioConfig.BUCKET_MEMBRES, doc.getCheminStockage());
         documentRepository.delete(doc);
     }
 }

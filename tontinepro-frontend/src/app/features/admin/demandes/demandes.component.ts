@@ -51,7 +51,7 @@ export class DemandesComponent implements OnInit {
         this.demandes.update(list => list.map(d => d.id === id ? updated : d));
         this.actif.set(null);
       },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur'); this.actif.set(null); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur'); this.actif.set(null); },
     });
   }
 
@@ -70,7 +70,7 @@ export class DemandesComponent implements OnInit {
         this.rejetId = null;
         this.actif.set(null);
       },
-      error: e => { this.error.set(e.error?.message ?? 'Erreur'); this.actif.set(null); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur'); this.actif.set(null); },
     });
   }
 }

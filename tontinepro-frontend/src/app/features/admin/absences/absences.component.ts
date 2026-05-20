@@ -72,7 +72,7 @@ export class AbsencesComponent implements OnInit {
         this.saving.set(false);
       },
       error: e => {
-        this.error.set(e.error?.message ?? 'Erreur lors de l\'enregistrement');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors de l\'enregistrement');
         this.saving.set(false);
       },
     });

@@ -69,7 +69,7 @@ export class DocumentsTontineComponent implements OnInit {
         this.uploading.set(false);
       },
       error: e => {
-        this.error.set(e.error?.message ?? 'Erreur téléchargement');
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur téléchargement');
         this.uploading.set(false);
       },
     });
@@ -79,7 +79,7 @@ export class DocumentsTontineComponent implements OnInit {
     if (!confirm('Supprimer ce document ?')) return;
     this.svc.supprimerDocumentOfficiel(this.tontineId, docId).subscribe({
       next: () => this.documents.update(list => list.filter(d => d.id !== docId)),
-      error: e => this.error.set(e.error?.message ?? 'Erreur suppression'),
+      error: e => this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur suppression'),
     });
   }
 
