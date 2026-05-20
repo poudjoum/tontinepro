@@ -2,6 +2,7 @@ import { Component, signal, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { PostAuthNavService } from '../../../core/services/post-auth-nav.service';
 
 function passwordMatch(control: AbstractControl) {
   const pwd = control.get('password')?.value;
@@ -15,9 +16,10 @@ function passwordMatch(control: AbstractControl) {
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
-  private fb     = inject(FormBuilder);
-  private auth   = inject(AuthService);
-  private router = inject(Router);
+  private fb      = inject(FormBuilder);
+  private auth    = inject(AuthService);
+  private router  = inject(Router);
+  private postNav = inject(PostAuthNavService);
 
   form = this.fb.nonNullable.group({
     email:     ['', [Validators.required, Validators.email]],
@@ -40,8 +42,7 @@ export class RegisterComponent {
     this.auth.register({ email, password, telephone: telephone || undefined }).subscribe({
       next: () => {
         this.loading.set(false);
-        // Nouvel utilisateur sans profil membre → découvrir les tontines
-        this.router.navigate(['/tontines']);
+        this.postNav.navigateAfterLogin();
       },
       error: err => {
         this.loading.set(false);

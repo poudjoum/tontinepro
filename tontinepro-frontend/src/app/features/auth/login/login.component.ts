@@ -2,6 +2,7 @@ import { Component, signal, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { PostAuthNavService } from '../../../core/services/post-auth-nav.service';
 import { isTwoFaChallenge } from '../../../core/models/auth.model';
 
 @Component({
@@ -10,9 +11,10 @@ import { isTwoFaChallenge } from '../../../core/models/auth.model';
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
-  private fb     = inject(FormBuilder);
-  private auth   = inject(AuthService);
-  private router = inject(Router);
+  private fb      = inject(FormBuilder);
+  private auth    = inject(AuthService);
+  private router  = inject(Router);
+  private postNav = inject(PostAuthNavService);
 
   form = this.fb.nonNullable.group({
     email:    ['', [Validators.required, Validators.email]],
@@ -37,7 +39,7 @@ export class LoginComponent {
           });
         } else {
           this.auth.saveAuth(res);
-          this.router.navigate(['/dashboard']);
+          this.postNav.navigateAfterLogin();
         }
       },
       error: err => {

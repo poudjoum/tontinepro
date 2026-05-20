@@ -2,6 +2,7 @@ import { Component, signal, OnInit, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { PostAuthNavService } from '../../../core/services/post-auth-nav.service';
 
 @Component({
   selector: 'app-two-fa',
@@ -9,9 +10,10 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './two-fa.component.html',
 })
 export class TwoFaComponent implements OnInit {
-  private fb     = inject(FormBuilder);
-  private auth   = inject(AuthService);
-  private router = inject(Router);
+  private fb      = inject(FormBuilder);
+  private auth    = inject(AuthService);
+  private router  = inject(Router);
+  private postNav = inject(PostAuthNavService);
 
   form = this.fb.nonNullable.group({
     code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
@@ -40,7 +42,7 @@ export class TwoFaComponent implements OnInit {
     this.auth.validate2fa(this.ticket(), this.form.getRawValue().code).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/dashboard']);
+        this.postNav.navigateAfterLogin();
       },
       error: err => {
         this.loading.set(false);
