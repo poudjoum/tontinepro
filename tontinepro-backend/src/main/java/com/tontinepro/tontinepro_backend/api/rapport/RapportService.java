@@ -2,7 +2,9 @@ package com.tontinepro.tontinepro_backend.api.rapport;
 
 import com.tontinepro.tontinepro_backend.api.rapport.builder.RapportCotisationsExcelBuilder;
 import com.tontinepro.tontinepro_backend.api.rapport.builder.RapportFinancierPdfBuilder;
+import com.tontinepro.tontinepro_backend.api.rapport.builder.RapportMembresExcelBuilder;
 import com.tontinepro.tontinepro_backend.api.rapport.builder.RapportMensuelPdfBuilder;
+import com.tontinepro.tontinepro_backend.api.rapport.builder.RapportSanctionsExcelBuilder;
 import com.tontinepro.tontinepro_backend.domain.aide.AideRepository;
 import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAide;
 import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAideRepository;
@@ -13,6 +15,8 @@ import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargneRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.pret.PretRepository;
+import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
+import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,9 +42,13 @@ public class RapportService {
     private final FondsAideRepository       fondsAideRepository;
     private final ContributionFondsAideRepository contributionRepository;
 
+    private final SanctionRepository sanctionRepository;
+
     private final RapportMensuelPdfBuilder       mensuelBuilder;
     private final RapportFinancierPdfBuilder      financierBuilder;
     private final RapportCotisationsExcelBuilder  cotisationsBuilder;
+    private final RapportSanctionsExcelBuilder    sanctionsBuilder;
+    private final RapportMembresExcelBuilder      membresBuilder;
 
     @Transactional(readOnly = true)
     public byte[] rapportMensuel(UUID tontineId, short mois, short annee) {
@@ -90,6 +98,22 @@ public class RapportService {
 
         return financierBuilder.build(tontine, comptes, tousLesPrets,
                 fondsAide, contributions, cotisationsAnnee);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] rapportSanctions(UUID tontineId, Boolean payee) {
+        Tontine tontine = loadTontine(tontineId);
+        List<Sanction> sanctions = payee != null
+                ? sanctionRepository.findAllByTontineIdAndPayee(tontineId, payee)
+                : sanctionRepository.findAllByTontineId(tontineId);
+        return sanctionsBuilder.build(tontine, sanctions);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] rapportMembres(UUID tontineId) {
+        Tontine tontine = loadTontine(tontineId);
+        var membres = membreRepository.findAllByTontineId(tontineId);
+        return membresBuilder.build(tontine, membres);
     }
 
     private Tontine loadTontine(UUID id) {

@@ -27,4 +27,15 @@ export class RapportService {
     const params = new HttpParams().set('tontineId', tontineId);
     return this.http.get(`${this.api}/financier`, { responseType: 'blob', params });
   }
+
+  sanctions(tontineId: string, payee?: boolean) {
+    let params = new HttpParams().set('tontineId', tontineId);
+    if (payee !== undefined) params = params.set('payee', String(payee));
+    return this.http.get(`${this.api}/sanctions`, { responseType: 'blob', params });
+  }
+
+  membres(tontineId: string) {
+    const params = new HttpParams().set('tontineId', tontineId);
+    return this.http.get(`${this.api}/membres`, { responseType: 'blob', params });
+  }
 }

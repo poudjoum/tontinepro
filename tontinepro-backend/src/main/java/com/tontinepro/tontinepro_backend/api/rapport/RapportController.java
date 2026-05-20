@@ -56,6 +56,25 @@ public class RapportController {
         return pdfResponse(pdf, "rapport-financier.pdf");
     }
 
+    @GetMapping("/sanctions")
+    @Operation(summary = "Export Excel des sanctions (filtre optionnel payée/non payée)")
+    public ResponseEntity<byte[]> sanctions(
+            @RequestParam UUID tontineId,
+            @RequestParam(required = false) Boolean payee
+    ) {
+        byte[] xlsx = rapportService.rapportSanctions(tontineId, payee);
+        String nom = payee == null ? "sanctions-complet.xlsx"
+                : payee ? "sanctions-reglees.xlsx" : "sanctions-impayees.xlsx";
+        return excelResponse(xlsx, nom);
+    }
+
+    @GetMapping("/membres")
+    @Operation(summary = "Export Excel du répertoire des membres")
+    public ResponseEntity<byte[]> membres(@RequestParam UUID tontineId) {
+        byte[] xlsx = rapportService.rapportMembres(tontineId);
+        return excelResponse(xlsx, "membres.xlsx");
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────
 
     private ResponseEntity<byte[]> pdfResponse(byte[] content, String filename) {

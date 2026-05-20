@@ -175,5 +175,55 @@
       </button>
     </div>
 
+    <!-- ── Export Sanctions ──────────────────────────────────────── -->
+    <div class="card space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+          <span class="text-xl">⚠️</span>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-900">Export Sanctions</p>
+          <p class="text-xs text-gray-500 mt-0.5">Toutes les sanctions avec statut de paiement · Format Excel</p>
+        </div>
+        <span class="ml-auto badge-warning flex-shrink-0">XLSX</span>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Filtrer par statut</label>
+        <select (change)="payeeS.set($any($event.target).value === '' ? undefined : $any($event.target).value === 'true')"
+                class="input-field text-sm py-2">
+          <option value="">Toutes les sanctions</option>
+          <option value="false">Non réglées uniquement</option>
+          <option value="true">Réglées uniquement</option>
+        </select>
+      </div>
+
+      <button (click)="downloadSanctions()" [disabled]="dlS() || !tontineId()" class="btn-primary py-2.5">
+        @if (dlS()) { Génération en cours… } @else { ⬇ Télécharger Sanctions Excel }
+      </button>
+    </div>
+
+    <!-- ── Export Membres ─────────────────────────────────────────── -->
+    <div class="card space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+          <span class="text-xl">👥</span>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-900">Répertoire des membres</p>
+          <p class="text-xs text-gray-500 mt-0.5">Annuaire complet avec fonctions et statuts · Format Excel</p>
+        </div>
+        <span class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 flex-shrink-0">XLSX</span>
+      </div>
+
+      <div class="bg-purple-50 rounded-xl px-4 py-3 text-xs text-purple-700">
+        Liste tous les membres (actifs, suspendus, retirés) avec matricule, email, fonction et date d'adhésion.
+      </div>
+
+      <button (click)="downloadMembres()" [disabled]="dlMbr() || !tontineId()" class="btn-primary py-2.5">
+        @if (dlMbr()) { Génération en cours… } @else { ⬇ Télécharger Répertoire membres }
+      </button>
+    </div>
+
   </div>
 }
