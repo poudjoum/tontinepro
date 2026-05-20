@@ -77,6 +77,18 @@ public class Tontine {
     @Builder.Default
     private BigDecimal montantPenaliteRetard = BigDecimal.ZERO;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_acces", nullable = false, length = 20)
+    @Builder.Default
+    private TypeAcces typeAcces = TypeAcces.OUVERTE;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean visible = true;
+
+    @Column(name = "description_acces", columnDefinition = "TEXT")
+    private String descriptionAcces;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean actif = true;
@@ -88,6 +100,11 @@ public class Tontine {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    public enum TypeAcces {
+        OUVERTE,      // Tontine ouverte à tous
+        RESTREINTE    // Groupe spécifique (anciens élèves, entreprise…)
+    }
 
     public enum ModeContributionAide {
         AUCUN,

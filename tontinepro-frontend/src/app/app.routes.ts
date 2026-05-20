@@ -22,6 +22,18 @@ export const routes: Routes = [
       import('./features/setup/setup.component').then(m => m.SetupComponent),
   },
 
+  // Liste publique des tontines disponibles
+  {
+    path: 'tontines',
+    loadComponent: () =>
+      import('./features/tontines/tontines.component').then(m => m.TontinesComponent),
+  },
+  {
+    path: 'tontines/:id',
+    loadComponent: () =>
+      import('./features/tontines/detail/tontine-detail.component').then(m => m.TontineDetailComponent),
+  },
+
   // Rejoindre via lien d'invitation (public)
   {
     path: 'rejoindre/:token',
@@ -138,6 +150,11 @@ export const routes: Routes = [
             path: 'membres',
             loadComponent: () =>
               import('./features/admin/membres/membres-admin.component').then(m => m.MembresAdminComponent),
+          },
+          {
+            path: 'demandes',
+            loadComponent: () =>
+              import('./features/admin/demandes/demandes.component').then(m => m.DemandesComponent),
           },
           {
             path: 'sessions',

@@ -9,5 +9,7 @@ public interface TontineRepository extends JpaRepository<Tontine, UUID> {
 
     List<Tontine> findAllByActifTrue();
 
+    List<Tontine> findAllByActifTrueAndVisibleTrue();
+
     boolean existsByNom(String nom);
 }

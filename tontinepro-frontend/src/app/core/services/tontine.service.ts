@@ -13,6 +13,10 @@ export class TontineService {
     return this.http.get<TontineResponse[]>(this.api);
   }
 
+  getPubliques() {
+    return this.http.get<TontineResponse[]>(`${this.api}/publiques`);
+  }
+
   getById(id: string) {
     return this.http.get<TontineResponse>(`${this.api}/${id}`);
   }

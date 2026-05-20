@@ -1,0 +1,155 @@
+<div class="min-h-screen bg-gray-50">
+
+  @if (loading()) {
+    <div class="flex items-center justify-center min-h-screen text-gray-400">Chargement…</div>
+  } @else if (tontine()) {
+
+    <!-- Header -->
+    <div class="bg-primary-600 text-white px-4 pt-safe-top pb-6">
+      <a routerLink="/tontines" class="text-primary-200 text-sm mb-3 block">← Retour</a>
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <h1 class="text-xl font-bold">{{ tontine()!.nom }}</h1>
+          @if (tontine()!.typeAcces === 'RESTREINTE') {
+            <span class="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-400 text-amber-900">
+              Groupe restreint
+            </span>
+          } @else {
+            <span class="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-400 text-green-900">
+              Ouverte à tous
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-2xl mx-auto px-4 py-4 space-y-4">
+
+      <!-- Description -->
+      @if (tontine()!.description) {
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <p class="text-sm text-gray-700">{{ tontine()!.description }}</p>
+        </div>
+      }
+
+      <!-- Conditions d'accès (groupe restreint) -->
+      @if (tontine()!.descriptionAcces) {
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <h2 class="text-sm font-semibold text-amber-800 mb-1">Conditions d'adhésion</h2>
+          <p class="text-sm text-amber-700">{{ tontine()!.descriptionAcces }}</p>
+        </div>
+      }
+
+      <!-- Paramètres -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">Paramètres</h2>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p class="text-xs text-gray-500">Cotisation min</p>
+            <p class="font-semibold text-gray-900">{{ fcfa(tontine()!.montantCotisationMin) }}</p>
+          </div>
+          @if (tontine()!.montantCotisationMax) {
+            <div>
+              <p class="text-xs text-gray-500">Cotisation max</p>
+              <p class="font-semibold text-gray-900">{{ fcfa(tontine()!.montantCotisationMax) }}</p>
+            </div>
+          }
+          <div>
+            <p class="text-xs text-gray-500">Taux intérêt prêt</p>
+            <p class="font-semibold text-gray-900">{{ tontine()!.tauxInteretPret }} %</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Taux intérêt épargne</p>
+            <p class="font-semibold text-gray-900">{{ tontine()!.tauxInteretEpargne }} %</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documents officiels -->
+      @if (documents().length > 0) {
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <h2 class="text-sm font-semibold text-gray-700 mb-3">Documents officiels</h2>
+          <div class="space-y-2">
+            @for (doc of documents(); track doc.id) {
+              <a [href]="urlDoc(doc.id)" target="_blank"
+                 class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-primary-50 transition-colors">
+                <span class="text-2xl">📄</span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-800">{{ labelDoc(doc.typeDocument) }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ doc.nomFichier }}</p>
+                </div>
+                <span class="text-xs text-primary-600 flex-shrink-0">Consulter →</span>
+              </a>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Formulaire de demande -->
+      @if (!submitted()) {
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+          <h2 class="text-base font-bold text-gray-900">Faire une demande d'adhésion</h2>
+          <p class="text-xs text-gray-500">
+            Votre demande sera examinée par le Secrétaire de la tontine.
+            Vous serez contacté(e) par email.
+          </p>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Prénom *</label>
+              <input [(ngModel)]="form.prenom" type="text" class="input-field" placeholder="Prénom" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Nom *</label>
+              <input [(ngModel)]="form.nom" type="text" class="input-field" placeholder="Nom" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Email *</label>
+            <input [(ngModel)]="form.email" type="email" class="input-field" placeholder="votre@email.com" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
+            <input [(ngModel)]="form.telephone" type="tel" class="input-field" placeholder="+237 6XX XXX XXX" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Motivation</label>
+            <textarea [(ngModel)]="form.motivation" rows="3" class="input-field resize-none"
+                      placeholder="Pourquoi souhaitez-vous rejoindre cette tontine ?"></textarea>
+          </div>
+
+          @if (error()) {
+            <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+          }
+
+          <button (click)="soumettre()"
+                  [disabled]="submitting() || !form.nom || !form.prenom || !form.email"
+                  class="btn-primary w-full">
+            @if (submitting()) { Envoi en cours… } @else { Envoyer ma demande }
+          </button>
+        </div>
+      } @else {
+        <div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center space-y-2">
+          <div class="text-4xl">✅</div>
+          <h2 class="text-base font-bold text-green-800">Demande envoyée !</h2>
+          <p class="text-sm text-green-700">
+            Votre demande a été reçue. Le Secrétaire de la tontine vous contactera
+            à l'adresse <strong>{{ form.email }}</strong>.
+          </p>
+          <a routerLink="/tontines" class="block text-sm text-primary-600 font-medium mt-2">
+            ← Retour aux tontines
+          </a>
+        </div>
+      }
+
+      <div class="text-center pb-4">
+        <a routerLink="/auth/login" class="text-sm text-primary-600 font-medium">
+          Déjà membre ? Se connecter →
+        </a>
+      </div>
+    </div>
+  }
+</div>

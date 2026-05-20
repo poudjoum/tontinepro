@@ -30,8 +30,15 @@ public class TontineController {
         return tontineService.create(request);
     }
 
+    /** Public — tontines visibles pour les candidats à l'adhésion */
+    @GetMapping("/publiques")
+    @Operation(summary = "Lister les tontines disponibles (public, sans authentification)")
+    public List<TontineResponse> listPubliques() {
+        return tontineService.listPubliques();
+    }
+
     @GetMapping
-    @Operation(summary = "Lister les tontines actives")
+    @Operation(summary = "Lister les tontines actives (authentifié)")
     public List<TontineResponse> listActive() {
         return tontineService.listActive();
     }
@@ -43,7 +50,7 @@ public class TontineController {
     }
 
     @PatchMapping("/{id}/config")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Modifier la configuration d'une tontine")
     public TontineResponse updateConfig(
             @PathVariable UUID id,

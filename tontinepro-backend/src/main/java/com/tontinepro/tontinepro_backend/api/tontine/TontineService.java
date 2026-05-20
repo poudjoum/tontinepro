@@ -69,9 +69,13 @@ public class TontineService {
     @Transactional(readOnly = true)
     public List<TontineResponse> listActive() {
         return tontineRepository.findAllByActifTrue()
-                .stream()
-                .map(TontineResponse::from)
-                .toList();
+                .stream().map(TontineResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TontineResponse> listPubliques() {
+        return tontineRepository.findAllByActifTrueAndVisibleTrue()
+                .stream().map(TontineResponse::from).toList();
     }
 
     @Transactional

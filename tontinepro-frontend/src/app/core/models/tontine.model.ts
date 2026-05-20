@@ -28,6 +28,9 @@ export interface TontineResponse {
   montantCotisationAide: number | null;
   montantAmende: number;
   montantPenaliteRetard: number;
+  typeAcces: 'OUVERTE' | 'RESTREINTE';
+  visible: boolean;
+  descriptionAcces: string | null;
   actif: boolean;
   createdAt: string;
   updatedAt: string;

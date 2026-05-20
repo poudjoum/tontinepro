@@ -24,30 +24,22 @@ public record TontineResponse(
         BigDecimal montantCotisationAide,
         BigDecimal montantAmende,
         BigDecimal montantPenaliteRetard,
+        Tontine.TypeAcces typeAcces,
+        boolean visible,
+        String descriptionAcces,
         boolean actif,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
     public static TontineResponse from(Tontine t) {
         return new TontineResponse(
-                t.getId(),
-                t.getNom(),
-                t.getDescription(),
-                t.getMontantCotisationMin(),
-                t.getMontantCotisationMax(),
-                t.getMontantConsensuel(),
-                t.getJourReference(),
-                t.getTypeReglePeriodicite(),
-                t.getDateProchaineTontine(),
-                t.getTauxInteretPret(),
-                t.getTauxInteretEpargne(),
-                t.getModeContributionAide(),
-                t.getMontantCotisationAide(),
-                t.getMontantAmende(),
-                t.getMontantPenaliteRetard(),
-                t.isActif(),
-                t.getCreatedAt(),
-                t.getUpdatedAt()
-        );
+                t.getId(), t.getNom(), t.getDescription(),
+                t.getMontantCotisationMin(), t.getMontantCotisationMax(), t.getMontantConsensuel(),
+                t.getJourReference(), t.getTypeReglePeriodicite(), t.getDateProchaineTontine(),
+                t.getTauxInteretPret(), t.getTauxInteretEpargne(),
+                t.getModeContributionAide(), t.getMontantCotisationAide(),
+                t.getMontantAmende(), t.getMontantPenaliteRetard(),
+                t.getTypeAcces(), t.isVisible(), t.getDescriptionAcces(),
+                t.isActif(), t.getCreatedAt(), t.getUpdatedAt());
     }
 }

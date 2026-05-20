@@ -79,6 +79,13 @@ export class AdminComponent {
       color: 'bg-teal-50',
     },
     {
+      title: 'Demandes',
+      desc: 'Adhésions à approuver',
+      route: '/admin/demandes',
+      icon: '📨',
+      color: 'bg-orange-50',
+    },
+    {
       title: 'Rapports',
       desc: 'PDF et Excel',
       route: '/rapports',
