@@ -24,6 +24,7 @@ public record TontineResponse(
         BigDecimal montantCotisationAide,
         BigDecimal montantAmende,
         BigDecimal montantPenaliteRetard,
+        BigDecimal montantFondAideAnnuelMembre,
         Tontine.TypeAcces typeAcces,
         boolean visible,
         String descriptionAcces,
@@ -39,6 +40,7 @@ public record TontineResponse(
                 t.getTauxInteretPret(), t.getTauxInteretEpargne(),
                 t.getModeContributionAide(), t.getMontantCotisationAide(),
                 t.getMontantAmende(), t.getMontantPenaliteRetard(),
+                t.getMontantFondAideAnnuelMembre(),
                 t.getTypeAcces(), t.isVisible(), t.getDescriptionAcces(),
                 t.isActif(), t.getCreatedAt(), t.getUpdatedAt());
     }

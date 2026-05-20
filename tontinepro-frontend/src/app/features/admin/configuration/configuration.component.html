@@ -112,6 +112,22 @@
         </div>
       </section>
 
+      <!-- Fonds d'aide annuel -->
+      <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Fonds d'aide</h2>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Montant annuel par membre (FCFA)</label>
+          <input [(ngModel)]="form.montantFondAideAnnuelMembre" name="montantFondAideAnnuelMembre"
+                 type="number" min="0" class="input-field"
+                 placeholder="Ex : 12 000 FCFA / an" />
+          <p class="text-[11px] text-gray-400 mt-1">
+            Obligation annuelle de chaque membre envers le fonds d'aide.
+            Le paiement est suivi mensuellement lors des cotisations.
+            Si le bénéficiaire du jour ne s'en est pas acquitté, le solde restant est déduit de son pot.
+          </p>
+        </div>
+      </section>
+
       <!-- Messages -->
       @if (success()) {
         <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-4 py-3">

@@ -18,4 +18,6 @@ public interface CotisationRepository extends JpaRepository<Cotisation, UUID> {
     boolean existsByMembreIdAndMoisAndAnnee(UUID membreId, short mois, short annee);
 
     List<Cotisation> findAllByTontineIdAndAnnee(UUID tontineId, short annee);
+
+    List<Cotisation> findAllByMembreIdAndAnneeAndStatut(UUID membreId, short annee, Cotisation.Statut statut);
 }

@@ -43,8 +43,14 @@ public class Cotisation {
     @Column(nullable = false)
     private short annee;
 
+    /** Part tontine (contribue au pot du bénéficiaire). */
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal montant;
+
+    /** Part fonds d'aide (installment mensuel sur l'obligation annuelle). */
+    @Column(name = "montant_fond_aide", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantFondAide = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

@@ -28,6 +28,7 @@ export interface TontineResponse {
   montantCotisationAide: number | null;
   montantAmende: number;
   montantPenaliteRetard: number;
+  montantFondAideAnnuelMembre: number | null;
   typeAcces: 'OUVERTE' | 'RESTREINTE';
   visible: boolean;
   descriptionAcces: string | null;
@@ -52,4 +53,5 @@ export interface UpdateTontineConfigRequest {
   montantCotisationAide?: number;
   montantAmende?: number;
   montantPenaliteRetard?: number;
+  montantFondAideAnnuelMembre?: number;
 }

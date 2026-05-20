@@ -103,6 +103,15 @@ public class CotisationService {
                 request.datePaiement() != null ? request.datePaiement() : OffsetDateTime.now());
         cotisation.setReferencePaiement(request.referencePaiement());
 
+        // Montant tontine (part du pot) — si fourni, remplace la valeur par défaut
+        if (request.montantTontine() != null) {
+            cotisation.setMontant(request.montantTontine());
+        }
+        // Montant fonds d'aide de ce mois
+        if (request.montantFondAide() != null) {
+            cotisation.setMontantFondAide(request.montantFondAide());
+        }
+
         CotisationResponse response = CotisationResponse.from(cotisationRepository.save(cotisation));
 
         notificationService.notifier(cotisation.getMembre().getUser(),

@@ -67,6 +67,7 @@ export class ConfigurationComponent implements OnInit {
             tauxInteretEpargne:   t.tauxInteretEpargne,
             montantAmende:        t.montantAmende,
             montantPenaliteRetard: t.montantPenaliteRetard,
+            montantFondAideAnnuelMembre: t.montantFondAideAnnuelMembre ?? undefined,
             modeContributionAide: t.modeContributionAide,
             montantCotisationAide: t.montantCotisationAide ?? undefined,
           };

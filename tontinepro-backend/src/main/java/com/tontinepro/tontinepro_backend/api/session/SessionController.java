@@ -58,6 +58,13 @@ public class SessionController {
         return sessionService.reordonnerBeneficiaires(id, request);
     }
 
+    @GetMapping("/{id}/bilan")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Bilan financier : pot tontine, fonds collecté, déduction bénéficiaire")
+    public SessionBilanResponse calculerBilan(@PathVariable UUID id) {
+        return sessionService.calculerBilan(id);
+    }
+
     @PostMapping("/{id}/recalibrer")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Ajouter les nouveaux membres à la session et recalculer dateFin")

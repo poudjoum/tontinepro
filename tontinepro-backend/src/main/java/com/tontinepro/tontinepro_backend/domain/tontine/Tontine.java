@@ -77,6 +77,9 @@ public class Tontine {
     @Builder.Default
     private BigDecimal montantPenaliteRetard = BigDecimal.ZERO;
 
+    @Column(name = "montant_fond_aide_annuel_membre", precision = 15, scale = 2)
+    private BigDecimal montantFondAideAnnuelMembre;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "type_acces", nullable = false, length = 20)
     @Builder.Default

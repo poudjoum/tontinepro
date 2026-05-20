@@ -5,6 +5,7 @@ import { SessionService } from '../../../core/services/session.service';
 import { TontineService } from '../../../core/services/tontine.service';
 import {
   SessionResponse,
+  SessionBilanResponse,
   OrdreBeneficiaireResponse,
   CreerSessionRequest,
   MiseAJourDateRequest,
@@ -33,6 +34,10 @@ export class SessionsComponent implements OnInit {
 
   // Session courante ouverte
   sessionOuverte = signal<SessionResponse | null>(null);
+
+  // Bilan de session
+  bilan = signal<SessionBilanResponse | null>(null);
+  afficherBilan = signal(false);
 
   // Validation bénéfice
   montantValide: { [ordreBeneficiaireId: string]: number } = {};
@@ -155,6 +160,22 @@ export class SessionsComponent implements OnInit {
 
   ouvrirSession(s: SessionResponse): void {
     this.sessionOuverte.set(s);
+  }
+
+  chargerBilan(session: SessionResponse): void {
+    this.saving.set(true);
+    this.error.set('');
+    this.sessionSvc.calculerBilan(session.id).subscribe({
+      next: b => {
+        this.bilan.set(b);
+        this.afficherBilan.set(true);
+        this.saving.set(false);
+      },
+      error: e => {
+        this.error.set(e.error?.message ?? 'Erreur chargement bilan');
+        this.saving.set(false);
+      },
+    });
   }
 
   recalibrer(session: SessionResponse): void {

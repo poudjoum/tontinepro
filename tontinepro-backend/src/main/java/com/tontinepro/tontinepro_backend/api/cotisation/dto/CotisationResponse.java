@@ -12,6 +12,8 @@ public record CotisationResponse(
         short mois,
         short annee,
         BigDecimal montant,
+        BigDecimal montantFondAide,
+        BigDecimal montantTotal,
         Cotisation.Statut statut,
         OffsetDateTime datePaiement,
         String referencePaiement,
@@ -25,11 +27,14 @@ public record CotisationResponse(
         OffsetDateTime updatedAt
 ) {
     public static CotisationResponse from(Cotisation c) {
+        BigDecimal fondAide = c.getMontantFondAide() != null ? c.getMontantFondAide() : BigDecimal.ZERO;
         return new CotisationResponse(
                 c.getId(),
                 c.getMois(),
                 c.getAnnee(),
                 c.getMontant(),
+                fondAide,
+                c.getMontant().add(fondAide),
                 c.getStatut(),
                 c.getDatePaiement(),
                 c.getReferencePaiement(),

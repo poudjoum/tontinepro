@@ -47,5 +47,8 @@ public record UpdateTontineConfigRequest(
         BigDecimal montantAmende,
 
         @DecimalMin("0.0")
-        BigDecimal montantPenaliteRetard
+        BigDecimal montantPenaliteRetard,
+
+        @DecimalMin("0.0")
+        BigDecimal montantFondAideAnnuelMembre
 ) {}

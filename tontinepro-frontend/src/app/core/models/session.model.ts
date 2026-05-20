@@ -42,3 +42,30 @@ export interface ValiderBeneficeRequest {
 export interface ReordonnerBeneficiairesRequest {
   ordreMembreIds: string[];
 }
+
+export interface LignePaiementMembre {
+  membreId: string;
+  matricule: string;
+  nomPrenom: string;
+  montantTontine: number;
+  montantFondAide: number;
+  total: number;
+  paye: boolean;
+}
+
+export interface SessionBilanResponse {
+  sessionId: string;
+  sessionNumero: number;
+  nbMembresPayes: number;
+  potTontineBrut: number;
+  fondsAideCollecte: number;
+  beneficiaireId: string | null;
+  beneficiaireNom: string | null;
+  beneficiairePrenom: string | null;
+  beneficiaireMatricule: string | null;
+  fondAideAnnuelObligation: number;
+  fondAidePayeCetteAnnee: number;
+  dettesFondsAide: number;
+  potBeneficiaireNet: number;
+  lignes: LignePaiementMembre[];
+}

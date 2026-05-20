@@ -1,6 +1,8 @@
 package com.tontinepro.tontinepro_backend.api.session;
 
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
+import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
+import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaire;
@@ -13,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,6 +28,7 @@ public class SessionService {
     private final OrdreBeneficiaireRepository ordreBeneficiaireRepository;
     private final TontineRepository tontineRepository;
     private final MembreRepository membreRepository;
+    private final CotisationRepository cotisationRepository;
     private final PeriodiciteService periodiciteService;
 
     @Transactional
@@ -245,6 +249,99 @@ public class SessionService {
         ordreBeneficiaireRepository.saveAll(ajouts);
 
         return getById(sessionId);
+    }
+
+    /**
+     * Calcule le bilan financier d'une session :
+     * - pot tontine brut (Σ montantTontine des cotisations payées ce mois)
+     * - fonds d'aide collecté (Σ montantFondAide) → trésorier
+     * - dette fonds d'aide du bénéficiaire (obligation annuelle − payé depuis jan)
+     * - pot net remis au bénéficiaire
+     */
+    @Transactional(readOnly = true)
+    public SessionBilanResponse calculerBilan(UUID sessionId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+
+        Tontine tontine = session.getTontine();
+        short mois  = (short) session.getDateDebut().getMonthValue();
+        short annee = (short) session.getDateDebut().getYear();
+
+        // Cotisations payées ce mois pour la tontine
+        List<Cotisation> cotisations = cotisationRepository
+                .findAllByTontineIdAndMoisAndAnnee(tontine.getId(), mois, annee)
+                .stream().filter(c -> c.getStatut() == Cotisation.Statut.PAYEE).toList();
+
+        BigDecimal potBrut = cotisations.stream()
+                .map(Cotisation::getMontant)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal fondsCollecte = cotisations.stream()
+                .map(c -> c.getMontantFondAide() != null ? c.getMontantFondAide() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Bénéficiaire du jour : premier non bénéficié dans l'ordre
+        OrdreBeneficiaire prochainOb = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(sessionId).stream()
+                .filter(ob -> !ob.isBeneficie()).findFirst().orElse(null);
+
+        // Calcul de la dette fonds d'aide du bénéficiaire
+        BigDecimal obligation = tontine.getMontantFondAideAnnuelMembre() != null
+                ? tontine.getMontantFondAideAnnuelMembre() : BigDecimal.ZERO;
+        BigDecimal dettesFondsAide = BigDecimal.ZERO;
+        BigDecimal fondAidePayeAnnee = BigDecimal.ZERO;
+
+        UUID benefId = null;
+        String benefNom = null, benefPrenom = null, benefMatricule = null;
+
+        if (prochainOb != null) {
+            benefId       = prochainOb.getMembre().getId();
+            benefNom      = prochainOb.getMembre().getNom();
+            benefPrenom   = prochainOb.getMembre().getPrenom();
+            benefMatricule = prochainOb.getMembre().getMatricule();
+
+            if (obligation.compareTo(BigDecimal.ZERO) > 0) {
+                fondAidePayeAnnee = cotisationRepository
+                        .findAllByMembreIdAndAnneeAndStatut(benefId, annee, Cotisation.Statut.PAYEE)
+                        .stream()
+                        .map(c -> c.getMontantFondAide() != null ? c.getMontantFondAide() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                dettesFondsAide = obligation.subtract(fondAidePayeAnnee);
+                if (dettesFondsAide.compareTo(BigDecimal.ZERO) < 0) {
+                    dettesFondsAide = BigDecimal.ZERO;
+                }
+            }
+        }
+
+        BigDecimal potNet = potBrut.subtract(dettesFondsAide);
+        if (potNet.compareTo(BigDecimal.ZERO) < 0) potNet = BigDecimal.ZERO;
+
+        // Lignes détail membres
+        List<Membre> membresActifs = membreRepository.findAllByTontineIdAndStatut(
+                tontine.getId(), Membre.Statut.ACTIF);
+
+        Map<UUID, Cotisation> cotParMembre = cotisations.stream()
+                .collect(Collectors.toMap(c -> c.getMembre().getId(), c -> c, (a, b) -> a));
+
+        List<SessionBilanResponse.LignePaiementMembre> lignes = membresActifs.stream().map(m -> {
+            Cotisation cot = cotParMembre.get(m.getId());
+            BigDecimal mt = cot != null ? cot.getMontant() : BigDecimal.ZERO;
+            BigDecimal mf = cot != null && cot.getMontantFondAide() != null
+                    ? cot.getMontantFondAide() : BigDecimal.ZERO;
+            return new SessionBilanResponse.LignePaiementMembre(
+                    m.getId(), m.getMatricule(), m.getPrenom() + " " + m.getNom(),
+                    mt, mf, mt.add(mf), cot != null
+            );
+        }).toList();
+
+        return new SessionBilanResponse(
+                sessionId, session.getNumero(),
+                cotisations.size(), potBrut, fondsCollecte,
+                benefId, benefNom, benefPrenom, benefMatricule,
+                obligation, fondAidePayeAnnee, dettesFondsAide,
+                potNet, lignes
+        );
     }
 
     // ─── helpers ───────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import {
   SessionResponse,
+  SessionBilanResponse,
   CreerSessionRequest,
   MiseAJourDateRequest,
   ValiderBeneficeRequest,
@@ -26,6 +27,10 @@ export class SessionService {
 
   getById(id: string) {
     return this.http.get<SessionResponse>(`${this.api}/${id}`);
+  }
+
+  calculerBilan(sessionId: string) {
+    return this.http.get<SessionBilanResponse>(`${this.api}/${sessionId}/bilan`);
   }
 
   mettreAJourProchainDate(id: string, request: MiseAJourDateRequest) {
