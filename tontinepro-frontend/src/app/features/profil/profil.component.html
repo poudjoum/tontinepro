@@ -10,15 +10,15 @@
 @if (!loading()) {
   <div class="space-y-4">
 
-    <!-- Messages -->
-    @if (error()) {
+    <!-- Messages globaux -->
+    @if (error() && editSection() === null) {
       <div class="card border border-red-200 bg-red-50 text-red-700 text-sm py-3 text-center">{{ error() }}</div>
     }
-    @if (success()) {
+    @if (success() && editSection() === null) {
       <div class="card border border-green-200 bg-green-50 text-green-700 text-sm py-3 text-center">{{ success() }}</div>
     }
 
-    <!-- ── Avatar + Infos personnelles ── -->
+    <!-- ── Avatar + Infos ── -->
     <div class="card">
       <div class="flex items-center gap-4">
         <div class="w-16 h-16 rounded-2xl bg-primary-100 flex items-center
@@ -27,20 +27,14 @@
         </div>
         <div class="flex-1 min-w-0">
           @if (membre()) {
-            <p class="text-xl font-bold text-gray-900">
-              {{ membre()!.nom }} {{ membre()!.prenom }}
-            </p>
+            <p class="text-xl font-bold text-gray-900">{{ membre()!.nom }} {{ membre()!.prenom }}</p>
             <p class="text-sm text-gray-500">{{ auth.currentUser()?.email }}</p>
             <div class="flex items-center gap-2 mt-1.5 flex-wrap">
               <span class="badge-gray">{{ membre()!.matricule }}</span>
               <span class="badge-info">{{ fonctionLabel(membre()!.fonction) }}</span>
-              @if (auth.isAdmin()) {
-                <span class="badge-warning">Admin</span>
-              }
             </div>
           } @else {
             <p class="font-semibold text-gray-900">{{ auth.currentUser()?.email }}</p>
-            <span class="badge-warning mt-1">{{ auth.currentUser()?.role }}</span>
           }
         </div>
       </div>
@@ -73,105 +67,159 @@
       </div>
     }
 
+    <!-- ══════════ MODIFIER LE PROFIL ══════════ -->
+    @if (editSection() === 'infos') {
+      <div class="card space-y-4 border border-primary-200">
+        <h2 class="font-semibold text-gray-900 text-sm">Modifier mon profil</h2>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Nom</label>
+            <input [(ngModel)]="editForm.nom" type="text" class="input-field" placeholder="Nom" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Prénom</label>
+            <input [(ngModel)]="editForm.prenom" type="text" class="input-field" placeholder="Prénom" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
+          <input [(ngModel)]="editForm.telephone" type="tel" class="input-field" placeholder="+237 6XX XXX XXX" />
+        </div>
+
+        @if (error()) {
+          <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ error() }}</div>
+        }
+
+        <div class="flex gap-2">
+          <button (click)="sauvegarderProfil()" [disabled]="submitting()" class="btn-primary flex-1">
+            @if (submitting()) { Enregistrement… } @else { Enregistrer }
+          </button>
+          <button (click)="editSection.set(null)" class="btn-secondary flex-1">Annuler</button>
+        </div>
+      </div>
+    } @else if (membre()) {
+      <button (click)="ouvrirEdit()"
+              class="flex items-center justify-between w-full bg-white rounded-xl px-4 py-3.5 shadow-sm border border-gray-100 text-sm font-medium text-gray-800 active:bg-gray-50">
+        <span>✏️ Modifier mon profil</span>
+        <span class="text-gray-400">›</span>
+      </button>
+    }
+
+    <!-- ══════════ CHANGER MOT DE PASSE ══════════ -->
+    @if (editSection() === 'mdp') {
+      <div class="card space-y-4 border border-amber-200">
+        <h2 class="font-semibold text-gray-900 text-sm">Changer mon mot de passe</h2>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Mot de passe actuel</label>
+          <input [(ngModel)]="mdpForm.ancien" type="password" class="input-field"
+                 placeholder="Mot de passe actuel" autocomplete="current-password" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Nouveau mot de passe</label>
+          <input [(ngModel)]="mdpForm.nouveau" type="password" class="input-field"
+                 placeholder="8 caractères minimum" autocomplete="new-password" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Confirmer le nouveau mot de passe</label>
+          <input [(ngModel)]="mdpForm.confirmation" type="password" class="input-field"
+                 placeholder="Répétez le nouveau mot de passe" autocomplete="new-password" />
+        </div>
+
+        @if (mdpError()) {
+          <div class="bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">{{ mdpError() }}</div>
+        }
+
+        <div class="flex gap-2">
+          <button (click)="changerMotDePasse()"
+                  [disabled]="submitting() || !mdpForm.ancien || !mdpForm.nouveau || !mdpForm.confirmation"
+                  class="btn-primary flex-1">
+            @if (submitting()) { Enregistrement… } @else { Changer le mot de passe }
+          </button>
+          <button (click)="editSection.set(null)" class="btn-secondary flex-1">Annuler</button>
+        </div>
+      </div>
+    } @else {
+      <button (click)="ouvrirMdp()"
+              class="flex items-center justify-between w-full bg-white rounded-xl px-4 py-3.5 shadow-sm border border-gray-100 text-sm font-medium text-gray-800 active:bg-gray-50">
+        <span>🔒 Changer mon mot de passe</span>
+        <span class="text-gray-400">›</span>
+      </button>
+    }
+
     <!-- ── Sécurité — 2FA ── -->
     <div class="card space-y-4">
       <div class="flex items-center justify-between">
-        <h2 class="font-semibold text-gray-900 text-sm">Sécurité</h2>
-      </div>
-
-      <!-- Statut 2FA -->
-      <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50">
-        <div>
-          <p class="text-sm font-medium text-gray-900">Double authentification (2FA)</p>
-          <p class="text-xs text-gray-500 mt-0.5">
-            {{ auth.twoFaEnabled() ? 'Activée — votre compte est protégé' : 'Désactivée' }}
-          </p>
-        </div>
+        <h2 class="font-semibold text-gray-900 text-sm">Double authentification (2FA)</h2>
         <div class="w-3 h-3 rounded-full flex-shrink-0"
              [class]="auth.twoFaEnabled() ? 'bg-green-500' : 'bg-gray-300'"></div>
       </div>
+      <p class="text-xs text-gray-500">
+        {{ auth.twoFaEnabled() ? 'Activée — votre compte est protégé.' : 'Désactivée — activez la 2FA pour plus de sécurité.' }}
+      </p>
 
-      <!-- Phase idle -->
       @if (phase2fa() === 'idle') {
         @if (!auth.twoFaEnabled()) {
-          <button (click)="activer2fa()" [disabled]="submitting()"
-                  class="btn-primary text-sm py-2.5">
+          <button (click)="activer2fa()" [disabled]="submitting()" class="btn-primary text-sm py-2.5">
             {{ submitting() ? 'Chargement...' : 'Activer la 2FA' }}
           </button>
         } @else {
           <button (click)="phase2fa.set('disable-code'); code2fa.set('')"
                   class="btn-secondary text-sm py-2.5 border-red-200 text-red-600">
-            Desactiver la 2FA
+            Désactiver la 2FA
           </button>
         }
       }
 
-      <!-- Phase setup — QR code -->
       @if (phase2fa() === 'setup-qr' && setup()) {
         <div class="space-y-3">
-          <p class="text-sm text-gray-700 font-medium">
-            1. Scannez ce QR code avec Google Authenticator ou Authy
-          </p>
+          <p class="text-sm text-gray-700 font-medium">1. Scannez ce QR code avec Google Authenticator ou Authy</p>
           <div class="flex justify-center">
-            <img [src]="setup()!.qrCodeDataUri" alt="QR code 2FA"
-                 class="w-48 h-48 border border-gray-200 rounded-xl">
+            <img [src]="setup()!.qrCodeDataUri" alt="QR code 2FA" class="w-48 h-48 border border-gray-200 rounded-xl">
           </div>
           <div class="bg-gray-50 rounded-xl p-3">
-            <p class="text-xs text-gray-500 mb-1">Ou saisissez ce secret manuellement :</p>
+            <p class="text-xs text-gray-500 mb-1">Secret manuel :</p>
             <p class="font-mono text-sm text-gray-900 break-all">{{ setup()!.secret }}</p>
           </div>
-          <button (click)="phase2fa.set('setup-code'); code2fa.set('')"
-                  class="btn-primary text-sm py-2.5">
+          <button (click)="phase2fa.set('setup-code'); code2fa.set('')" class="btn-primary text-sm py-2.5">
             2. J'ai scanné le QR code
           </button>
           <button (click)="annuler2fa()" class="btn-secondary text-sm py-2">Annuler</button>
         </div>
       }
 
-      <!-- Phase setup — saisie code -->
       @if (phase2fa() === 'setup-code') {
         <div class="space-y-3">
-          <p class="text-sm text-gray-700 font-medium">
-            Saisissez le code a 6 chiffres affiche par votre application
-          </p>
+          <p class="text-sm text-gray-700">Saisissez le code à 6 chiffres de votre application</p>
           <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
-                 [value]="code2fa()"
-                 (input)="code2fa.set($any($event.target).value)"
-                 placeholder="000000"
-                 class="input-field text-center text-2xl font-bold tracking-widest">
+                 [value]="code2fa()" (input)="code2fa.set($any($event.target).value)"
+                 placeholder="000000" class="input-field text-center text-2xl font-bold tracking-widest">
           <button (click)="confirmer2fa()" [disabled]="code2fa().length !== 6 || submitting()"
                   class="btn-primary text-sm py-2.5">
-            {{ submitting() ? 'Verification...' : 'Confirmer l\'activation' }}
+            {{ submitting() ? 'Vérification...' : 'Confirmer l\'activation' }}
           </button>
-          <button (click)="phase2fa.set('setup-qr')" class="btn-secondary text-sm py-2">
-            Retour
-          </button>
+          <button (click)="phase2fa.set('setup-qr')" class="btn-secondary text-sm py-2">Retour</button>
         </div>
       }
 
-      <!-- Phase disable — saisie code -->
       @if (phase2fa() === 'disable-code') {
         <div class="space-y-3">
-          <p class="text-sm text-gray-700">
-            Saisissez votre code TOTP actuel pour confirmer la desactivation
-          </p>
+          <p class="text-sm text-gray-700">Saisissez votre code TOTP pour confirmer la désactivation</p>
           <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
-                 [value]="code2fa()"
-                 (input)="code2fa.set($any($event.target).value)"
-                 placeholder="000000"
-                 class="input-field text-center text-2xl font-bold tracking-widest">
+                 [value]="code2fa()" (input)="code2fa.set($any($event.target).value)"
+                 placeholder="000000" class="input-field text-center text-2xl font-bold tracking-widest">
           <button (click)="desactiver2fa()" [disabled]="code2fa().length !== 6 || submitting()"
                   class="w-full min-h-[44px] flex items-center justify-center px-4 py-3
-                         rounded-xl bg-red-600 text-white font-semibold text-sm
-                         disabled:opacity-50">
-            {{ submitting() ? 'Desactivation...' : 'Confirmer la desactivation' }}
+                         rounded-xl bg-red-600 text-white font-semibold text-sm disabled:opacity-50">
+            {{ submitting() ? 'Désactivation...' : 'Confirmer la désactivation' }}
           </button>
           <button (click)="annuler2fa()" class="btn-secondary text-sm py-2">Annuler</button>
         </div>
       }
     </div>
 
-    <!-- ── Deconnexion ── -->
+    <!-- ── Déconnexion ── -->
     <button (click)="auth.logout()"
             class="w-full min-h-[44px] flex items-center justify-center gap-2
                    px-4 py-3 rounded-xl border border-red-200 text-red-600
@@ -180,7 +228,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
       </svg>
-      Se deconnecter
+      Se déconnecter
     </button>
 
   </div>
