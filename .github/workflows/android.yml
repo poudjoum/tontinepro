@@ -39,7 +39,7 @@ jobs:
       # ── 5. Sync Capacitor → copie les assets dans android/ ───────
       - name: Capacitor sync
         working-directory: tontinepro-frontend
-        run: npx cap sync android --no-build
+        run: npx cap sync android
 
       # ── 6. JDK 17 pour Gradle ────────────────────────────────────
       - name: Setup JDK 17
