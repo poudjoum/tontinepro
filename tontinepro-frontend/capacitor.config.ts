@@ -8,13 +8,9 @@ const config: CapacitorConfig = {
   webDir: 'dist/tontinepro-frontend/browser',
 
   server: {
-    androidScheme: 'https',
-
-    // ── Développement local ──────────────────────────────────────────
-    // Décommentez et remplacez l'IP par l'adresse de votre machine de dev
-    // pour que l'APK pointe directement sur le backend Spring Boot local.
-    // url: 'http://192.168.1.xxx:4200',
-    // cleartext: true,
+    androidScheme: 'http',
+    // Cleartext autorisé pour le réseau LAN (192.168.x.x non-HTTPS)
+    cleartext: true,
   },
 
   android: {

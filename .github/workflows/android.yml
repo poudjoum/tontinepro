@@ -1,0 +1,73 @@
+name: Build APK Android
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'tontinepro-frontend/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:   # Permet de déclencher manuellement depuis GitHub
+
+jobs:
+  build-apk:
+    name: Build APK (debug)
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Récupérer le code ──────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js pour Angular + Capacitor ──────────────────────
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tontinepro-frontend/package-lock.json
+
+      # ── 3. Installer les dépendances npm ─────────────────────────
+      - name: Install npm dependencies
+        working-directory: tontinepro-frontend
+        run: npm ci --ignore-scripts
+
+      # ── 4. Build Angular avec la config Capacitor ────────────────
+      - name: Build Angular (capacitor config)
+        working-directory: tontinepro-frontend
+        run: npx ng build --configuration capacitor
+
+      # ── 5. Sync Capacitor → copie les assets dans android/ ───────
+      - name: Capacitor sync
+        working-directory: tontinepro-frontend
+        run: npx cap sync android --no-build
+
+      # ── 6. JDK 17 pour Gradle ────────────────────────────────────
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # ── 7. Cache Gradle ──────────────────────────────────────────
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('tontinepro-frontend/android/**/*.gradle*') }}
+
+      # ── 8. Build APK debug ────────────────────────────────────────
+      - name: Build debug APK
+        working-directory: tontinepro-frontend/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      # ── 9. Publier l'APK comme artefact téléchargeable ───────────
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tontinepro-debug-${{ github.run_number }}
+          path: tontinepro-frontend/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
