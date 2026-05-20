@@ -10,12 +10,26 @@ import { TontineResponse } from '../../core/models/tontine.model';
     <div class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 p-4">
       <div class="max-w-2xl mx-auto space-y-4">
 
-        <div class="text-center pt-4 pb-2">
-          <div class="inline-flex items-center justify-center w-14 h-14 bg-primary-600 rounded-2xl mb-3">
-            <span class="text-white text-xl font-bold">T</span>
+        <!-- Header -->
+        <div class="flex items-center justify-between pt-2">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-primary-600 rounded-xl flex items-center justify-center">
+              <span class="text-white font-bold">T</span>
+            </div>
+            <span class="font-bold text-gray-900">TontinePro</span>
           </div>
-          <h1 class="text-2xl font-bold text-gray-900">TontinePro</h1>
-          <p class="text-sm text-gray-500 mt-1">Tontines disponibles</p>
+          <a routerLink="/auth/login"
+             class="text-sm font-semibold text-primary-600 border border-primary-300
+                    px-3 py-1.5 rounded-lg">
+            Se connecter
+          </a>
+        </div>
+
+        <div class="text-center py-2">
+          <h1 class="text-xl font-bold text-gray-900">Tontines disponibles</h1>
+          <p class="text-sm text-gray-500 mt-1">
+            Sélectionnez une tontine pour consulter ses conditions et faire votre demande.
+          </p>
         </div>
 
         @if (loading()) {

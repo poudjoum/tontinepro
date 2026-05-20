@@ -206,3 +206,28 @@
     {{ error() }}
   </div>
 }
+
+<!-- Utilisateur connecté mais sans profil membre (nouveau compte) -->
+@if (!loading() && !error() && !admin() && !membre()) {
+  <div class="space-y-6 text-center pt-6">
+    <div class="w-20 h-20 rounded-3xl bg-primary-100 flex items-center justify-center mx-auto">
+      <span class="text-4xl">🏦</span>
+    </div>
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">Bienvenue sur TontinePro</h2>
+      <p class="text-sm text-gray-500 mt-2 max-w-xs mx-auto">
+        Vous n'êtes pas encore membre d'une tontine.
+        Découvrez les tontines disponibles et faites votre demande d'adhésion.
+      </p>
+    </div>
+    <div class="flex flex-col gap-3 max-w-xs mx-auto">
+      <a routerLink="/tontines"
+         class="btn-primary">
+        Découvrir les tontines →
+      </a>
+      <p class="text-xs text-gray-400">
+        Votre demande sera examinée par le Secrétaire de la tontine.
+      </p>
+    </div>
+  </div>
+}

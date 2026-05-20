@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
@@ -16,21 +16,28 @@ export class DashboardComponent implements OnInit {
   auth    = inject(AuthService);
   private svc = inject(DashboardService);
 
-  membre  = signal<MembreDashboard | null>(null);
-  admin   = signal<AdminDashboard | null>(null);
-  loading = signal(true);
-  error   = signal('');
+  membre   = signal<MembreDashboard | null>(null);
+  admin    = signal<AdminDashboard | null>(null);
+  error    = signal('');
+
+  // Compteur de chargement : deux appels possibles (admin + membre)
+  private pendingCalls = signal(0);
+  loading = computed(() => this.pendingCalls() > 0);
 
   ngOnInit(): void {
+    const callsToMake = this.auth.isGestionnaire() ? 2 : 1;
+    this.pendingCalls.set(callsToMake);
+
     if (this.auth.isGestionnaire()) {
       this.svc.getAdminDashboard().subscribe({
-        next:  d => { this.admin.set(d);  this.loading.set(false); },
-        error: e => { this.error.set(e.message); this.loading.set(false); },
+        next: d => { this.admin.set(d); this.pendingCalls.update(n => n - 1); },
+        error: () => { this.pendingCalls.update(n => n - 1); },
       });
     }
+
     this.svc.getMembreDashboard().subscribe({
-      next:  d => { this.membre.set(d); this.loading.set(false); },
-      error: () => this.loading.set(false),
+      next:  d => { this.membre.set(d); this.pendingCalls.update(n => n - 1); },
+      error: () => { this.pendingCalls.update(n => n - 1); },
     });
   }
 

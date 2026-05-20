@@ -40,7 +40,8 @@ export class RegisterComponent {
     this.auth.register({ email, password, telephone: telephone || undefined }).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/dashboard']);
+        // Nouvel utilisateur sans profil membre → découvrir les tontines
+        this.router.navigate(['/tontines']);
       },
       error: err => {
         this.loading.set(false);
