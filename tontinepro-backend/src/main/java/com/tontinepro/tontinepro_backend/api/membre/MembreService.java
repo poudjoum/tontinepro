@@ -54,14 +54,12 @@ public class MembreService {
                 .tontine(tontine)
                 .nom(request.nom())
                 .prenom(request.prenom())
+                .matricule(generateMatricule())
                 .dateAdhesion(request.dateAdhesion() != null ? request.dateAdhesion() : LocalDate.now())
                 .fonction(request.fonction() != null ? request.fonction() : Membre.Fonction.MEMBRE_ORDINAIRE)
                 .build();
 
         membre = membreRepository.save(membre);
-        membre.setMatricule(generateMatricule(membre.getId()));
-        membre = membreRepository.save(membre);
-
         compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());
 
         return MembreResponse.from(membre);
@@ -150,18 +148,16 @@ public class MembreService {
                 .tontine(tontine)
                 .nom(request.nom())
                 .prenom(request.prenom())
+                .matricule(generateMatricule())
                 .fonction(fonction)
                 .build();
         membre = membreRepository.save(membre);
-        membre.setMatricule(generateMatricule(membre.getId()));
-        membre = membreRepository.save(membre);
-
         compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());
 
         return MembreResponse.from(membre);
     }
 
-    private String generateMatricule(UUID membreId) {
-        return "MBR-" + membreId.toString().replace("-", "").substring(0, 8).toUpperCase();
+    private String generateMatricule() {
+        return "MBR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
     }
 }
