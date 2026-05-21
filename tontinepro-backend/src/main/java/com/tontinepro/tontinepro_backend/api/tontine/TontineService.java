@@ -78,9 +78,23 @@ public class TontineService {
     }
 
     @Transactional(readOnly = true)
-    public List<TontineResponse> listActive() {
-        return tontineRepository.findAllByActifTrue()
-                .stream().map(TontineResponse::from).toList();
+    public List<TontineResponse> listActive(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        // Le super-admin voit toutes les tontines
+        if (user.getRole() == User.Role.SUPER_ADMIN) {
+            return tontineRepository.findAllByActifTrue()
+                    .stream().map(TontineResponse::from).toList();
+        }
+
+        // Les autres voient uniquement les tontines auxquelles ils appartiennent
+        return membreRepository.findAllByUserEmail(email).stream()
+                .map(m -> m.getTontine())
+                .filter(Tontine::isActif)
+                .map(TontineResponse::from)
+                .distinct()
+                .toList();
     }
 
     @Transactional(readOnly = true)

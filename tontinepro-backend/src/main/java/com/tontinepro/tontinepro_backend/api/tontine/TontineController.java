@@ -41,9 +41,9 @@ public class TontineController {
     }
 
     @GetMapping
-    @Operation(summary = "Lister les tontines actives (authentifié)")
-    public List<TontineResponse> listActive() {
-        return tontineService.listActive();
+    @Operation(summary = "Lister les tontines actives (authentifié) — filtrées par appartenance")
+    public List<TontineResponse> listActive(@AuthenticationPrincipal UserDetails principal) {
+        return tontineService.listActive(principal.getUsername());
     }
 
     @GetMapping("/{id}")
