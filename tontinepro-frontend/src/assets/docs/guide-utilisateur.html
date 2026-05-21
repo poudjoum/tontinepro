@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TontinePro — Guide Utilisateur</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #1e293b; font-size: 14px; line-height: 1.6; }
+  .container { max-width: 860px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Cover */
+  .cover { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; border-radius: 20px; padding: 48px 40px; text-align: center; margin-bottom: 40px; }
+  .cover-logo { width: 64px; height: 64px; background: white; border-radius: 16px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; color: #4f46e5; }
+  .cover h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+  .cover .subtitle { font-size: 16px; opacity: 0.85; margin-bottom: 24px; }
+  .cover .version { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 16px; font-size: 13px; }
+
+  /* TOC */
+  .toc { background: white; border-radius: 16px; padding: 24px; margin-bottom: 32px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .toc h2 { font-size: 16px; color: #4f46e5; margin-bottom: 12px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { padding: 4px 0; }
+  .toc a { color: #4f46e5; text-decoration: none; }
+
+  /* Sections */
+  .section { background: white; border-radius: 16px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; }
+  .section-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .icon-blue { background: #eff6ff; }
+  .icon-green { background: #f0fdf4; }
+  .icon-purple { background: #faf5ff; }
+  .icon-orange { background: #fff7ed; }
+  .icon-red { background: #fef2f2; }
+  .icon-teal { background: #f0fdfa; }
+  .section h2 { font-size: 18px; font-weight: 700; color: #1e293b; }
+  .section h3 { font-size: 14px; font-weight: 700; color: #475569; margin: 16px 0 8px; }
+  .section p { color: #475569; margin-bottom: 10px; }
+  .section ul { padding-left: 20px; color: #475569; }
+  .section li { padding: 3px 0; }
+
+  /* Mockup phone */
+  .phone-frame { background: #1e293b; border-radius: 32px; padding: 12px; width: 220px; box-shadow: 0 20px 40px rgba(0,0,0,.25); flex-shrink: 0; }
+  .phone-screen { background: #f8fafc; border-radius: 22px; overflow: hidden; min-height: 380px; }
+  .phone-group { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin: 16px 0; }
+  .phone-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-align: center; margin-top: 8px; }
+
+  /* Screen components */
+  .sc-header { background: white; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+  .sc-header-logo { display: flex; align-items: center; gap: 6px; }
+  .sc-logo-dot { width: 20px; height: 20px; background: #4f46e5; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 9px; font-weight: 900; }
+  .sc-title { font-size: 10px; font-weight: 700; color: #1e293b; }
+  .sc-body { padding: 10px; }
+  .sc-card { background: white; border-radius: 10px; padding: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
+  .sc-card-title { font-size: 10px; font-weight: 700; color: #1e293b; }
+  .sc-card-sub { font-size: 9px; color: #94a3b8; margin-top: 2px; }
+  .sc-badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 8px; font-weight: 600; }
+  .badge-green { background: #dcfce7; color: #16a34a; }
+  .badge-blue { background: #dbeafe; color: #2563eb; }
+  .badge-amber { background: #fef3c7; color: #d97706; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+  .badge-gray { background: #f1f5f9; color: #64748b; }
+  .sc-nav { background: white; border-top: 1px solid #e2e8f0; padding: 8px 0 4px; display: flex; justify-content: space-around; }
+  .sc-nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .sc-nav-icon { font-size: 16px; }
+  .sc-nav-label { font-size: 7px; color: #94a3b8; }
+  .sc-nav-label.active { color: #4f46e5; }
+  .sc-row { display: flex; justify-content: space-between; align-items: center; }
+  .sc-avatar { width: 28px; height: 28px; border-radius: 50%; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #4f46e5; }
+  .sc-amount { font-size: 18px; font-weight: 800; color: #1e293b; }
+  .sc-amount-label { font-size: 8px; color: #94a3b8; }
+  .sc-divider { height: 1px; background: #f1f5f9; margin: 8px 0; }
+  .sc-btn { background: #4f46e5; color: white; border-radius: 8px; padding: 8px; text-align: center; font-size: 10px; font-weight: 600; margin-top: 8px; }
+  .sc-btn-outline { border: 1px solid #4f46e5; color: #4f46e5; border-radius: 8px; padding: 8px; text-align: center; font-size: 10px; font-weight: 600; margin-top: 6px; }
+  .sc-input { border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; font-size: 10px; color: #64748b; width: 100%; margin-bottom: 6px; }
+  .sc-label { font-size: 8px; font-weight: 600; color: #64748b; margin-bottom: 3px; }
+  .sc-section-title { font-size: 10px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
+  .sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .sc-stat { background: #f8fafc; border-radius: 8px; padding: 8px; text-align: center; }
+  .sc-stat-val { font-size: 13px; font-weight: 800; color: #4f46e5; }
+  .sc-stat-lab { font-size: 8px; color: #94a3b8; }
+  .sc-link { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 6px; }
+  .sc-link-text { font-size: 10px; font-weight: 500; color: #1e293b; }
+  .sc-link-arrow { color: #94a3b8; font-size: 12px; }
+  .sc-progress-bar { background: #e2e8f0; border-radius: 4px; height: 4px; margin-top: 4px; }
+  .sc-progress-fill { background: #4f46e5; border-radius: 4px; height: 4px; }
+  .sc-tag { display: inline-block; background: #eff6ff; color: #4f46e5; border-radius: 6px; padding: 2px 6px; font-size: 8px; font-weight: 600; }
+
+  /* Steps */
+  .steps { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; }
+  .step { display: flex; gap: 12px; }
+  .step-num { width: 24px; height: 24px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .step-content { flex: 1; }
+  .step-title { font-size: 13px; font-weight: 600; color: #1e293b; }
+  .step-desc { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+  /* Tips */
+  .tip { background: #eff6ff; border-left: 4px solid #4f46e5; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+  .tip-title { font-size: 12px; font-weight: 700; color: #4f46e5; margin-bottom: 4px; }
+  .tip p { color: #3730a3; font-size: 12px; margin: 0; }
+  .warning { background: #fff7ed; border-left: 4px solid #f97316; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+  .warning-title { font-size: 12px; font-weight: 700; color: #ea580c; margin-bottom: 4px; }
+  .warning p { color: #9a3412; font-size: 12px; margin: 0; }
+
+  .two-col { display: flex; gap: 20px; align-items: flex-start; }
+  .two-col .text { flex: 1; }
+
+  @media print {
+    body { background: white; }
+    .container { padding: 0; }
+    .section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Cover -->
+  <div class="cover">
+    <div class="cover-logo">T</div>
+    <h1>TontinePro</h1>
+    <p class="subtitle">Guide Utilisateur Complet</p>
+    <span class="version">Version 1.0 — Mai 2026</span>
+  </div>
+
+  <!-- Table des matières -->
+  <div class="toc">
+    <h2>📋 Table des matières</h2>
+    <ol>
+      <li><a href="#connexion">Connexion et premiers pas</a></li>
+      <li><a href="#membre">Espace membre — Vue quotidienne</a></li>
+      <li><a href="#rejoindre">Rejoindre une tontine</a></li>
+      <li><a href="#cotisations">Mes cotisations</a></li>
+      <li><a href="#epargne">Mon épargne</a></li>
+      <li><a href="#prets">Prêts et remboursements</a></li>
+      <li><a href="#suivi">Suivi mensuel</a></li>
+      <li><a href="#profil">Mon profil et sécurité</a></li>
+      <li><a href="#admin">Administration (Secrétaire / Président)</a></li>
+      <li><a href="#historique">Rattrapage historique — Import Excel</a></li>
+    </ol>
+  </div>
+
+  <!-- 1. Connexion -->
+  <div class="section" id="connexion">
+    <div class="section-header">
+      <div class="section-icon icon-blue">🔐</div>
+      <h2>1. Connexion et premiers pas</h2>
+    </div>
+
+    <div class="two-col">
+      <div class="text">
+        <h3>Se connecter</h3>
+        <p>Accède à l'application via le lien fourni par ton secrétaire. Saisis ton <strong>email</strong> et ton <strong>mot de passe</strong>.</p>
+
+        <h3>Activer son compte (membres pré-inscrits)</h3>
+        <p>Si ton secrétaire t'a inscrit directement avec ton numéro de téléphone, utilise la page <strong>"Activer mon compte"</strong> pour définir ton propre email et mot de passe.</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-title">Clique sur "Activer mon compte"</div>
+              <div class="step-desc">Accessible depuis la page de connexion</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-title">Saisis ton numéro de téléphone</div>
+              <div class="step-desc">Celui communiqué à ton secrétaire lors de l'inscription</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-title">Choisis ton email et mot de passe</div>
+              <div class="step-desc">Tu es immédiatement connecté</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div style="padding:20px 14px; background: linear-gradient(160deg,#4f46e5,#7c3aed); min-height:140px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+              <div style="width:40px;height:40px;background:white;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#4f46e5;font-size:18px;margin-bottom:10px;">T</div>
+              <div style="color:white;font-size:14px;font-weight:700;">TontinePro</div>
+              <div style="color:rgba(255,255,255,.7);font-size:9px;margin-top:3px;">Connexion à votre compte</div>
+            </div>
+            <div class="sc-body" style="padding-top:14px;">
+              <div class="sc-label">Adresse email</div>
+              <div class="sc-input">vous@email.com</div>
+              <div class="sc-label">Mot de passe</div>
+              <div class="sc-input">••••••••</div>
+              <div class="sc-btn">Se connecter</div>
+              <div style="text-align:center;margin-top:10px;font-size:9px;color:#4f46e5;">Activer mon compte →</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Écran de connexion</div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <div class="tip-title">💡 Rejoindre via un lien d'invitation</div>
+      <p>Si tu reçois un lien d'invitation par SMS ou WhatsApp, ouvre-le et crée ton compte directement. Ton profil membre est automatiquement associé à la tontine.</p>
+    </div>
+  </div>
+
+  <!-- 2. Espace membre -->
+  <div class="section" id="membre">
+    <div class="section-header">
+      <div class="section-icon icon-green">🏠</div>
+      <h2>2. Espace membre — Vue quotidienne</h2>
+    </div>
+
+    <div class="two-col">
+      <div class="text">
+        <p>Le <strong>tableau de bord</strong> est la première page que tu vois après connexion. Il affiche en un coup d'œil :</p>
+        <ul>
+          <li>Le solde de ton <strong>épargne</strong></li>
+          <li>Tes <strong>cotisations</strong> du mois (payées / en attente)</li>
+          <li>Ton <strong>prochain tour</strong> de bénéfice</li>
+          <li>Les <strong>alertes</strong> importantes (sanctions, retards)</li>
+        </ul>
+        <h3>Navigation principale</h3>
+        <ul>
+          <li>🏠 <strong>Accueil</strong> — Tableau de bord</li>
+          <li>💳 <strong>Cotisations</strong> — Historique et statut</li>
+          <li>🏦 <strong>Épargne</strong> — Mon compte d'épargne</li>
+          <li>📋 <strong>Prêts</strong> — Demandes et remboursements</li>
+          <li>🤝 <strong>Aides</strong> — Fond de solidarité</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header">
+              <div class="sc-header-logo">
+                <div class="sc-logo-dot">T</div>
+                <span class="sc-title">TontinePro</span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:14px;">🔔</span>
+                <div class="sc-avatar">GE</div>
+              </div>
+            </div>
+            <div class="sc-body">
+              <div class="sc-card" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;">
+                <div style="font-size:8px;opacity:.8;">Mon épargne</div>
+                <div style="font-size:18px;font-weight:800;margin:4px 0;">75 000 FCFA</div>
+                <div style="font-size:8px;opacity:.8;">Tontine Famille Essome</div>
+              </div>
+              <div class="sc-section-title">Ce mois-ci</div>
+              <div class="sc-card">
+                <div class="sc-row">
+                  <div>
+                    <div class="sc-card-title">Cotisation novembre</div>
+                    <div class="sc-card-sub">Échéance : 10/11/2025</div>
+                  </div>
+                  <span class="sc-badge badge-green">✓ Payée</span>
+                </div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-row">
+                  <div>
+                    <div class="sc-card-title">Mon tour</div>
+                    <div class="sc-card-sub">Position 7 / 12</div>
+                  </div>
+                  <span class="sc-badge badge-blue">6 mois</span>
+                </div>
+              </div>
+            </div>
+            <div class="sc-nav">
+              <div class="sc-nav-item"><span class="sc-nav-icon">🏠</span><span class="sc-nav-label active">Accueil</span></div>
+              <div class="sc-nav-item"><span class="sc-nav-icon">💳</span><span class="sc-nav-label">Cotis.</span></div>
+              <div class="sc-nav-item"><span class="sc-nav-icon">🏦</span><span class="sc-nav-label">Épargne</span></div>
+              <div class="sc-nav-item"><span class="sc-nav-icon">📋</span><span class="sc-nav-label">Prêts</span></div>
+              <div class="sc-nav-item"><span class="sc-nav-icon">🤝</span><span class="sc-nav-label">Aides</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Tableau de bord</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Rejoindre -->
+  <div class="section" id="rejoindre">
+    <div class="section-header">
+      <div class="section-icon icon-purple">🔗</div>
+      <h2>3. Rejoindre une tontine</h2>
+    </div>
+    <h3>Via un lien d'invitation</h3>
+    <p>Le secrétaire génère un lien unique valable 72h. Lorsque tu cliques dessus :</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">La page d'accueil de la tontine s'affiche</div><div class="step-desc">Nom, description, conditions</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Remplis ton nom, prénom, téléphone, email et mot de passe</div><div class="step-desc">Si tu es déjà inscrit avec ce téléphone, tes credentials sont mis à jour</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Tu es automatiquement connecté</div><div class="step-desc">Matricule généré, compte épargne ouvert</div></div></div>
+    </div>
+    <div class="warning">
+      <div class="warning-title">⚠️ Lien à usage unique</div>
+      <p>Chaque lien d'invitation ne peut être utilisé qu'une seule fois. Si le lien a expiré (après 72h), demande un nouveau lien au secrétaire.</p>
+    </div>
+  </div>
+
+  <!-- 4. Cotisations -->
+  <div class="section" id="cotisations">
+    <div class="section-header">
+      <div class="section-icon icon-blue">💳</div>
+      <h2>4. Mes cotisations</h2>
+    </div>
+    <div class="two-col">
+      <div class="text">
+        <p>La page <strong>Cotisations</strong> affiche l'historique complet de toutes tes cotisations avec leur statut :</p>
+        <ul>
+          <li>✅ <strong>Payée</strong> — Cotisation enregistrée</li>
+          <li>⏳ <strong>En attente</strong> — À régler ce mois-ci</li>
+          <li>⚠️ <strong>En retard</strong> — Une sanction peut être générée</li>
+        </ul>
+        <h3>Saisie de séance</h3>
+        <p>Lors de chaque réunion, le secrétaire saisit les cotisations de tous les membres en une fois. Le statut de ta cotisation est mis à jour en temps réel.</p>
+      </div>
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header"><span class="sc-title">Mes cotisations</span></div>
+            <div class="sc-body">
+              <div class="sc-card">
+                <div class="sc-row"><div><div class="sc-card-title">Novembre 2025</div><div class="sc-card-sub">25 000 + 5 000 FCFA fond</div></div><span class="sc-badge badge-green">✓ Payée</span></div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-row"><div><div class="sc-card-title">Décembre 2025</div><div class="sc-card-sub">25 000 + 5 000 FCFA fond</div></div><span class="sc-badge badge-green">✓ Payée</span></div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-row"><div><div class="sc-card-title">Janvier 2026</div><div class="sc-card-sub">25 000 + 5 000 FCFA fond</div></div><span class="sc-badge badge-amber">⏳ Attente</span></div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-row"><div><div class="sc-card-title">Février 2026</div><div class="sc-card-sub">25 000 FCFA</div></div><span class="sc-badge badge-red">⚠ Retard</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Liste des cotisations</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Épargne -->
+  <div class="section" id="epargne">
+    <div class="section-header">
+      <div class="section-icon icon-green">🏦</div>
+      <h2>5. Mon épargne</h2>
+    </div>
+    <p>Chaque membre dispose d'un <strong>compte d'épargne individuel</strong>. Ce capital est constitué de :</p>
+    <ul>
+      <li>La <strong>part du fond antérieur</strong> allouée à ton épargne en début de session</li>
+      <li>Tes <strong>versements complémentaires</strong> libres en cours de session</li>
+      <li>Les <strong>intérêts</strong> distribués par le secrétaire en fin de session</li>
+    </ul>
+    <div class="tip">
+      <div class="tip-title">💡 Capital prêtable</div>
+      <p>Ton épargne constitue le capital disponible pour les prêts entre membres. En fin de session, le capital est reversé dans la caisse + les intérêts sont distribués à tous.</p>
+    </div>
+    <h3>Historique des mouvements</h3>
+    <p>Chaque dépôt, retrait et intérêt est tracé dans l'historique de ton compte épargne.</p>
+  </div>
+
+  <!-- 6. Prêts -->
+  <div class="section" id="prets">
+    <div class="section-header">
+      <div class="section-icon icon-orange">📋</div>
+      <h2>6. Prêts et remboursements</h2>
+    </div>
+    <div class="two-col">
+      <div class="text">
+        <h3>Faire une demande de prêt</h3>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Uploader les documents requis</div><div class="step-desc">Plan de localisation + reconnaissance de dette</div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Soumettre la demande</div><div class="step-desc">Montant, durée — le taux est fixé par la tontine</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Attendre la validation</div><div class="step-desc">Le Président ou Secrétaire approuve ou rejette</div></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Suivre l'échéancier</div><div class="step-desc">Rembourser chaque mensualité dans l'app</div></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header"><span class="sc-title">Mon prêt en cours</span></div>
+            <div class="sc-body">
+              <div class="sc-card" style="background:#f0fdf4;border-color:#86efac;">
+                <div class="sc-card-title" style="color:#16a34a;">✓ Approuvé</div>
+                <div style="font-size:18px;font-weight:800;margin:6px 0;">50 000 FCFA</div>
+                <div class="sc-card-sub">3 mois · Taux 5%/an</div>
+              </div>
+              <div class="sc-section-title" style="margin-top:10px;">Échéancier</div>
+              <div class="sc-card">
+                <div class="sc-row"><div><div class="sc-card-title">Échéance 1 — Fév 2026</div><div class="sc-card-sub">16 875 FCFA</div></div><span class="sc-badge badge-green">✓</span></div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-row"><div><div class="sc-card-title">Échéance 2 — Mar 2026</div><div class="sc-card-sub">16 875 FCFA</div></div><span class="sc-badge badge-amber">⏳</span></div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-row"><div><div class="sc-card-title">Échéance 3 — Avr 2026</div><div class="sc-card-sub">16 875 FCFA</div></div><span class="sc-badge badge-gray">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Échéancier de prêt</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Suivi -->
+  <div class="section" id="suivi">
+    <div class="section-header">
+      <div class="section-icon icon-teal">📊</div>
+      <h2>7. Suivi mensuel</h2>
+    </div>
+    <p>La page <strong>Suivi mensuel</strong> te donne une vue synthétique mois par mois de toute ton activité :</p>
+    <ul>
+      <li>Cotisations tontine et fond d'aide</li>
+      <li>Épargne (solde + mouvements)</li>
+      <li>Sanctions éventuelles</li>
+      <li>Remboursements de prêt</li>
+    </ul>
+    <p>Sélectionne l'année souhaitée pour consulter l'historique. Cette vue est accessible aux membres comme aux gestionnaires depuis le <strong>Profil → Espace membre</strong>.</p>
+
+    <div class="tip">
+      <div class="tip-title">💡 Pour les Présidents et Secrétaires</div>
+      <p>Accède à ton suivi membre via <strong>ton profil → Espace membre → Mon suivi mensuel</strong>. Même si tu as le rôle admin, ton compte épargne et tes cotisations sont bien trackés.</p>
+    </div>
+  </div>
+
+  <!-- 8. Profil -->
+  <div class="section" id="profil">
+    <div class="section-header">
+      <div class="section-icon icon-purple">👤</div>
+      <h2>8. Mon profil et sécurité</h2>
+    </div>
+    <div class="two-col">
+      <div class="text">
+        <h3>Accéder au profil</h3>
+        <p>Clique sur l'<strong>avatar en haut à droite</strong> dans toutes les pages.</p>
+        <h3>Informations disponibles</h3>
+        <ul>
+          <li>Nom, prénom, email, téléphone</li>
+          <li>Matricule et fonction dans la tontine</li>
+          <li>Statut du compte</li>
+        </ul>
+        <h3>Sécurité — Double authentification (2FA)</h3>
+        <p>Active la <strong>2FA</strong> pour protéger ton compte avec Google Authenticator ou Authy.</p>
+        <h3>Espace membre (gestionnaires)</h3>
+        <p>Les Présidents et Secrétaires accèdent à leurs pages membre (suivi, cotisations, épargne, prêts, aides, sanctions) directement depuis leur profil.</p>
+      </div>
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header"><span class="sc-title">Mon profil</span></div>
+            <div class="sc-body">
+              <div class="sc-card">
+                <div style="display:flex;gap:10px;align-items:center;">
+                  <div style="width:40px;height:40px;border-radius:12px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#4f46e5;">GE</div>
+                  <div>
+                    <div class="sc-card-title">ESSOME Georges</div>
+                    <div class="sc-card-sub">g.essome@mail.com</div>
+                    <div style="margin-top:4px;"><span class="sc-tag">MBR-A1B2C3D4</span> <span class="sc-badge badge-blue">Secrétaire</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="sc-section-title" style="margin-top:10px;">Espace membre</div>
+              <div class="sc-link"><span class="sc-link-text">📊 Mon suivi mensuel</span><span class="sc-link-arrow">›</span></div>
+              <div class="sc-link"><span class="sc-link-text">🔄 Mon tour de bénéfice</span><span class="sc-link-arrow">›</span></div>
+              <div class="sc-link"><span class="sc-link-text">💳 Mes cotisations</span><span class="sc-link-arrow">›</span></div>
+              <div class="sc-link"><span class="sc-link-text">🔒 Changer mot de passe</span><span class="sc-link-arrow">›</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Page profil</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Admin -->
+  <div class="section" id="admin">
+    <div class="section-header">
+      <div class="section-icon icon-orange">⚙️</div>
+      <h2>9. Administration (Secrétaire / Président)</h2>
+    </div>
+
+    <div class="two-col">
+      <div class="text">
+        <p>L'espace Administration est accessible via l'onglet <strong>⚙️ Admin</strong> dans la navigation.</p>
+        <h3>Fonctions disponibles</h3>
+        <ul>
+          <li>⚙️ <strong>Configuration</strong> — Taux d'intérêt, périodicité, fond d'aide</li>
+          <li>👥 <strong>Membres</strong> — Inscription directe, gestion des fonctions, suspension</li>
+          <li>🔗 <strong>Invitations</strong> — Générer des liens d'adhésion</li>
+          <li>📋 <strong>Absences</strong> — Appel de présence en réunion</li>
+          <li>⚠️ <strong>Sanctions</strong> — Amendes, marquer comme payées</li>
+          <li>🔄 <strong>Sessions</strong> — Créer sessions, échéancier, valider bénéfices</li>
+          <li>📨 <strong>Demandes</strong> — Approuver les adhésions</li>
+          <li>📊 <strong>Rapports</strong> — Export PDF/Excel</li>
+          <li>📤 <strong>Rattrapage</strong> — Import historique Excel</li>
+        </ul>
+        <h3>Gestion des membres RETIRE</h3>
+        <p>Un membre retiré <strong>disparaît automatiquement</strong> de toutes les vues (liste, calendrier, absences). Son historique financier est conservé.</p>
+      </div>
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header"><span class="sc-title">Administration</span></div>
+            <div class="sc-body">
+              <div style="background:linear-gradient(90deg,#4f46e5,#7c3aed);border-radius:10px;padding:10px;color:white;display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:18px;">🚀</span>
+                <div><div style="font-size:10px;font-weight:700;">Guide de démarrage</div><div style="font-size:8px;opacity:.8;">Config · Membres · Session</div></div>
+              </div>
+              <div class="sc-grid">
+                <div class="sc-card"><div style="font-size:16px;margin-bottom:4px;">⚙️</div><div class="sc-card-title" style="font-size:9px;">Configuration</div></div>
+                <div class="sc-card"><div style="font-size:16px;margin-bottom:4px;">👥</div><div class="sc-card-title" style="font-size:9px;">Membres</div></div>
+                <div class="sc-card"><div style="font-size:16px;margin-bottom:4px;">🔄</div><div class="sc-card-title" style="font-size:9px;">Sessions</div></div>
+                <div class="sc-card"><div style="font-size:16px;margin-bottom:4px;">📋</div><div class="sc-card-title" style="font-size:9px;">Absences</div></div>
+                <div class="sc-card"><div style="font-size:16px;margin-bottom:4px;">📤</div><div class="sc-card-title" style="font-size:9px;">Rattrapage</div></div>
+                <div class="sc-card"><div style="font-size:16px;margin-bottom:4px;">📊</div><div class="sc-card-title" style="font-size:9px;">Rapports</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Menu administration</div>
+      </div>
+    </div>
+
+    <h3>Calendrier des sessions</h3>
+    <p>L'échéancier d'une session affiche l'ordre de passage de chaque membre avec sa date prévue de bénéfice. Les membres <strong>retirés non encore bénéficiaires</strong> sont automatiquement masqués.</p>
+
+    <div class="phone-group">
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header"><span class="sc-title">Sessions — Calendrier</span></div>
+            <div class="sc-body">
+              <div class="sc-section-title">📅 Calendrier d'échéances</div>
+              <div class="sc-card" style="border-color:#fcd34d;background:#fffbeb;">
+                <div class="sc-row">
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <div style="width:22px;height:22px;background:#fef3c7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#d97706;">6</div>
+                    <div><div class="sc-card-title">BONAKENG Paul</div><div class="sc-card-sub">MBR-A1B2C3</div></div>
+                  </div>
+                  <div style="text-align:right;"><div style="font-size:9px;font-weight:600;color:#1e293b;">10 Mai 2026</div><div style="font-size:8px;color:#94a3b8;">Dans 15 jours</div></div>
+                </div>
+                <div style="margin-top:6px;"><span style="font-size:8px;background:#fef3c7;color:#d97706;border-radius:6px;padding:2px 6px;font-weight:600;">⭐ Prochain bénéficiaire</span></div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-row">
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <div style="width:22px;height:22px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#4f46e5;">7</div>
+                    <div><div class="sc-card-title">ESSOME Georges</div><div class="sc-card-sub">MBR-D4E5F6</div></div>
+                  </div>
+                  <div style="text-align:right;"><div style="font-size:9px;color:#94a3b8;font-style:italic;">Date non définie</div></div>
+                </div>
+              </div>
+              <div class="sc-card" style="background:#f8fafc;">
+                <div class="sc-row">
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <div style="width:22px;height:22px;background:#f0fdf4;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#16a34a;">5</div>
+                    <div><div class="sc-card-title" style="color:#64748b;">MBARGA Jean</div><div class="sc-card-sub">Tour 5 · Avr 2026</div></div>
+                  </div>
+                  <span class="sc-badge badge-green">✓ Bénéficié</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Calendrier d'échéances</div>
+      </div>
+
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header"><span class="sc-title">Appel de présence</span></div>
+            <div class="sc-body">
+              <div class="sc-label">Date de réunion</div>
+              <div class="sc-input">10/05/2026</div>
+              <div class="sc-section-title">Membres (10)</div>
+              <div class="sc-card" style="background:#f0fdf4;border-color:#86efac;">
+                <div class="sc-row">
+                  <div class="sc-card-title">ESSOME Georges</div>
+                  <span style="font-size:16px;">✅</span>
+                </div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-row">
+                  <div class="sc-card-title">BONAKENG Paul</div>
+                  <span style="font-size:16px;">⬜</span>
+                </div>
+              </div>
+              <div class="sc-card" style="background:#f0fdf4;border-color:#86efac;">
+                <div class="sc-row">
+                  <div class="sc-card-title">MBARGA Jean</div>
+                  <span style="font-size:16px;">✅</span>
+                </div>
+              </div>
+              <div class="sc-btn" style="margin-top:10px;">Valider l'appel</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Appel de présence</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. Import historique -->
+  <div class="section" id="historique">
+    <div class="section-header">
+      <div class="section-icon icon-teal">📤</div>
+      <h2>10. Rattrapage historique — Import Excel</h2>
+    </div>
+
+    <p>Cette fonctionnalité permet au secrétaire de <strong>mettre à jour l'application lorsque la tontine est déjà en cours</strong> (exemple : tontine à son tour 6/12 au moment de l'adoption de TontinePro).</p>
+
+    <div class="two-col">
+      <div class="text">
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Télécharger le modèle Excel</div><div class="step-desc">Admin → Rattrapage → "Télécharger le modèle Excel"</div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Remplir les 6 onglets</div><div class="step-desc">SESSION · TOURS_PASSES · COTISATIONS_PASSEES · ABSENCES_SANCTIONS · EPARGNE_COMPLEMENTAIRE · PRETS_EN_COURS</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Choisir la session dans l'app</div><div class="step-desc">Sélectionner la tontine et la session à renseigner</div></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Charger le fichier rempli</div><div class="step-desc">L'app affiche un aperçu des données détectées</div></div></div>
+          <div class="step"><div class="step-num">5</div><div class="step-content"><div class="step-title">Lancer l'import</div><div class="step-desc">Bilan détaillé + liste des avertissements éventuels</div></div></div>
+        </div>
+
+        <h3>Ce qui est importé</h3>
+        <ul>
+          <li>✅ Tours passés (qui a bénéficié, quand, combien)</li>
+          <li>✅ Cotisations par membre et par mois (PAYEE / EN_RETARD)</li>
+          <li>✅ Absences et sanctions (payées ou non)</li>
+          <li>✅ Capital épargne initial + versements complémentaires</li>
+          <li>✅ Fond antérieur (caisse du trésorier)</li>
+          <li>✅ Prêts en cours avec échéancier et remboursements effectués</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header"><span class="sc-title">Rattrapage historique</span></div>
+            <div class="sc-body">
+              <div class="sc-card" style="background:#eff6ff;border-color:#bfdbfe;">
+                <div class="sc-card-title" style="color:#1d4ed8;">Étape 1 — Modèle Excel</div>
+                <div class="sc-btn" style="margin-top:8px;background:#2563eb;font-size:9px;padding:6px;">📥 Télécharger le modèle</div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-label">Session à renseigner</div>
+                <div class="sc-input">Session n°1 — EN_COURS</div>
+              </div>
+              <div class="sc-card" style="border-style:dashed;text-align:center;padding:16px 10px;">
+                <div style="font-size:24px;">📂</div>
+                <div style="font-size:9px;color:#64748b;margin-top:4px;">modele_historique_rempli.xlsx</div>
+                <div class="sc-badge badge-green" style="margin-top:4px;">✅ Fichier lu</div>
+              </div>
+              <div class="sc-card" style="background:#f0fdf4;border-color:#86efac;">
+                <div style="font-size:9px;font-weight:700;color:#16a34a;margin-bottom:6px;">✅ Fichier lu avec succès</div>
+                <div style="font-size:9px;color:#166534;">• 5 tours passés</div>
+                <div style="font-size:9px;color:#166534;">• 60 cotisations</div>
+                <div style="font-size:9px;color:#166534;">• 8 absences / 6 sanctions</div>
+                <div style="font-size:9px;color:#166534;">• Fond : 450 000 FCFA</div>
+              </div>
+              <div class="sc-btn" style="font-size:10px;">🚀 Lancer l'import</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Import historique</div>
+      </div>
+    </div>
+
+    <div class="warning">
+      <div class="warning-title">⚠️ Identification par téléphone</div>
+      <p>Les membres sont retrouvés par leur numéro de téléphone. Assure-toi que les numéros dans le fichier Excel correspondent exactement à ceux enregistrés dans l'app. Les lignes non reconnues sont signalées dans les avertissements.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:32px 0;color:#94a3b8;font-size:12px;">
+    <div style="font-weight:700;font-size:14px;color:#4f46e5;margin-bottom:4px;">TontinePro v1.0</div>
+    <div>tontinepro.tontinepro.uk · Mai 2026</div>
+    <div style="margin-top:8px;">Pour toute assistance : contactez votre secrétaire ou administrateur de tontine</div>
+  </div>
+
+</div>
+</body>
+</html>
