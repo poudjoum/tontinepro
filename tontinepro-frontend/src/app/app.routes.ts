@@ -205,6 +205,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/admin/onboarding/onboarding.component').then(m => m.OnboardingComponent),
           },
+          {
+            path: 'historique-import',
+            loadComponent: () =>
+              import('./features/admin/historique-import/historique-import.component').then(m => m.HistoriqueImportComponent),
+          },
         ],
       },
     ],

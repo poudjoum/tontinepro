@@ -115,5 +115,12 @@ export class AdminComponent {
       icon: '📊',
       color: 'bg-indigo-50',
     },
+    {
+      title: 'Rattrapage',
+      desc: 'Importer l\'historique d\'une session',
+      route: '/admin/historique-import',
+      icon: '📤',
+      color: 'bg-cyan-50',
+    },
   ];
 }
