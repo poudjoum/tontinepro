@@ -3,8 +3,10 @@ package com.tontinepro.tontinepro_backend.api.membre;
 import com.tontinepro.tontinepro_backend.api.membre.dto.CreateMembreRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.InscriptionDirecteRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
+import com.tontinepro.tontinepro_backend.api.membre.dto.ReinitialiserMembresResponse;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreFonctionRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreStatutRequest;
+import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargne;
 import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargneRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +34,7 @@ public class MembreService {
     private final UserRepository userRepository;
     private final TontineRepository tontineRepository;
     private final CompteEpargneRepository compteEpargneRepository;
+    private final CotisationRepository cotisationRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -174,6 +178,46 @@ public class MembreService {
         compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());
 
         return MembreResponse.from(membre);
+    }
+
+    /**
+     * Supprime les membres d'une tontine qui n'ont aucune activité financière
+     * pour qu'ils puissent se réinscrire proprement via un lien d'invitation.
+     * Les membres ayant des cotisations sont ignorés (données financières préservées).
+     * Le compte User est supprimé uniquement si le membre n'appartient à aucune autre tontine.
+     */
+    @Transactional
+    public ReinitialiserMembresResponse reinitialiserPourInvitation(UUID tontineId) {
+        List<Membre> membres = membreRepository.findAllByTontineId(tontineId);
+
+        List<ReinitialiserMembresResponse.MembreInfo> supprimes = new ArrayList<>();
+        List<ReinitialiserMembresResponse.MembreInfo> ignores  = new ArrayList<>();
+
+        for (Membre m : membres) {
+            boolean aCotisations = !cotisationRepository.findAllByMembreId(m.getId()).isEmpty();
+            String tel = m.getUser().getTelephone();
+
+            if (aCotisations) {
+                ignores.add(new ReinitialiserMembresResponse.MembreInfo(
+                        m.getNom(), m.getPrenom(), tel, "cotisations existantes"));
+                continue;
+            }
+
+            User user = m.getUser();
+            compteEpargneRepository.findByMembreId(m.getId())
+                    .ifPresent(compteEpargneRepository::delete);
+            membreRepository.delete(m);
+
+            // Supprimer le compte utilisateur s'il n'a plus aucun autre profil membre
+            if (!membreRepository.existsByUserId(user.getId())) {
+                userRepository.delete(user);
+            }
+
+            supprimes.add(new ReinitialiserMembresResponse.MembreInfo(
+                    m.getNom(), m.getPrenom(), tel, null));
+        }
+
+        return new ReinitialiserMembresResponse(supprimes, ignores);
     }
 
     private String generateMatricule() {

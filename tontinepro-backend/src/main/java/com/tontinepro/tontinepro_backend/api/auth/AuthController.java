@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.auth;
 
 import com.tontinepro.tontinepro_backend.api.auth.dto.*;
+import com.tontinepro.tontinepro_backend.api.auth.dto.ClaimerCompteRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -56,6 +57,12 @@ public class AuthController {
     public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails principal) {
         authService.logout(principal.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/activer-compte")
+    @Operation(summary = "Activer son compte via numéro de téléphone (membres pré-inscrits par un admin)")
+    public AuthResponse activerCompte(@Valid @RequestBody ClaimerCompteRequest request) {
+        return authService.activerCompte(request);
     }
 
     // ── 2FA ──────────────────────────────────────────────────────────────

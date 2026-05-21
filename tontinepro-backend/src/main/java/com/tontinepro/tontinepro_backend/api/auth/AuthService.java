@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.auth;
 
 import com.tontinepro.tontinepro_backend.api.auth.dto.AuthResponse;
+import com.tontinepro.tontinepro_backend.api.auth.dto.ClaimerCompteRequest;
 import com.tontinepro.tontinepro_backend.api.auth.dto.LoginRequest;
 import com.tontinepro.tontinepro_backend.api.auth.dto.RefreshRequest;
 import com.tontinepro.tontinepro_backend.api.auth.dto.RegisterRequest;
@@ -120,6 +121,32 @@ public class AuthService {
         refreshTokenRepository.save(stored);
 
         User user = stored.getUser();
+        return buildAuthResponse(user);
+    }
+
+    /**
+     * Permet à un membre pré-créé (par inscription directe admin) de réclamer son compte
+     * en utilisant son numéro de téléphone comme identifiant fiable,
+     * puis de définir son propre email et mot de passe.
+     */
+    @Transactional
+    public AuthResponse activerCompte(ClaimerCompteRequest request) {
+        User user = userRepository.findByTelephone(request.telephone())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Aucun compte trouvé pour ce numéro de téléphone"));
+
+        // Si le nouvel email est différent, vérifier qu'il n'est pas déjà pris par un autre compte
+        if (!request.email().equalsIgnoreCase(user.getEmail())) {
+            if (userRepository.existsByEmail(request.email())) {
+                throw new IllegalArgumentException("Cet email est déjà utilisé par un autre compte");
+            }
+            user.setEmail(request.email());
+        }
+
+        user.setHashedPassword(passwordEncoder.encode(request.motDePasse()));
+        userRepository.save(user);
+
+        refreshTokenRepository.revokeAllByUserId(user.getId());
         return buildAuthResponse(user);
     }
 

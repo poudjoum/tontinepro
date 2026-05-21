@@ -3,6 +3,7 @@ package com.tontinepro.tontinepro_backend.api.membre;
 import com.tontinepro.tontinepro_backend.api.membre.dto.CreateMembreRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.InscriptionDirecteRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.MembreResponse;
+import com.tontinepro.tontinepro_backend.api.membre.dto.ReinitialiserMembresResponse;
 import com.tontinepro.tontinepro_backend.api.membre.dto.SuiviMoisResponse;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreFonctionRequest;
 import com.tontinepro.tontinepro_backend.api.membre.dto.UpdateMembreStatutRequest;
@@ -87,6 +88,13 @@ public class MembreController {
             @Valid @RequestBody UpdateMembreFonctionRequest request
     ) {
         return membreService.updateFonction(id, request);
+    }
+
+    @DeleteMapping("/tontine/{tontineId}/reinitialiser")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Réinitialiser les membres d'une tontine sans activité financière (pour réinscription via invitation)")
+    public ReinitialiserMembresResponse reinitialiser(@PathVariable UUID tontineId) {
+        return membreService.reinitialiserPourInvitation(tontineId);
     }
 
     @GetMapping("/me/suivi")

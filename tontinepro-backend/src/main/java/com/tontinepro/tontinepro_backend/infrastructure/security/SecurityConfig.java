@@ -43,6 +43,7 @@ public class SecurityConfig {
         // Reset mot de passe (lien envoyé par super admin)
         "/api/v1/auth/reset-password/verify",
         "/api/v1/auth/reset-password/confirmer",
+        "/api/v1/auth/activer-compte",
         "/v3/api-docs/**",
         "/swagger-ui/**",
         "/swagger-ui.html"
