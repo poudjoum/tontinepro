@@ -110,10 +110,22 @@ public class InvitationService {
         // (il peut déjà être membre d'une autre tontine)
         User user;
         if (userRepository.existsByEmail(request.email())) {
+            // Compte trouvé par email — on le réutilise
             user = userRepository.findByEmail(request.email()).orElseThrow();
             if (membreRepository.existsByUserIdAndTontineId(user.getId(), tontine.getId())) {
                 throw new IllegalArgumentException("Vous êtes déjà membre de cette tontine");
             }
+        } else if (request.telephone() != null && !request.telephone().isBlank()
+                && userRepository.findByTelephone(request.telephone()).isPresent()) {
+            // Compte pré-créé par l'admin avec ce numéro de téléphone mais un email placeholder :
+            // on met à jour les credentials avec ceux fournis par le membre lui-même
+            user = userRepository.findByTelephone(request.telephone()).orElseThrow();
+            if (membreRepository.existsByUserIdAndTontineId(user.getId(), tontine.getId())) {
+                throw new IllegalArgumentException("Vous êtes déjà membre de cette tontine");
+            }
+            user.setEmail(request.email());
+            user.setHashedPassword(passwordEncoder.encode(request.password()));
+            userRepository.save(user);
         } else {
             user = userRepository.save(User.builder()
                     .email(request.email())
