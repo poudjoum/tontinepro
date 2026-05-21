@@ -134,14 +134,14 @@ public class InvitationService {
                     .role(User.Role.MEMBRE)
                     .build());
         }
+        String matricule = "MBR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
         Membre membre = Membre.builder()
                 .user(user)
                 .tontine(tontine)
                 .nom(request.nom())
                 .prenom(request.prenom())
+                .matricule(matricule)
                 .build();
-        membre = membreRepository.save(membre);
-        membre.setMatricule("MBR-" + membre.getId().toString().replace("-", "").substring(0, 8).toUpperCase());
         membre = membreRepository.save(membre);
 
         compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());
