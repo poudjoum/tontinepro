@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { MembreService } from '../../core/services/membre.service';
 import { ProfilService } from '../../core/services/profil.service';
@@ -16,7 +17,7 @@ const FONCTION_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-profil',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './profil.component.html',
 })
 export class ProfilComponent implements OnInit {
@@ -46,7 +47,12 @@ export class ProfilComponent implements OnInit {
   ngOnInit(): void {
     this.membreSvc.getMonProfil().subscribe({
       next:  m => { this.membre.set(m); this.loading.set(false); },
-      error: () => this.loading.set(false),
+      error: e => {
+        if (e.status !== 404 && e.status !== 400) {
+          this.error.set('Impossible de charger le profil membre.');
+        }
+        this.loading.set(false);
+      },
     });
   }
 
