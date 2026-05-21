@@ -63,3 +63,6 @@ app:
     endpoint:   ${MINIO_ENDPOINT:http://localhost:9000}
     access-key: ${MINIO_ACCESS_KEY:tontinepro}
     secret-key: ${MINIO_SECRET_KEY:changeme-minio-secret}
+  superadmin:
+    email:    ${SUPERADMIN_EMAIL:}
+    password: ${SUPERADMIN_PASSWORD:}
