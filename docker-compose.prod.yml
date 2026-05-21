@@ -61,6 +61,8 @@ services:
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       # URL publique du frontend (pour les liens dans les emails)
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-https://tontinepro.tontinepro.uk}
+      SUPERADMIN_EMAIL:    ${SUPERADMIN_EMAIL:-}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy
