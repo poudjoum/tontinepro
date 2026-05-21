@@ -146,6 +146,7 @@ public class SessionService {
                     ob.getMembre().getNom(),
                     ob.getMembre().getPrenom(),
                     ob.getMembre().getMatricule(),
+                    ob.getMembre().getStatut().name(),
                     ob.getOrdre(),
                     dateEffective,
                     ob.getMontantRecu(),

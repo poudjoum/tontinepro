@@ -51,7 +51,8 @@ export class MembresAdminComponent implements OnInit {
   filtres = computed(() => {
     const q = this.recherche.toLowerCase();
     return this.membres().filter(m =>
-      !q || m.nom.toLowerCase().includes(q) || m.prenom.toLowerCase().includes(q) || m.matricule.toLowerCase().includes(q)
+      m.statut !== 'RETIRE' &&
+      (!q || m.nom.toLowerCase().includes(q) || m.prenom.toLowerCase().includes(q) || m.matricule.toLowerCase().includes(q))
     );
   });
 

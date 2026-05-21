@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.session.dto;
 
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaire;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ public record OrdreBeneficiaireResponse(
         String membreNom,
         String membrePrenom,
         String membreMatricule,
+        String membreStatut,
         int ordre,
         LocalDate dateBenefice,
         BigDecimal montantRecu,
@@ -24,6 +26,7 @@ public record OrdreBeneficiaireResponse(
                 ob.getMembre().getNom(),
                 ob.getMembre().getPrenom(),
                 ob.getMembre().getMatricule(),
+                ob.getMembre().getStatut().name(),
                 ob.getOrdre(),
                 ob.getDateBenefice(),
                 ob.getMontantRecu(),

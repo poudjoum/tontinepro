@@ -345,15 +345,18 @@ export class SessionsComponent implements OnInit {
     return this.beneficiairesTriesParDate(session).find(b => !b.beneficie) ?? null;
   }
 
-  /** Liste triée par dateBenefice ASC (nulls en dernier), puis par ordre. */
+  /** Liste triée par dateBenefice ASC (nulls en dernier), puis par ordre.
+   *  Les membres RETIRE qui n'ont pas encore bénéficié sont exclus de l'affichage. */
   beneficiairesTriesParDate(session: SessionResponse): OrdreBeneficiaireResponse[] {
-    return [...session.beneficiaires].sort((a, b) => {
-      if (!a.dateBenefice && !b.dateBenefice) return a.ordre - b.ordre;
-      if (!a.dateBenefice) return 1;
-      if (!b.dateBenefice) return -1;
-      const diff = new Date(a.dateBenefice).getTime() - new Date(b.dateBenefice).getTime();
-      return diff !== 0 ? diff : a.ordre - b.ordre;
-    });
+    return [...session.beneficiaires]
+      .filter(ob => ob.beneficie || ob.membreStatut !== 'RETIRE')
+      .sort((a, b) => {
+        if (!a.dateBenefice && !b.dateBenefice) return a.ordre - b.ordre;
+        if (!a.dateBenefice) return 1;
+        if (!b.dateBenefice) return -1;
+        const diff = new Date(a.dateBenefice).getTime() - new Date(b.dateBenefice).getTime();
+        return diff !== 0 ? diff : a.ordre - b.ordre;
+      });
   }
 
   joursRestants(dateStr: string | null): string {

@@ -6,6 +6,7 @@ export interface OrdreBeneficiaireResponse {
   membreNom: string;
   membrePrenom: string;
   membreMatricule: string;
+  membreStatut: 'ACTIF' | 'SUSPENDU' | 'RETIRE';
   ordre: number;
   dateBenefice: string | null;
   montantRecu: number | null;
