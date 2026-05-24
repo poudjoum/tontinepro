@@ -98,6 +98,8 @@
       <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
         <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Sanctions</h2>
 
+        <!-- Cotisation & absence -->
+        <p class="text-[11px] text-gray-500 font-medium uppercase tracking-wide">Cotisation &amp; absence</p>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Amende absence (FCFA)</label>
@@ -105,8 +107,69 @@
                    type="number" min="0" class="input-field" />
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Pénalité retard/jour (FCFA)</label>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Pénalité retard cotisation/jour (FCFA)</label>
             <input [(ngModel)]="form.montantPenaliteRetard" name="montantPenaliteRetard"
+                   type="number" min="0" class="input-field" />
+          </div>
+        </div>
+
+        <!-- Retard réunion par tranche -->
+        <p class="text-[11px] text-gray-500 font-medium uppercase tracking-wide mt-2">Retard à la réunion</p>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Tranche 1 (FCFA)</label>
+            <input [(ngModel)]="form.montantRetardReunionT1" name="montantRetardReunionT1"
+                   type="number" min="0" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Tranche 2 (FCFA)</label>
+            <input [(ngModel)]="form.montantRetardReunionT2" name="montantRetardReunionT2"
+                   type="number" min="0" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Tranche 3 (FCFA)</label>
+            <input [(ngModel)]="form.montantRetardReunionT3" name="montantRetardReunionT3"
+                   type="number" min="0" class="input-field" />
+          </div>
+        </div>
+
+        <!-- Échec tontine -->
+        <p class="text-[11px] text-gray-500 font-medium uppercase tracking-wide mt-2">Échec tontine</p>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Avant bénéfice (FCFA)</label>
+            <input [(ngModel)]="form.montantEchecTontineAvant" name="montantEchecTontineAvant"
+                   type="number" min="0" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Après bénéfice (FCFA)</label>
+            <input [(ngModel)]="form.montantEchecTontineApres" name="montantEchecTontineApres"
+                   type="number" min="0" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Reversé bénéficiaire (FCFA)</label>
+            <input [(ngModel)]="form.montantReverseBeneficiaire" name="montantReverseBeneficiaire"
+                   type="number" min="0" class="input-field" />
+            <p class="text-[11px] text-gray-400 mt-0.5">Part versée au bénéficiaire du tour</p>
+          </div>
+        </div>
+
+        <!-- Troubles -->
+        <p class="text-[11px] text-gray-500 font-medium uppercase tracking-wide mt-2">Troubles</p>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Bagarre (FCFA)</label>
+            <input [(ngModel)]="form.montantTroubleBagarre" name="montantTroubleBagarre"
+                   type="number" min="0" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Engueulade (FCFA)</label>
+            <input [(ngModel)]="form.montantTroubleEngueulade" name="montantTroubleEngueulade"
+                   type="number" min="0" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Insulte (FCFA)</label>
+            <input [(ngModel)]="form.montantTroubleInsulte" name="montantTroubleInsulte"
                    type="number" min="0" class="input-field" />
           </div>
         </div>

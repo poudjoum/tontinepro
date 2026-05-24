@@ -35,9 +35,17 @@ export class SanctionsComponent implements OnInit {
   };
 
   types: { value: TypeSanction; label: string }[] = [
-    { value: 'ABSENCE_REUNION',    label: 'Absence à une réunion' },
-    { value: 'RETARD_COTISATION',  label: 'Retard de cotisation' },
-    { value: 'AUTRE',              label: 'Autre' },
+    { value: 'ABSENCE_REUNION',     label: 'Absence à une réunion' },
+    { value: 'RETARD_COTISATION',   label: 'Retard de cotisation' },
+    { value: 'RETARD_REUNION_T1',   label: 'Retard réunion — tranche 1' },
+    { value: 'RETARD_REUNION_T2',   label: 'Retard réunion — tranche 2' },
+    { value: 'RETARD_REUNION_T3',   label: 'Retard réunion — tranche 3' },
+    { value: 'ECHEC_TONTINE_AVANT', label: 'Échec tontine (avant bénéfice)' },
+    { value: 'ECHEC_TONTINE_APRES', label: 'Échec tontine (après bénéfice)' },
+    { value: 'TROUBLE_BAGARRE',     label: 'Trouble — bagarre' },
+    { value: 'TROUBLE_ENGUEULADE',  label: 'Trouble — engueulade' },
+    { value: 'TROUBLE_INSULTE',     label: 'Trouble — insulte' },
+    { value: 'AUTRE',               label: 'Autre' },
   ];
 
   total = computed(() =>

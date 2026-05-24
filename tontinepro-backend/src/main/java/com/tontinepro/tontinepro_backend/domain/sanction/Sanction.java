@@ -59,6 +59,14 @@ public class Sanction {
     public enum TypeSanction {
         RETARD_COTISATION,
         ABSENCE_REUNION,
+        RETARD_REUNION_T1,
+        RETARD_REUNION_T2,
+        RETARD_REUNION_T3,
+        ECHEC_TONTINE_AVANT,
+        ECHEC_TONTINE_APRES,
+        TROUBLE_BAGARRE,
+        TROUBLE_ENGUEULADE,
+        TROUBLE_INSULTE,
         AUTRE
     }
 }

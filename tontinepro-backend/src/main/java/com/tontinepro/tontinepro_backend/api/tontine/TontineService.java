@@ -200,6 +200,33 @@ public class TontineService {
         if (request.montantPenaliteRetard() != null) {
             tontine.setMontantPenaliteRetard(request.montantPenaliteRetard());
         }
+        if (request.montantRetardReunionT1() != null) {
+            tontine.setMontantRetardReunionT1(request.montantRetardReunionT1());
+        }
+        if (request.montantRetardReunionT2() != null) {
+            tontine.setMontantRetardReunionT2(request.montantRetardReunionT2());
+        }
+        if (request.montantRetardReunionT3() != null) {
+            tontine.setMontantRetardReunionT3(request.montantRetardReunionT3());
+        }
+        if (request.montantEchecTontineAvant() != null) {
+            tontine.setMontantEchecTontineAvant(request.montantEchecTontineAvant());
+        }
+        if (request.montantEchecTontineApres() != null) {
+            tontine.setMontantEchecTontineApres(request.montantEchecTontineApres());
+        }
+        if (request.montantReverseBeneficiaire() != null) {
+            tontine.setMontantReverseBeneficiaire(request.montantReverseBeneficiaire());
+        }
+        if (request.montantTroubleBagarre() != null) {
+            tontine.setMontantTroubleBagarre(request.montantTroubleBagarre());
+        }
+        if (request.montantTroubleEngueulade() != null) {
+            tontine.setMontantTroubleEngueulade(request.montantTroubleEngueulade());
+        }
+        if (request.montantTroubleInsulte() != null) {
+            tontine.setMontantTroubleInsulte(request.montantTroubleInsulte());
+        }
 
         return TontineResponse.from(tontineRepository.save(tontine));
     }

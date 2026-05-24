@@ -28,6 +28,15 @@ export interface TontineResponse {
   montantCotisationAide: number | null;
   montantAmende: number;
   montantPenaliteRetard: number;
+  montantRetardReunionT1: number;
+  montantRetardReunionT2: number;
+  montantRetardReunionT3: number;
+  montantEchecTontineAvant: number;
+  montantEchecTontineApres: number;
+  montantReverseBeneficiaire: number;
+  montantTroubleBagarre: number;
+  montantTroubleEngueulade: number;
+  montantTroubleInsulte: number;
   montantFondAideAnnuelMembre: number | null;
   typeAcces: 'OUVERTE' | 'RESTREINTE';
   visible: boolean;
@@ -53,5 +62,14 @@ export interface UpdateTontineConfigRequest {
   montantCotisationAide?: number;
   montantAmende?: number;
   montantPenaliteRetard?: number;
+  montantRetardReunionT1?: number;
+  montantRetardReunionT2?: number;
+  montantRetardReunionT3?: number;
+  montantEchecTontineAvant?: number;
+  montantEchecTontineApres?: number;
+  montantReverseBeneficiaire?: number;
+  montantTroubleBagarre?: number;
+  montantTroubleEngueulade?: number;
+  montantTroubleInsulte?: number;
   montantFondAideAnnuelMembre?: number;
 }

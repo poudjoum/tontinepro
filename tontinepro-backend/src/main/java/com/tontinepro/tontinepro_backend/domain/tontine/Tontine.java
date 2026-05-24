@@ -77,6 +77,42 @@ public class Tontine {
     @Builder.Default
     private BigDecimal montantPenaliteRetard = BigDecimal.ZERO;
 
+    @Column(name = "montant_retard_reunion_t1", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantRetardReunionT1 = BigDecimal.ZERO;
+
+    @Column(name = "montant_retard_reunion_t2", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantRetardReunionT2 = BigDecimal.ZERO;
+
+    @Column(name = "montant_retard_reunion_t3", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantRetardReunionT3 = BigDecimal.ZERO;
+
+    @Column(name = "montant_echec_tontine_avant", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantEchecTontineAvant = BigDecimal.ZERO;
+
+    @Column(name = "montant_echec_tontine_apres", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantEchecTontineApres = BigDecimal.ZERO;
+
+    @Column(name = "montant_reverse_beneficiaire", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantReverseBeneficiaire = BigDecimal.ZERO;
+
+    @Column(name = "montant_trouble_bagarre", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantTroubleBagarre = BigDecimal.ZERO;
+
+    @Column(name = "montant_trouble_engueulade", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantTroubleEngueulade = BigDecimal.ZERO;
+
+    @Column(name = "montant_trouble_insulte", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantTroubleInsulte = BigDecimal.ZERO;
+
     @Column(name = "montant_fond_aide_annuel_membre", precision = 15, scale = 2)
     private BigDecimal montantFondAideAnnuelMembre;
 

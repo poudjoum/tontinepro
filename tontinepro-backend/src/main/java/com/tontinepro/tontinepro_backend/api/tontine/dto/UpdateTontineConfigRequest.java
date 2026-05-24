@@ -50,5 +50,32 @@ public record UpdateTontineConfigRequest(
         BigDecimal montantPenaliteRetard,
 
         @DecimalMin("0.0")
+        BigDecimal montantRetardReunionT1,
+
+        @DecimalMin("0.0")
+        BigDecimal montantRetardReunionT2,
+
+        @DecimalMin("0.0")
+        BigDecimal montantRetardReunionT3,
+
+        @DecimalMin("0.0")
+        BigDecimal montantEchecTontineAvant,
+
+        @DecimalMin("0.0")
+        BigDecimal montantEchecTontineApres,
+
+        @DecimalMin("0.0")
+        BigDecimal montantReverseBeneficiaire,
+
+        @DecimalMin("0.0")
+        BigDecimal montantTroubleBagarre,
+
+        @DecimalMin("0.0")
+        BigDecimal montantTroubleEngueulade,
+
+        @DecimalMin("0.0")
+        BigDecimal montantTroubleInsulte,
+
+        @DecimalMin("0.0")
         BigDecimal montantFondAideAnnuelMembre
 ) {}
