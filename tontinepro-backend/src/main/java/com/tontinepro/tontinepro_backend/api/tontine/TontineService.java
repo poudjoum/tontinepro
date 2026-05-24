@@ -88,8 +88,9 @@ public class TontineService {
                     .stream().map(TontineResponse::from).toList();
         }
 
-        // Les autres voient uniquement les tontines auxquelles ils appartiennent
+        // Les autres voient uniquement les tontines auxquelles ils appartiennent (statut ACTIF)
         return membreRepository.findAllByUserEmail(email).stream()
+                .filter(m -> m.getStatut() == Membre.Statut.ACTIF)
                 .map(m -> m.getTontine())
                 .filter(Tontine::isActif)
                 .map(TontineResponse::from)
