@@ -16,7 +16,6 @@ import com.tontinepro.tontinepro_backend.domain.pret.EcheancePret;
 import com.tontinepro.tontinepro_backend.domain.pret.EcheancePretRepository;
 import com.tontinepro.tontinepro_backend.domain.pret.Pret;
 import com.tontinepro.tontinepro_backend.domain.pret.PretRepository;
-import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
 import com.tontinepro.tontinepro_backend.domain.user.User;
 import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
@@ -105,14 +104,9 @@ public class DashboardService {
 
     @Transactional(readOnly = true)
     public AdminDashboardResponse getAdminDashboard(String email) {
-        // Tontine de l'admin via son profil membre, sinon première tontine active
         UUID tontineId = membreRepository.findByUserEmail(email)
                 .map(m -> m.getTontine().getId())
-                .orElseGet(() -> tontineRepository.findAllByActifTrue()
-                        .stream().findFirst()
-                        .map(Tontine::getId)
-                        .orElseThrow(() -> new IllegalStateException("Aucune tontine configurée"))
-                );
+                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre pour ce compte"));
 
         Tontine tontine = tontineRepository.findById(tontineId).orElseThrow();
 

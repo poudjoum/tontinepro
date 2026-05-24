@@ -228,8 +228,19 @@
   </div>
 }
 
-<!-- Utilisateur connecté mais sans profil membre (nouveau compte ou profil non trouvé) -->
-@if (!loading() && (sansProfil() || (!admin() && !membre()))) {
+<!-- Gestionnaire sans profil membre : message d'erreur (ne pas proposer la page publique) -->
+@if (!loading() && (sansProfil() || (!admin() && !membre())) && auth.isGestionnaire()) {
+  <div class="card text-center py-10 space-y-2">
+    <p class="text-gray-700 font-semibold">Profil membre introuvable</p>
+    <p class="text-sm text-gray-500">
+      Votre compte n'est pas encore associé à un profil membre.<br>
+      Contactez le Super Administrateur de la plateforme.
+    </p>
+  </div>
+}
+
+<!-- Nouvel utilisateur sans tontine : panneau d'onboarding -->
+@if (!loading() && (sansProfil() || (!admin() && !membre())) && !auth.isGestionnaire()) {
   <div class="space-y-6 text-center pt-6">
     <div class="w-20 h-20 rounded-3xl bg-primary-100 flex items-center justify-center mx-auto">
       <span class="text-4xl">🏦</span>
