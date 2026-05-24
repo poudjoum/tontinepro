@@ -5,6 +5,7 @@ import {
   SuperAdminService,
   TontinePlatformeResponse,
   ConfigurerRedevanceRequest,
+  SuperAdminCreerTontineRequest,
 } from '../../core/services/super-admin.service';
 
 @Component({
@@ -25,6 +26,21 @@ export class SuperAdminComponent implements OnInit {
   nbActives     = computed(() => this.tontines().filter(t => t.actif).length);
   totalMembres  = computed(() => this.tontines().reduce((s, t) => s + t.nombreMembresActifs, 0));
 
+  // Formulaire création tontine
+  afficherFormCreation = signal(false);
+  creationForm: SuperAdminCreerTontineRequest = {
+    tontineNom: '',
+    tontineDescription: '',
+    montantCotisationMin: 5000,
+    typeAcces: 'OUVERTE',
+    secretaireEmail: '',
+    secretaireNom: '',
+    secretairePrenom: '',
+    secretaireTelephone: '',
+    secretairePassword: '',
+  };
+  motDePasseVisible = signal(false);
+
   // Panneau redevance ouvert pour une tontine
   redevancePanelId = signal<string | null>(null);
   revForm: ConfigurerRedevanceRequest = {
@@ -38,6 +54,41 @@ export class SuperAdminComponent implements OnInit {
     this.svc.listerTontines().subscribe({
       next: t => { this.tontines.set(t); this.loading.set(false); },
       error: () => { this.error.set('Impossible de charger les tontines'); this.loading.set(false); },
+    });
+  }
+
+  ouvrirFormCreation(): void {
+    this.afficherFormCreation.set(true);
+    this.error.set('');
+    this.success.set('');
+  }
+
+  annulerCreation(): void {
+    this.afficherFormCreation.set(false);
+    this.creationForm = {
+      tontineNom: '', tontineDescription: '', montantCotisationMin: 5000,
+      typeAcces: 'OUVERTE', secretaireEmail: '', secretaireNom: '',
+      secretairePrenom: '', secretaireTelephone: '', secretairePassword: '',
+    };
+  }
+
+  soumettreTontine(): void {
+    this.saving.set(true);
+    this.error.set('');
+    const payload = {
+      ...this.creationForm,
+      tontineDescription: this.creationForm.tontineDescription || undefined,
+      secretaireTelephone: this.creationForm.secretaireTelephone || undefined,
+    };
+    this.svc.creerTontine(payload).subscribe({
+      next: t => {
+        this.tontines.update(list => [t, ...list]);
+        this.success.set(`Tontine "${t.nom}" créée avec succès.`);
+        this.afficherFormCreation.set(false);
+        this.annulerCreation();
+        this.saving.set(false);
+      },
+      error: e => { this.error.set(e.message ?? 'Erreur création'); this.saving.set(false); },
     });
   }
 

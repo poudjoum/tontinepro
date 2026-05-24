@@ -1,7 +1,12 @@
 package com.tontinepro.tontinepro_backend.api.superadmin;
 
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.ConfigurerRedevanceRequest;
+import com.tontinepro.tontinepro_backend.api.superadmin.dto.SuperAdminCreerTontineRequest;
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.TontinePlatformeResponse;
+import com.tontinepro.tontinepro_backend.domain.aide.FondsAide;
+import com.tontinepro.tontinepro_backend.domain.aide.FondsAideRepository;
+import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargne;
+import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargneRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.redevance.Redevance;
@@ -10,9 +15,12 @@ import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
 import com.tontinepro.tontinepro_backend.domain.user.PasswordResetToken;
 import com.tontinepro.tontinepro_backend.domain.user.PasswordResetTokenRepository;
+import com.tontinepro.tontinepro_backend.domain.user.User;
+import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
 import com.tontinepro.tontinepro_backend.infrastructure.notification.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,9 +37,54 @@ public class SuperAdminService {
     private final RedevanceRepository redevanceRepository;
     private final PasswordResetTokenRepository resetTokenRepository;
     private final EmailService emailService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final CompteEpargneRepository compteEpargneRepository;
+    private final FondsAideRepository fondsAideRepository;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendUrl;
+
+    @Transactional
+    public TontinePlatformeResponse creerTontine(SuperAdminCreerTontineRequest req) {
+        if (tontineRepository.existsByNom(req.tontineNom())) {
+            throw new IllegalArgumentException("Une tontine avec ce nom existe déjà");
+        }
+        if (userRepository.existsByEmail(req.secretaireEmail())) {
+            throw new IllegalArgumentException("Un compte existe déjà avec l'email : " + req.secretaireEmail());
+        }
+
+        Tontine tontine = tontineRepository.save(Tontine.builder()
+                .nom(req.tontineNom())
+                .description(req.tontineDescription())
+                .montantCotisationMin(req.montantCotisationMin())
+                .typeAcces(req.typeAcces() != null ? req.typeAcces() : Tontine.TypeAcces.OUVERTE)
+                .descriptionAcces(req.descriptionAcces())
+                .build());
+
+        fondsAideRepository.save(FondsAide.builder().tontine(tontine).build());
+
+        User secretaire = userRepository.save(User.builder()
+                .email(req.secretaireEmail())
+                .hashedPassword(passwordEncoder.encode(req.secretairePassword()))
+                .telephone(req.secretaireTelephone())
+                .role(User.Role.SECRETAIRE)
+                .build());
+
+        String matricule = "MBR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        Membre membre = membreRepository.save(Membre.builder()
+                .user(secretaire)
+                .tontine(tontine)
+                .nom(req.secretaireNom())
+                .prenom(req.secretairePrenom())
+                .matricule(matricule)
+                .fonction(Membre.Fonction.SECRETAIRE)
+                .build());
+
+        compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());
+
+        return toResponse(tontine);
+    }
 
     @Transactional(readOnly = true)
     public List<TontinePlatformeResponse> listerTontines() {
@@ -120,14 +173,12 @@ public class SuperAdminService {
         List<Membre> membres = membreRepository.findAllByTontineIdAndStatut(
                 t.getId(), Membre.Statut.ACTIF);
 
-        String emailPresident = membres.stream()
+        Membre president = membres.stream()
                 .filter(m -> m.getFonction() == Membre.Fonction.PRESIDENT)
-                .map(m -> m.getUser().getEmail())
                 .findFirst().orElse(null);
 
-        String emailSecretaire = membres.stream()
+        Membre secretaire = membres.stream()
                 .filter(m -> m.getFonction() == Membre.Fonction.SECRETAIRE)
-                .map(m -> m.getUser().getEmail())
                 .findFirst().orElse(null);
 
         TontinePlatformeResponse.RedevanceInfo rev = redevanceRepository.findByTontineId(t.getId())
@@ -139,6 +190,15 @@ public class SuperAdminService {
 
         return new TontinePlatformeResponse(
                 t.getId(), t.getNom(), t.getDescription(), t.isActif(),
-                membres.size(), emailPresident, emailSecretaire, rev);
+                membres.size(),
+                president != null ? president.getUser().getEmail() : null,
+                president != null ? president.getUser().getTelephone() : null,
+                president != null ? president.getNom() : null,
+                president != null ? president.getPrenom() : null,
+                secretaire != null ? secretaire.getUser().getEmail() : null,
+                secretaire != null ? secretaire.getUser().getTelephone() : null,
+                secretaire != null ? secretaire.getNom() : null,
+                secretaire != null ? secretaire.getPrenom() : null,
+                rev);
     }
 }

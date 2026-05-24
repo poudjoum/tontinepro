@@ -37,6 +37,97 @@
       </div>
     }
 
+    <!-- Bouton créer tontine -->
+    @if (!loading()) {
+      <button (click)="ouvrirFormCreation()"
+              class="w-full bg-primary-600 text-white text-sm font-semibold rounded-xl py-3 flex items-center justify-center gap-2">
+        <span class="text-lg leading-none">+</span> Créer une tontine
+      </button>
+    }
+
+    <!-- Formulaire de création -->
+    @if (afficherFormCreation()) {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+        <h2 class="text-sm font-bold text-gray-900">Nouvelle tontine</h2>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Nom de la tontine *</label>
+          <input [(ngModel)]="creationForm.tontineNom" type="text" class="input-field"
+                 placeholder="Ex : Tontine des amis de Douala" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Description</label>
+          <textarea [(ngModel)]="creationForm.tontineDescription" rows="2" class="input-field resize-none"
+                    placeholder="Décrivez la tontine…"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Cotisation min. (FCFA) *</label>
+            <input [(ngModel)]="creationForm.montantCotisationMin" type="number" min="0" class="input-field" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Type d'accès</label>
+            <select [(ngModel)]="creationForm.typeAcces" class="input-field">
+              <option value="OUVERTE">Ouverte</option>
+              <option value="RESTREINTE">Restreinte</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="border-gray-100" />
+        <p class="text-xs font-semibold text-gray-700">Compte Secrétaire gestionnaire</p>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Prénom *</label>
+            <input [(ngModel)]="creationForm.secretairePrenom" type="text" class="input-field" placeholder="Prénom" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Nom *</label>
+            <input [(ngModel)]="creationForm.secretaireNom" type="text" class="input-field" placeholder="Nom" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Email *</label>
+          <input [(ngModel)]="creationForm.secretaireEmail" type="email" class="input-field"
+                 placeholder="email@exemple.com" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
+          <input [(ngModel)]="creationForm.secretaireTelephone" type="tel" class="input-field"
+                 placeholder="+237 6XX XXX XXX" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Mot de passe provisoire *</label>
+          <div class="relative">
+            <input [(ngModel)]="creationForm.secretairePassword"
+                   [type]="motDePasseVisible() ? 'text' : 'password'"
+                   class="input-field pr-10" placeholder="Min 8 caractères" />
+            <button type="button" (click)="motDePasseVisible.set(!motDePasseVisible())"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+              {{ motDePasseVisible() ? 'Masquer' : 'Voir' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button (click)="annulerCreation()" class="btn-secondary flex-1 text-xs py-2">Annuler</button>
+          <button (click)="soumettreTontine()"
+                  [disabled]="saving() || !creationForm.tontineNom || !creationForm.secretaireEmail
+                              || !creationForm.secretairePassword || !creationForm.secretaireNom
+                              || !creationForm.secretairePrenom"
+                  class="btn-primary flex-1 text-xs py-2 disabled:opacity-50">
+            @if (saving()) { Création… } @else { Créer }
+          </button>
+        </div>
+      </div>
+    }
+
     <!-- Stats globales -->
     @if (!loading()) {
       <div class="grid grid-cols-3 gap-3">
@@ -71,11 +162,27 @@
                 </span>
               </div>
               <p class="text-xs text-gray-500 mt-0.5">{{ t.nombreMembresActifs }} membre(s) actif(s)</p>
-              @if (t.emailPresident) {
-                <p class="text-[10px] text-gray-400 mt-0.5">Président : {{ t.emailPresident }}</p>
-              }
               @if (t.emailSecretaire) {
-                <p class="text-[10px] text-gray-400">Secrétaire : {{ t.emailSecretaire }}</p>
+                <div class="mt-1 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1">
+                  <p class="text-[10px] font-medium text-amber-800">
+                    Secrétaire : {{ t.prenomSecretaire }} {{ t.nomSecretaire }}
+                  </p>
+                  <p class="text-[10px] text-amber-700">{{ t.emailSecretaire }}</p>
+                  @if (t.telephoneSecretaire) {
+                    <p class="text-[10px] text-amber-600">{{ t.telephoneSecretaire }}</p>
+                  }
+                </div>
+              }
+              @if (t.emailPresident) {
+                <div class="mt-1 bg-blue-50 border border-blue-100 rounded-lg px-2 py-1">
+                  <p class="text-[10px] font-medium text-blue-800">
+                    Président : {{ t.prenomPresident }} {{ t.nomPresident }}
+                  </p>
+                  <p class="text-[10px] text-blue-700">{{ t.emailPresident }}</p>
+                  @if (t.telephonePresident) {
+                    <p class="text-[10px] text-blue-600">{{ t.telephonePresident }}</p>
+                  }
+                </div>
               }
             </div>
 

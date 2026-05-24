@@ -11,7 +11,13 @@ public record TontinePlatformeResponse(
         boolean actif,
         int nombreMembresActifs,
         String emailPresident,
+        String telephonePresident,
+        String nomPresident,
+        String prenomPresident,
         String emailSecretaire,
+        String telephoneSecretaire,
+        String nomSecretaire,
+        String prenomSecretaire,
         RedevanceInfo redevance
 ) {
     public record RedevanceInfo(

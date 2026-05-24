@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.superadmin;
 
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.ConfigurerRedevanceRequest;
+import com.tontinepro.tontinepro_backend.api.superadmin.dto.SuperAdminCreerTontineRequest;
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.TontinePlatformeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +23,13 @@ import java.util.UUID;
 public class SuperAdminController {
 
     private final SuperAdminService superAdminService;
+
+    @PostMapping("/tontines")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Créer une tontine et un compte Secrétaire gestionnaire")
+    public TontinePlatformeResponse creerTontine(@Valid @RequestBody SuperAdminCreerTontineRequest request) {
+        return superAdminService.creerTontine(request);
+    }
 
     @GetMapping("/tontines")
     @Operation(summary = "Lister toutes les tontines de la plateforme")
