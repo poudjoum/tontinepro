@@ -14,8 +14,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
@@ -27,29 +25,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    // AntPathRequestMatcher explicite pour garantir la compatibilité avec Spring Security 7
-    private static final RequestMatcher[] PUBLIC_MATCHERS = {
-        AntPathRequestMatcher.antMatcher("/api/v1/auth/register"),
-        AntPathRequestMatcher.antMatcher("/api/v1/auth/login"),
-        AntPathRequestMatcher.antMatcher("/api/v1/auth/refresh"),
-        AntPathRequestMatcher.antMatcher("/api/v1/auth/2fa/valider"),
-        AntPathRequestMatcher.antMatcher("/api/v1/setup"),
-        AntPathRequestMatcher.antMatcher("/api/v1/setup/status"),
-        AntPathRequestMatcher.antMatcher("/api/v1/invitation/*/statut"),
-        AntPathRequestMatcher.antMatcher("/api/v1/invitation/*/rejoindre"),
-        AntPathRequestMatcher.antMatcher("/api/v1/tontines/publiques"),
-        AntPathRequestMatcher.antMatcher("/api/v1/tontines/creer-avec-compte"),
-        AntPathRequestMatcher.antMatcher("/api/v1/tontines/*/demandes"),
-        AntPathRequestMatcher.antMatcher("/api/v1/tontines/*/documents-officiels"),
-        AntPathRequestMatcher.antMatcher("/api/v1/tontines/*/documents-officiels/*/fichier"),
-        AntPathRequestMatcher.antMatcher("/api/v1/auth/reset-password/verify"),
-        AntPathRequestMatcher.antMatcher("/api/v1/auth/reset-password/confirmer"),
-        AntPathRequestMatcher.antMatcher("/api/v1/auth/activer-compte"),
-        AntPathRequestMatcher.antMatcher("/v3/api-docs/**"),
-        AntPathRequestMatcher.antMatcher("/swagger-ui/**"),
-        AntPathRequestMatcher.antMatcher("/swagger-ui.html"),
-    };
-
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -57,7 +32,27 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PUBLIC_MATCHERS).permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/2fa/valider",
+                                "/api/v1/setup",
+                                "/api/v1/setup/status",
+                                "/api/v1/invitation/*/statut",
+                                "/api/v1/invitation/*/rejoindre",
+                                "/api/v1/tontines/publiques",
+                                "/api/v1/tontines/creer-avec-compte",
+                                "/api/v1/tontines/*/demandes",
+                                "/api/v1/tontines/*/documents-officiels",
+                                "/api/v1/tontines/*/documents-officiels/*/fichier",
+                                "/api/v1/auth/reset-password/verify",
+                                "/api/v1/auth/reset-password/confirmer",
+                                "/api/v1/auth/activer-compte",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
