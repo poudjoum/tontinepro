@@ -16,6 +16,7 @@ import com.tontinepro.tontinepro_backend.domain.pret.EcheancePret;
 import com.tontinepro.tontinepro_backend.domain.pret.EcheancePretRepository;
 import com.tontinepro.tontinepro_backend.domain.pret.Pret;
 import com.tontinepro.tontinepro_backend.domain.pret.PretRepository;
+import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
 import com.tontinepro.tontinepro_backend.domain.user.User;
 import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
