@@ -100,7 +100,7 @@
       }
 
       <!-- Calendrier de la session -->
-      @if (echeancier().length > 0) {
+e      @if (echeancierTrie().length > 0) {
         <div class="space-y-2">
           <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide px-1">
             Calendrier de la session
@@ -114,7 +114,7 @@
               <span class="col-span-3 text-xs font-semibold text-gray-400 text-right">Montant</span>
             </div>
             <!-- Lignes -->
-            @for (ligne of echeancier(); track ligne.id) {
+            @for (ligne of echeancierTrie(); track ligne.id) {
               @let estMoi = ligne.ordre === tour()!.ordre;
               <div class="grid grid-cols-12 gap-2 px-4 py-3 border-b border-gray-50 last:border-0"
                    [class]="estMoi
@@ -144,10 +144,14 @@
                 </div>
                 <!-- Montant -->
                 <div class="col-span-3 text-right">
-                  @if (ligne.beneficie && ligne.montantRecu) {
-                    <span class="text-xs font-semibold text-green-600">{{ fcfa(ligne.montantRecu) }}</span>
+                  @let montant = montantLigne(ligne, estMoi);
+                  @if (montant != null && montant > 0) {
+                    <span class="text-xs font-semibold"
+                          [class]="ligne.beneficie ? 'text-green-600' : 'text-gray-700'">
+                      {{ fcfa(montant) }}
+                    </span>
                   } @else {
-                    <span class="text-xs text-gray-400">—</span>
+                    <span class="text-xs text-gray-400">0</span>
                   }
                 </div>
               </div>

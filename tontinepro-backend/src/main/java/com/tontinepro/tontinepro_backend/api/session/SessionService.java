@@ -292,7 +292,12 @@ public class SessionService {
     @Transactional(readOnly = true)
     public List<OrdreBeneficiaireResponse> echeancier(UUID sessionId) {
         return ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId)
-                .stream().map(OrdreBeneficiaireResponse::from).toList();
+                .stream()
+                .filter(ob -> ob.getMembre().getStatut() != Membre.Statut.RETIRE || ob.isBeneficie())
+                .sorted(java.util.Comparator.comparing(
+                        ob -> ob.getDateBenefice() == null ? java.time.LocalDate.MAX : ob.getDateBenefice()))
+                .map(OrdreBeneficiaireResponse::from)
+                .toList();
     }
 
     /**
