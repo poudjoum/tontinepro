@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
-import { MonTourResponse, MonBeneficeResponse } from '../../core/models/session.model';
+import { MonTourResponse, MonBeneficeResponse, OrdreBeneficiaireResponse } from '../../core/models/session.model';
 
 @Component({
   selector: 'app-mon-tour',
@@ -13,11 +13,10 @@ export class MonTourComponent implements OnInit {
 
   tour       = signal<MonTourResponse | null>(null);
   benefices  = signal<MonBeneficeResponse[]>([]);
+  echeancier = signal<OrdreBeneficiaireResponse[]>([]);
   loading    = signal(true);
   error      = signal('');
 
-  // Membres qui passeront avant moi (non bénéficiés avec ordre < mon ordre)
-  // Calculé depuis le signal tour — utilisé pour afficher la progression
   progressPct = computed(() => {
     const t = this.tour();
     if (!t || t.totalMembres === 0) return 0;
@@ -30,7 +29,14 @@ export class MonTourComponent implements OnInit {
     const done = () => { if (--pending === 0) this.loading.set(false); };
 
     this.svc.monTour().subscribe({
-      next: t => { this.tour.set(t); done(); },
+      next: t => {
+        this.tour.set(t);
+        this.svc.echeancier(t.sessionId).subscribe({
+          next: e => this.echeancier.set(e),
+          error: () => {},
+        });
+        done();
+      },
       error: () => { done(); },
     });
 

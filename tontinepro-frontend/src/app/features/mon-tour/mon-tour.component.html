@@ -99,6 +99,66 @@
         </div>
       }
 
+      <!-- Calendrier de la session -->
+      @if (echeancier().length > 0) {
+        <div class="space-y-2">
+          <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide px-1">
+            Calendrier de la session
+          </h2>
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <!-- En-tête tableau -->
+            <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 border-b border-gray-100">
+              <span class="col-span-1 text-xs font-semibold text-gray-400">#</span>
+              <span class="col-span-5 text-xs font-semibold text-gray-400">Membre</span>
+              <span class="col-span-3 text-xs font-semibold text-gray-400">Date</span>
+              <span class="col-span-3 text-xs font-semibold text-gray-400 text-right">Montant</span>
+            </div>
+            <!-- Lignes -->
+            @for (ligne of echeancier(); track ligne.id) {
+              @let estMoi = ligne.ordre === tour()!.ordre;
+              <div class="grid grid-cols-12 gap-2 px-4 py-3 border-b border-gray-50 last:border-0"
+                   [class]="estMoi
+                     ? 'bg-primary-50 border-l-4 border-l-primary-500'
+                     : ligne.beneficie
+                       ? 'opacity-50'
+                       : ''">
+                <!-- Ordre -->
+                <span class="col-span-1 text-sm font-bold"
+                      [class]="estMoi ? 'text-primary-700' : ligne.beneficie ? 'text-gray-400' : 'text-gray-600'">
+                  {{ ligne.ordre }}
+                </span>
+                <!-- Nom -->
+                <div class="col-span-5 min-w-0">
+                  <p class="text-sm font-medium truncate"
+                     [class]="estMoi ? 'text-primary-800' : ligne.beneficie ? 'text-gray-400' : 'text-gray-800'">
+                    {{ estMoi ? 'Vous' : ligne.membrePrenom + ' ' + ligne.membreNom }}
+                  </p>
+                  <p class="text-xs text-gray-400 truncate">{{ ligne.membreMatricule }}</p>
+                </div>
+                <!-- Date -->
+                <div class="col-span-3">
+                  <p class="text-xs"
+                     [class]="estMoi ? 'text-primary-700 font-semibold' : ligne.beneficie ? 'text-gray-400' : 'text-gray-600'">
+                    {{ formatDate(ligne.dateBenefice) }}
+                  </p>
+                </div>
+                <!-- Montant -->
+                <div class="col-span-3 text-right">
+                  @if (ligne.beneficie && ligne.montantRecu) {
+                    <span class="text-xs font-semibold text-green-600">{{ fcfa(ligne.montantRecu) }}</span>
+                  } @else {
+                    <span class="text-xs text-gray-400">—</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+          <p class="text-xs text-gray-400 px-1">
+            Lignes en gris = bénéfice déjà reçu · Votre ligne est surlignée en bleu
+          </p>
+        </div>
+      }
+
       <!-- Historique des bénéfices reçus -->
       @if (benefices().length > 0) {
         <div class="space-y-3">

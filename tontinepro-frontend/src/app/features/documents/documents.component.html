@@ -327,6 +327,33 @@
         }
       </div>
     }
+
+    <!-- Documents officiels de la tontine -->
+    <div class="space-y-2 pt-2">
+      <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Documents officiels de la tontine</h2>
+      <p class="text-xs text-gray-400 -mt-1">Règlement intérieur, statuts et autres documents publiés par le Secrétariat.</p>
+
+      @if (documentsOfficiel().length === 0) {
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 text-center text-gray-400">
+          <p class="text-2xl mb-1">📂</p>
+          <p class="text-sm">Aucun document publié par votre tontine.</p>
+        </div>
+      }
+
+      @for (doc of documentsOfficiel(); track doc.id) {
+        <div class="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+            <span class="text-xl">📄</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-800">{{ labelTypeOfficiel(doc.typeDocument) }}</p>
+            <p class="text-xs text-gray-500 truncate">{{ doc.nomFichier }} · {{ formatSize(doc.tailleOctets) }}</p>
+          </div>
+          <a [href]="urlDocOfficiel(doc.id)" target="_blank"
+             class="text-xs text-primary-600 font-medium underline flex-shrink-0">Ouvrir</a>
+        </div>
+      }
+    </div>
   }
 
 </div>

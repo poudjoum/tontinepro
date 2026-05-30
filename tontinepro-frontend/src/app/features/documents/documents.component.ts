@@ -1,9 +1,11 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DocumentService } from '../../core/services/document.service';
+import { DemandeService } from '../../core/services/demande.service';
 import { AuthService } from '../../core/services/auth.service';
 import { MembreService } from '../../core/services/membre.service';
 import { DocumentResponse, TypeDocument } from '../../core/models/document.model';
+import { DocumentTontineResponse, TypeDocumentTontine } from '../../core/models/demande.model';
 import { MembreResponse } from '../../core/models/membre.model';
 import { environment } from '../../../environments/environment';
 
@@ -13,9 +15,10 @@ import { environment } from '../../../environments/environment';
   templateUrl: './documents.component.html',
 })
 export class DocumentsComponent implements OnInit {
-  private svc    = inject(DocumentService);
-  auth           = inject(AuthService);
-  private mbrSvc = inject(MembreService);
+  private svc     = inject(DocumentService);
+  private demSvc  = inject(DemandeService);
+  auth            = inject(AuthService);
+  private mbrSvc  = inject(MembreService);
 
   // ── État commun ────────────────────────────────────────────────────────────
   loading   = signal(true);
@@ -24,8 +27,10 @@ export class DocumentsComponent implements OnInit {
   success   = signal('');
 
   // ── Vue membre ─────────────────────────────────────────────────────────────
-  membreId      = '';
-  documents     = signal<DocumentResponse[]>([]);
+  membreId          = '';
+  tontineId         = '';
+  documents         = signal<DocumentResponse[]>([]);
+  documentsOfficiel = signal<DocumentTontineResponse[]>([]);
   selectedType: TypeDocument = 'CNI';
   selectedFile: File | null = null;
 
@@ -68,7 +73,15 @@ export class DocumentsComponent implements OnInit {
       });
     } else {
       this.mbrSvc.getMonProfil().subscribe({
-        next: m => { this.membreId = m.id; this.chargerMesDocs(); },
+        next: m => {
+          this.membreId = m.id;
+          this.tontineId = m.tontineId;
+          this.chargerMesDocs();
+          this.demSvc.documentsOfficielsTontine(m.tontineId).subscribe({
+            next: d => this.documentsOfficiel.set(d),
+            error: () => {},
+          });
+        },
         error: () => this.loading.set(false),
       });
     }
@@ -140,6 +153,19 @@ export class DocumentsComponent implements OnInit {
 
   urlFichier(id: string): string {
     return `${environment.apiUrl}/documents/${id}/fichier`;
+  }
+
+  urlDocOfficiel(docId: string): string {
+    return `${environment.apiUrl}/tontines/${this.tontineId}/documents-officiels/${docId}/fichier`;
+  }
+
+  labelTypeOfficiel(t: TypeDocumentTontine): string {
+    const map: Record<TypeDocumentTontine, string> = {
+      REGLEMENT_INTERIEUR: 'Règlement intérieur',
+      STATUTS: 'Statuts',
+      AUTRE: 'Autre document',
+    };
+    return map[t] ?? t;
   }
 
   formatSize(bytes: number): string {
