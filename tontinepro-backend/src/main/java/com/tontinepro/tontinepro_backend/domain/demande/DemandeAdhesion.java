@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.domain.demande;
 
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.user.User;
 import jakarta.persistence.*;
@@ -41,6 +42,15 @@ public class DemandeAdhesion {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private Statut statut = Statut.EN_ATTENTE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_participation", length = 20)
+    @Builder.Default
+    private Membre.TypeParticipation typeParticipation = Membre.TypeParticipation.TONTINE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode_paiement_aide", length = 20)
+    private Membre.ModePaiementAide modePaiementAide;
 
     @Column(name = "motif_rejet", columnDefinition = "TEXT")
     private String motifRejet;

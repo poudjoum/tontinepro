@@ -30,6 +30,12 @@ public interface MembreRepository extends JpaRepository<Membre, UUID> {
 
     List<Membre> findAllByTontineIdAndStatut(UUID tontineId, Membre.Statut statut);
 
+    List<Membre> findAllByTontineIdAndStatutAndTypeParticipation(
+            UUID tontineId, Membre.Statut statut, Membre.TypeParticipation typeParticipation);
+
+    List<Membre> findAllByTontineIdAndTypeParticipation(
+            UUID tontineId, Membre.TypeParticipation typeParticipation);
+
     /** Vérifie qu'un utilisateur n'est pas déjà membre de cette tontine précise. */
     boolean existsByUserIdAndTontineId(UUID userId, UUID tontineId);
 

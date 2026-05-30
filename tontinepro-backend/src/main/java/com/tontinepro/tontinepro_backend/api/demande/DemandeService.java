@@ -60,6 +60,9 @@ public class DemandeService {
                 .email(request.email())
                 .telephone(request.telephone())
                 .motivation(request.motivation())
+                .typeParticipation(request.typeParticipation() != null
+                        ? request.typeParticipation() : com.tontinepro.tontinepro_backend.domain.membre.Membre.TypeParticipation.TONTINE)
+                .modePaiementAide(request.modePaiementAide())
                 .build();
 
         DemandeAdhesion saved = demandeRepository.save(demande);
@@ -105,6 +108,9 @@ public class DemandeService {
                 .nom(demande.getNom())
                 .prenom(demande.getPrenom())
                 .matricule(matricule)
+                .typeParticipation(demande.getTypeParticipation() != null
+                        ? demande.getTypeParticipation() : Membre.TypeParticipation.TONTINE)
+                .modePaiementAide(demande.getModePaiementAide())
                 .build());
 
         compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());

@@ -127,6 +127,15 @@ export interface LigneRapport {
   paye: boolean;
 }
 
+export interface ContributeurAideSociale {
+  membreId: string;
+  nomPrenom: string;
+  matricule: string;
+  modePaiement: 'MENSUEL' | 'EN_UNE_FOIS' | null;
+  montantFond: number;
+  paye: boolean;
+}
+
 export interface RapportTourResponse {
   sessionId: string;
   sessionNumero: number;
@@ -147,6 +156,7 @@ export interface RapportTourResponse {
   fondAidePayeAnnee: number;
   detteFondAide: number;
   cagnotteBeneficiaire: number;
+  contributeursSolidaires: ContributeurAideSociale[];
 }
 
 export interface MonTourResponse {

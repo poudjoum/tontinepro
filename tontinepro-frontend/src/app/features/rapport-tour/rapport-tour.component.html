@@ -139,6 +139,43 @@
         </div>
       </div>
 
+      <!-- Contributeurs Aide Sociale -->
+      @if (r.contributeursSolidaires && r.contributeursSolidaires.length) {
+        <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 p-4 mt-4">
+          <h3 class="text-sm font-bold text-indigo-800 mb-3">Contributeurs — Aide Sociale</h3>
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="bg-indigo-700 text-white">
+                <th class="px-3 py-2 text-left rounded-tl-lg">Nom & Prénoms</th>
+                <th class="px-3 py-2 text-left">Matricule</th>
+                <th class="px-3 py-2 text-center">Mode</th>
+                <th class="px-3 py-2 text-right">Montant fond</th>
+                <th class="px-3 py-2 text-center rounded-tr-lg">✓</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of r.contributeursSolidaires; track c.membreId; let even = $even) {
+                <tr [class]="even ? 'bg-white' : 'bg-indigo-50'">
+                  <td class="px-3 py-2 font-medium text-gray-800">{{ c.nomPrenom }}</td>
+                  <td class="px-3 py-2 text-gray-500 font-mono">{{ c.matricule }}</td>
+                  <td class="px-3 py-2 text-center text-gray-600">
+                    {{ c.modePaiement === 'EN_UNE_FOIS' ? 'Session (une fois)' : 'Mensuel' }}
+                  </td>
+                  <td class="px-3 py-2 text-right font-semibold text-indigo-700">{{ fcfa(c.montantFond) }}</td>
+                  <td class="px-3 py-2 text-center">
+                    @if (c.paye) {
+                      <span class="text-green-600 font-bold">✓</span>
+                    } @else {
+                      <span class="text-gray-400">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
       <!-- Actions (masquées à l'impression) -->
       <div class="flex gap-3 print:hidden pb-8">
         <button (click)="imprimer()"

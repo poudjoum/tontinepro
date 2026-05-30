@@ -5,6 +5,7 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.tontinepro.tontinepro_backend.api.session.dto.RapportTourResponse;
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import org.springframework.stereotype.Component;
 
 import java.awt.Color;
@@ -12,6 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Component
 public class RapportTourPdfBuilder {
@@ -39,6 +41,10 @@ public class RapportTourPdfBuilder {
             ajouterTableau(doc, r);
             doc.add(Chunk.NEWLINE);
             ajouterBilan(doc, r);
+            if (r.contributeursSolidaires() != null && !r.contributeursSolidaires().isEmpty()) {
+                doc.add(Chunk.NEWLINE);
+                ajouterContributeursSolidaires(doc, r.contributeursSolidaires());
+            }
             ajouterPied(doc);
         } catch (DocumentException e) {
             throw new RuntimeException("Erreur génération PDF rapport de tour", e);
@@ -198,6 +204,44 @@ public class RapportTourPdfBuilder {
         val.setBorderColor(new Color(220, 220, 220));
         t.addCell(lbl);
         t.addCell(val);
+    }
+
+    private void ajouterContributeursSolidaires(Document doc,
+            List<RapportTourResponse.ContributeurAideSociale> contributeurs) throws DocumentException {
+
+        Font fSection = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, BLEU_FONCE);
+        Paragraph s = new Paragraph("CONTRIBUTEURS — AIDE SOCIALE", fSection);
+        s.setSpacingAfter(6f);
+        doc.add(s);
+
+        Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+        Font fData = FontFactory.getFont(FontFactory.HELVETICA, 8);
+
+        PdfPTable t = new PdfPTable(5);
+        t.setWidthPercentage(85f);
+        t.setWidths(new float[]{30f, 18f, 22f, 20f, 10f});
+        t.setSpacingAfter(8f);
+
+        Color bgHeader = new Color(63, 81, 181);
+        for (String h : new String[]{"Nom & Prénoms", "Matricule", "Mode paiement", "Montant fond", "✓"}) {
+            t.addCell(cellEntete(h, fEnt, bgHeader));
+        }
+
+        boolean pair = false;
+        for (RapportTourResponse.ContributeurAideSociale c : contributeurs) {
+            Color bg = pair ? Color.WHITE : GRIS_CLAIR;
+            pair = !pair;
+            String modeLabel = c.modePaiement() == Membre.ModePaiementAide.EN_UNE_FOIS
+                    ? "En une fois (session)" : "Mensuel";
+            t.addCell(cellDonnee(c.nomPrenom(), fData, bg, Element.ALIGN_LEFT));
+            t.addCell(cellDonnee(c.matricule(), fData, bg, Element.ALIGN_LEFT));
+            t.addCell(cellDonnee(modeLabel, fData, bg, Element.ALIGN_CENTER));
+            t.addCell(cellDonnee(fcfa(c.montantFond()), fData, bg, Element.ALIGN_RIGHT));
+            t.addCell(cellDonnee(c.paye() ? "✓" : "—",
+                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, c.paye() ? VERT : Color.GRAY),
+                    bg, Element.ALIGN_CENTER));
+        }
+        doc.add(t);
     }
 
     private void ajouterPied(Document doc) throws DocumentException {

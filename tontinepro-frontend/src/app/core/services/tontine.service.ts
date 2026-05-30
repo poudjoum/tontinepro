@@ -27,7 +27,11 @@ export class TontineService {
   }
 
   /** Rejoindre directement une tontine ouverte (utilisateur connecté) */
-  rejoindreOuverte(tontineId: string, request: { nom: string; prenom: string; telephone?: string }) {
+  rejoindreOuverte(tontineId: string, request: {
+    nom: string; prenom: string; telephone?: string;
+    typeParticipation?: 'TONTINE' | 'AIDE_SOCIALE';
+    modePaiementAide?: 'MENSUEL' | 'EN_UNE_FOIS';
+  }) {
     return this.http.post<any>(`${this.api}/${tontineId}/rejoindre`, request);
   }
 

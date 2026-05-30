@@ -16,5 +16,11 @@ public record CreateMembreRequest(
         LocalDate dateAdhesion,
 
         /** Fonction dans le bureau. Optionnel — défaut : MEMBRE_ORDINAIRE. */
-        Membre.Fonction fonction
+        Membre.Fonction fonction,
+
+        /** Type de participation. Optionnel — défaut : TONTINE. */
+        Membre.TypeParticipation typeParticipation,
+
+        /** Mode de paiement du fond d'aide. Requis si AIDE_SOCIALE. */
+        Membre.ModePaiementAide modePaiementAide
 ) {}

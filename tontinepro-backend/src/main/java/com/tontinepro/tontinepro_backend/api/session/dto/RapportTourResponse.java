@@ -1,5 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.session.dto;
 
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -20,7 +22,7 @@ public record RapportTourResponse(
         String beneficiaireNom,
         String beneficiaireMatricule,
 
-        // Tableau membres
+        // Tableau membres TONTINE
         List<LigneRapport> lignes,
 
         // Totaux
@@ -34,7 +36,10 @@ public record RapportTourResponse(
         BigDecimal fondAideObligation,   // obligation annuelle
         BigDecimal fondAidePayeAnnee,    // déjà payé par le bénéficiaire cette année
         BigDecimal detteFondAide,        // obligation - payé (min 0)
-        BigDecimal cagnotteBeneficiaire  // potBrut - detteFondAide
+        BigDecimal cagnotteBeneficiaire, // potBrut - detteFondAide
+
+        // Contributeurs Aide Sociale (section bas de rapport)
+        List<ContributeurAideSociale> contributeursSolidaires
 
 ) {
     public record LigneRapport(
@@ -45,6 +50,15 @@ public record RapportTourResponse(
             BigDecimal fond,
             BigDecimal repas,
             BigDecimal sanctions,
+            boolean paye
+    ) {}
+
+    public record ContributeurAideSociale(
+            UUID membreId,
+            String nomPrenom,
+            String matricule,
+            Membre.ModePaiementAide modePaiement,
+            BigDecimal montantFond,
             boolean paye
     ) {}
 }

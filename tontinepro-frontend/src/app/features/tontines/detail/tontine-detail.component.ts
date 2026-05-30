@@ -29,9 +29,17 @@ export class TontineDetailComponent implements OnInit {
   error      = signal('');
 
   // Formulaire rejoindre directement (utilisateur connecté, tontine ouverte)
-  rejoindreForm = { nom: '', prenom: '', telephone: '' };
+  rejoindreForm = {
+    nom: '', prenom: '', telephone: '',
+    typeParticipation: 'TONTINE' as 'TONTINE' | 'AIDE_SOCIALE',
+    modePaiementAide: 'MENSUEL' as 'MENSUEL' | 'EN_UNE_FOIS',
+  };
   // Formulaire demande (public, tontine ouverte ou restreinte)
-  demandeForm = { nom: '', prenom: '', email: '', telephone: '', motivation: '' };
+  demandeForm = {
+    nom: '', prenom: '', email: '', telephone: '', motivation: '',
+    typeParticipation: 'TONTINE' as 'TONTINE' | 'AIDE_SOCIALE',
+    modePaiementAide: 'MENSUEL' as 'MENSUEL' | 'EN_UNE_FOIS',
+  };
 
   ngOnInit(): void {
     this.tontineId = this.route.snapshot.paramMap.get('id') ?? '';
@@ -56,6 +64,9 @@ export class TontineDetailComponent implements OnInit {
       email: user?.email ?? '',
       telephone: this.rejoindreForm.telephone || undefined,
       motivation: 'Demande d\'adhésion à la tontine restreinte',
+      typeParticipation: this.rejoindreForm.typeParticipation,
+      modePaiementAide: this.rejoindreForm.typeParticipation === 'AIDE_SOCIALE'
+        ? this.rejoindreForm.modePaiementAide : undefined,
     }).subscribe({
       next: () => { this.submitted.set(true); this.submitting.set(false); },
       error: e => {
@@ -69,7 +80,11 @@ export class TontineDetailComponent implements OnInit {
   rejoindreDirectement(): void {
     this.submitting.set(true);
     this.error.set('');
-    this.tontSvc.rejoindreOuverte(this.tontineId, this.rejoindreForm).subscribe({
+    this.tontSvc.rejoindreOuverte(this.tontineId, {
+      ...this.rejoindreForm,
+      modePaiementAide: this.rejoindreForm.typeParticipation === 'AIDE_SOCIALE'
+        ? this.rejoindreForm.modePaiementAide : undefined,
+    }).subscribe({
       next: () => {
         this.submitting.set(false);
         this.submitted.set(true);
@@ -93,6 +108,9 @@ export class TontineDetailComponent implements OnInit {
       email: this.demandeForm.email,
       telephone: this.demandeForm.telephone || undefined,
       motivation: this.demandeForm.motivation || undefined,
+      typeParticipation: this.demandeForm.typeParticipation,
+      modePaiementAide: this.demandeForm.typeParticipation === 'AIDE_SOCIALE'
+        ? this.demandeForm.modePaiementAide : undefined,
     }).subscribe({
       next: () => { this.submitted.set(true); this.submitting.set(false); },
       error: e => {

@@ -61,6 +61,9 @@ public class MembreService {
                 .matricule(generateMatricule())
                 .dateAdhesion(request.dateAdhesion() != null ? request.dateAdhesion() : LocalDate.now())
                 .fonction(request.fonction() != null ? request.fonction() : Membre.Fonction.MEMBRE_ORDINAIRE)
+                .typeParticipation(request.typeParticipation() != null
+                        ? request.typeParticipation() : Membre.TypeParticipation.TONTINE)
+                .modePaiementAide(request.modePaiementAide())
                 .build();
 
         membre = membreRepository.save(membre);
@@ -173,6 +176,9 @@ public class MembreService {
                 .prenom(request.prenom())
                 .matricule(generateMatricule())
                 .fonction(fonction)
+                .typeParticipation(request.typeParticipation() != null
+                        ? request.typeParticipation() : Membre.TypeParticipation.TONTINE)
+                .modePaiementAide(request.modePaiementAide())
                 .build();
         membre = membreRepository.save(membre);
         compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());

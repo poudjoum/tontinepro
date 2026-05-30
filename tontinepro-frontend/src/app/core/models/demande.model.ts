@@ -13,6 +13,8 @@ export interface DemandeResponse {
   motivation: string | null;
   statut: StatutDemande;
   motifRejet: string | null;
+  typeParticipation: 'TONTINE' | 'AIDE_SOCIALE';
+  modePaiementAide: 'MENSUEL' | 'EN_UNE_FOIS' | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +25,8 @@ export interface SoumettreDemandeRequest {
   email: string;
   telephone?: string;
   motivation?: string;
+  typeParticipation?: 'TONTINE' | 'AIDE_SOCIALE';
+  modePaiementAide?: 'MENSUEL' | 'EN_UNE_FOIS';
 }
 
 export interface DocumentTontineResponse {

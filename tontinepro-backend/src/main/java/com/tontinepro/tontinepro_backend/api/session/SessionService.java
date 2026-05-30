@@ -43,9 +43,9 @@ public class SessionService {
         Tontine tontine = tontineRepository.findById(request.tontineId())
                 .orElseThrow(() -> new IllegalArgumentException("Tontine introuvable : " + request.tontineId()));
 
-        // Récupérer les membres actifs de la tontine
-        List<Membre> membresActifs = membreRepository.findAllByTontineIdAndStatut(
-                tontine.getId(), Membre.Statut.ACTIF);
+        // Récupérer uniquement les membres TONTINE actifs (les membres AIDE_SOCIALE n'ont pas de slot calendrier)
+        List<Membre> membresActifs = membreRepository.findAllByTontineIdAndStatutAndTypeParticipation(
+                tontine.getId(), Membre.Statut.ACTIF, Membre.TypeParticipation.TONTINE);
 
         if (membresActifs.isEmpty()) {
             throw new IllegalStateException("Aucun membre actif dans la tontine");
@@ -484,7 +484,13 @@ public class SessionService {
         List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository
                 .findAllBySessionIdOrderByOrdre(sessionId);
 
+        BigDecimal fondMensuel = (tontine.getModeContributionAide() == Tontine.ModeContributionAide.MENSUEL
+                && tontine.getMontantCotisationAide() != null)
+                ? tontine.getMontantCotisationAide() : BigDecimal.ZERO;
+
         List<Cotisation> result = new ArrayList<>();
+
+        // ── Membres TONTINE (dans le calendrier) ──────────────────────────────────
         for (OrdreBeneficiaire ob : ordres) {
             Membre membre = ob.getMembre();
             if (membre.getStatut() != Membre.Statut.ACTIF) continue;
@@ -497,19 +503,56 @@ public class SessionService {
             } else {
                 BigDecimal montant = tontine.getMontantCotisationMin() != null
                         ? tontine.getMontantCotisationMin() : BigDecimal.ZERO;
-                // Pré-remplir montantFondAide si mode MENSUEL
-                BigDecimal fondAide = (tontine.getModeContributionAide() == Tontine.ModeContributionAide.MENSUEL
-                        && tontine.getMontantCotisationAide() != null)
-                        ? tontine.getMontantCotisationAide() : BigDecimal.ZERO;
                 Cotisation c = cotisationRepository.save(Cotisation.builder()
                         .membre(membre)
                         .tontine(tontine)
                         .mois(mois)
                         .annee(annee)
                         .montant(montant)
-                        .montantFondAide(fondAide)
+                        .montantFondAide(fondMensuel)
                         .build());
                 result.add(c);
+            }
+        }
+
+        // ── Membres AIDE_SOCIALE ───────────────────────────────────────────────────
+        List<Membre> membresAide = membreRepository.findAllByTontineIdAndStatutAndTypeParticipation(
+                tontine.getId(), Membre.Statut.ACTIF, Membre.TypeParticipation.AIDE_SOCIALE);
+
+        for (Membre membre : membresAide) {
+            if (membre.getModePaiementAide() == Membre.ModePaiementAide.EN_UNE_FOIS) {
+                // Une seule cotisation pour toute la session — créée au premier appel, ignorée ensuite
+                if (!cotisationRepository.existsByMembreIdAndMoisAndAnnee(membre.getId(), mois, annee)) {
+                    int nbTours = ordres.size() == 0 ? session.getNombreMembres() : ordres.size();
+                    BigDecimal totalAide = fondMensuel.multiply(BigDecimal.valueOf(nbTours));
+                    Cotisation c = cotisationRepository.save(Cotisation.builder()
+                            .membre(membre)
+                            .tontine(tontine)
+                            .mois(mois)
+                            .annee(annee)
+                            .montant(BigDecimal.ZERO)
+                            .montantFondAide(totalAide)
+                            .build());
+                    result.add(c);
+                }
+            } else {
+                // MENSUEL : cotisation mensuelle fond uniquement
+                if (cotisationRepository.existsByMembreIdAndMoisAndAnnee(membre.getId(), mois, annee)) {
+                    cotisationRepository.findAllByMembreId(membre.getId()).stream()
+                            .filter(c -> c.getMois() == mois && c.getAnnee() == annee)
+                            .findFirst()
+                            .ifPresent(result::add);
+                } else {
+                    Cotisation c = cotisationRepository.save(Cotisation.builder()
+                            .membre(membre)
+                            .tontine(tontine)
+                            .mois(mois)
+                            .annee(annee)
+                            .montant(BigDecimal.ZERO)
+                            .montantFondAide(fondMensuel)
+                            .build());
+                    result.add(c);
+                }
             }
         }
 
@@ -718,8 +761,9 @@ public class SessionService {
                         s -> s.getMembre().getId(),
                         Collectors.reducing(BigDecimal.ZERO, Sanction::getMontant, BigDecimal::add)));
 
-        // Membres actifs (+ ceux qui ont cotisé même si SUSPENDU)
-        List<Membre> membres = membreRepository.findAllByTontineIdAndStatut(tontine.getId(), Membre.Statut.ACTIF);
+        // Membres actifs TONTINE uniquement dans le tableau principal
+        List<Membre> membres = membreRepository.findAllByTontineIdAndStatutAndTypeParticipation(
+                tontine.getId(), Membre.Statut.ACTIF, Membre.TypeParticipation.TONTINE);
 
         List<RapportTourResponse.LigneRapport> lignes = membres.stream().map(m -> {
             Cotisation cot = cotParMembre.get(m.getId());
@@ -750,6 +794,32 @@ public class SessionService {
         BigDecimal cagnotte = potBrut.subtract(dette);
         if (cagnotte.compareTo(BigDecimal.ZERO) < 0) cagnotte = BigDecimal.ZERO;
 
+        // ── Contributeurs Aide Sociale ─────────────────────────────────────────────
+        short moisSession = (short) session.getDateDebut().getMonthValue();
+        short anneeSession = (short) session.getDateDebut().getYear();
+
+        List<Membre> membresAide = membreRepository.findAllByTontineIdAndStatutAndTypeParticipation(
+                tontine.getId(), Membre.Statut.ACTIF, Membre.TypeParticipation.AIDE_SOCIALE);
+
+        List<RapportTourResponse.ContributeurAideSociale> contributeurs = membresAide.stream().map(m -> {
+            // EN_UNE_FOIS : cotisation créée au mois de début de session
+            // MENSUEL : cotisation du mois courant
+            short moisLookup  = m.getModePaiementAide() == Membre.ModePaiementAide.EN_UNE_FOIS ? moisSession : mois;
+            short anneeLookup = m.getModePaiementAide() == Membre.ModePaiementAide.EN_UNE_FOIS ? anneeSession : annee;
+
+            Cotisation cot = cotisationRepository.findAllByMembreId(m.getId()).stream()
+                    .filter(c -> c.getMois() == moisLookup && c.getAnnee() == anneeLookup)
+                    .findFirst().orElse(null);
+
+            BigDecimal fond = cot != null && cot.getMontantFondAide() != null
+                    ? cot.getMontantFondAide() : BigDecimal.ZERO;
+            boolean paye = cot != null && cot.getStatut() == Cotisation.Statut.PAYEE;
+
+            return new RapportTourResponse.ContributeurAideSociale(
+                    m.getId(), m.getPrenom() + " " + m.getNom(), m.getMatricule(),
+                    m.getModePaiementAide(), fond, paye);
+        }).toList();
+
         return new RapportTourResponse(
                 sessionId, session.getNumero(), tontine.getNom(),
                 dateTour, mois, annee,
@@ -758,7 +828,8 @@ public class SessionService {
                 ob.getMembre().getMatricule(),
                 lignes,
                 totalCotis, totalFond, totalRepas, totalSanct,
-                potBrut, obligation, fondAidePaye, dette, cagnotte);
+                potBrut, obligation, fondAidePaye, dette, cagnotte,
+                contributeurs);
     }
 
     // ─── Inscription en retard ──────────────────────────────────────────────────

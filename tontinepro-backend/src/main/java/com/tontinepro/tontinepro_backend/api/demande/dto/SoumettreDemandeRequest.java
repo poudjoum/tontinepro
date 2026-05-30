@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.demande.dto;
 
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -16,5 +17,9 @@ public record SoumettreDemandeRequest(
 
         String telephone,
 
-        String motivation
+        String motivation,
+
+        Membre.TypeParticipation typeParticipation,
+
+        Membre.ModePaiementAide modePaiementAide
 ) {}

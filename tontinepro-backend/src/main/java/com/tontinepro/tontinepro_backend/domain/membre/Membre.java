@@ -60,6 +60,15 @@ public class Membre {
     @Builder.Default
     private Fonction fonction = Fonction.MEMBRE_ORDINAIRE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_participation", nullable = false, length = 20)
+    @Builder.Default
+    private TypeParticipation typeParticipation = TypeParticipation.TONTINE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode_paiement_aide", length = 20)
+    private ModePaiementAide modePaiementAide;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();
@@ -78,5 +87,15 @@ public class Membre {
         TRESORIER,
         CENSEUR,
         MEMBRE_ORDINAIRE
+    }
+
+    public enum TypeParticipation {
+        TONTINE,
+        AIDE_SOCIALE
+    }
+
+    public enum ModePaiementAide {
+        MENSUEL,
+        EN_UNE_FOIS
     }
 }

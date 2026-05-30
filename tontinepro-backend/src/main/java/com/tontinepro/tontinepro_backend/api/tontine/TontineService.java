@@ -136,6 +136,9 @@ public class TontineService {
                 .nom(request.nom())
                 .prenom(request.prenom())
                 .matricule(matricule)
+                .typeParticipation(request.typeParticipation() != null
+                        ? request.typeParticipation() : Membre.TypeParticipation.TONTINE)
+                .modePaiementAide(request.modePaiementAide())
                 .build());
 
         compteEpargneRepository.save(CompteEpargne.builder().membre(membre).build());

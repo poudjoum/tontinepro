@@ -27,5 +27,9 @@ public record InscriptionDirecteRequest(
 
         String telephone,
 
-        Membre.Fonction fonction
+        Membre.Fonction fonction,
+
+        Membre.TypeParticipation typeParticipation,
+
+        Membre.ModePaiementAide modePaiementAide
 ) {}

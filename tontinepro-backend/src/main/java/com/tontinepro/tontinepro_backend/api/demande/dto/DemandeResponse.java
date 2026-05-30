@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.demande.dto;
 
 import com.tontinepro.tontinepro_backend.domain.demande.DemandeAdhesion;
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -16,6 +17,8 @@ public record DemandeResponse(
         String motivation,
         DemandeAdhesion.Statut statut,
         String motifRejet,
+        Membre.TypeParticipation typeParticipation,
+        Membre.ModePaiementAide modePaiementAide,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
@@ -31,6 +34,8 @@ public record DemandeResponse(
                 d.getMotivation(),
                 d.getStatut(),
                 d.getMotifRejet(),
+                d.getTypeParticipation(),
+                d.getModePaiementAide(),
                 d.getCreatedAt(),
                 d.getUpdatedAt()
         );
