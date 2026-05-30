@@ -83,6 +83,39 @@ export interface MonBeneficeResponse {
   montantRecu: number | null;
 }
 
+export interface DetailTourRattrapage {
+  numeroTour: number;
+  beneficiaireNom: string;
+  dateTour: string;
+  cotisation: number;
+  repas: number;
+  total: number;
+}
+
+export interface MembreEligibleRetardResponse {
+  membreId: string;
+  nom: string;
+  prenom: string;
+  matricule: string;
+  toursARattraper: number;
+  montantCotisationUnitaire: number;
+  montantRepasUnitaire: number;
+  montantTotalRattrapage: number;
+  tours: DetailTourRattrapage[];
+}
+
+export interface InscrireEnRetardResult {
+  membreId: string;
+  nomMembre: string;
+  matricule: string;
+  positionDansSession: number;
+  dateBeneficePrevue: string | null;
+  toursRattrapes: number;
+  totalRattrapage: number;
+  details: DetailTourRattrapage[];
+  sessionMiseAJour: SessionResponse;
+}
+
 export interface LigneRapport {
   membreId: string;
   nomPrenom: string;

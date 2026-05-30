@@ -761,6 +761,225 @@ public class SessionService {
                 potBrut, obligation, fondAidePaye, dette, cagnotte);
     }
 
+    // ─── Inscription en retard ──────────────────────────────────────────────────
+
+    /**
+     * Liste les membres actifs de la tontine non encore inscrits dans la session,
+     * avec le détail du rattrapage à effectuer pour chaque tour déjà complété.
+     */
+    @Transactional(readOnly = true)
+    public List<MembreEligibleRetardResponse> membresEligiblesRetard(UUID sessionId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable"));
+        if (session.getStatut() != SessionTontine.Statut.EN_COURS) {
+            throw new IllegalStateException("La session n'est pas en cours");
+        }
+
+        List<OrdreBeneficiaire> toursCompletes =
+                ordreBeneficiaireRepository.findAllBySessionIdAndBeneficieTrueOrderByOrdreAsc(sessionId);
+
+        Tontine tontine = session.getTontine();
+        List<Membre> membresActifs = membreRepository.findAllByTontineIdAndStatut(tontine.getId(), Membre.Statut.ACTIF);
+
+        Set<UUID> dejaDansSession = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(sessionId).stream()
+                .map(ob -> ob.getMembre().getId())
+                .collect(Collectors.toSet());
+
+        return membresActifs.stream()
+                .filter(m -> !dejaDansSession.contains(m.getId()))
+                .map(m -> buildEligibleResponse(m, toursCompletes, tontine))
+                .toList();
+    }
+
+    private MembreEligibleRetardResponse buildEligibleResponse(Membre membre,
+            List<OrdreBeneficiaire> toursCompletes, Tontine tontine) {
+
+        List<MembreEligibleRetardResponse.DetailTourRattrapage> details = new ArrayList<>();
+        BigDecimal totalRattrapage = BigDecimal.ZERO;
+        BigDecimal cotisUnitaire   = BigDecimal.ZERO;
+        BigDecimal repasUnitaire   = BigDecimal.ZERO;
+
+        for (OrdreBeneficiaire ob : toursCompletes) {
+            LocalDate dateTour = ob.getDateBenefice() != null ? ob.getDateBenefice() : LocalDate.now();
+            short mois  = (short) dateTour.getMonthValue();
+            short annee = (short) dateTour.getYear();
+
+            BigDecimal avgCotis = moyenneCotisations(tontine.getId(), mois, annee, false);
+            BigDecimal avgRepas = moyenneRepas(tontine.getId(), mois, annee);
+            if (avgCotis.compareTo(BigDecimal.ZERO) == 0 && tontine.getMontantCotisationMin() != null) {
+                avgCotis = tontine.getMontantCotisationMin();
+            }
+
+            BigDecimal total = avgCotis.add(avgRepas);
+            totalRattrapage  = totalRattrapage.add(total);
+            cotisUnitaire    = avgCotis;
+            repasUnitaire    = avgRepas;
+
+            details.add(new MembreEligibleRetardResponse.DetailTourRattrapage(
+                    ob.getOrdre(),
+                    ob.getMembre().getPrenom() + " " + ob.getMembre().getNom(),
+                    dateTour.toString(),
+                    avgCotis, avgRepas, total));
+        }
+
+        return new MembreEligibleRetardResponse(
+                membre.getId(), membre.getNom(), membre.getPrenom(), membre.getMatricule(),
+                toursCompletes.size(), cotisUnitaire, repasUnitaire, totalRattrapage, details);
+    }
+
+    /**
+     * Inscrit un membre en retard dans la session :
+     * - crée des cotisations PAYEE rétroactives pour chaque tour passé
+     * - crédite le montantRecu de chaque bénéficiaire passé du complément
+     * - ajoute le membre en fin de calendrier
+     * - renvoie les rapports PDF actualisés par email à tous les membres
+     */
+    @Transactional
+    public InscrireEnRetardResult inscrireEnRetard(UUID sessionId, UUID membreId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable"));
+        if (session.getStatut() != SessionTontine.Statut.EN_COURS) {
+            throw new IllegalStateException("La session n'est pas en cours");
+        }
+
+        Membre membre = membreRepository.findById(membreId)
+                .orElseThrow(() -> new IllegalArgumentException("Membre introuvable"));
+        if (!membre.getTontine().getId().equals(session.getTontine().getId())) {
+            throw new IllegalArgumentException("Ce membre n'appartient pas à cette tontine");
+        }
+        if (ordreBeneficiaireRepository.existsBySessionIdAndMembreId(sessionId, membreId)) {
+            throw new IllegalStateException("Ce membre est déjà inscrit dans cette session");
+        }
+
+        List<OrdreBeneficiaire> toursCompletes =
+                ordreBeneficiaireRepository.findAllBySessionIdAndBeneficieTrueOrderByOrdreAsc(sessionId);
+
+        if (toursCompletes.size() >= 3) {
+            throw new IllegalStateException(
+                    toursCompletes.size() + " tour(s) déjà clôturé(s). "
+                    + "L'inscription en retard n'est plus possible après le 2ème tour.");
+        }
+
+        Tontine tontine = session.getTontine();
+        List<MembreEligibleRetardResponse.DetailTourRattrapage> details = new ArrayList<>();
+        BigDecimal totalRattrapage = BigDecimal.ZERO;
+
+        for (OrdreBeneficiaire obPassé : toursCompletes) {
+            LocalDate dateTour = obPassé.getDateBenefice() != null ? obPassé.getDateBenefice() : LocalDate.now();
+            short mois  = (short) dateTour.getMonthValue();
+            short annee = (short) dateTour.getYear();
+
+            BigDecimal cotis = moyenneCotisations(tontine.getId(), mois, annee, false);
+            BigDecimal repas = moyenneRepas(tontine.getId(), mois, annee);
+            BigDecimal fond  = moyenneFond(tontine.getId(), mois, annee);
+            if (cotis.compareTo(BigDecimal.ZERO) == 0 && tontine.getMontantCotisationMin() != null) {
+                cotis = tontine.getMontantCotisationMin();
+            }
+
+            // Cotisation rétroactive (idempotente)
+            if (!cotisationRepository.existsByMembreIdAndMoisAndAnnee(membreId, mois, annee)) {
+                Cotisation cot = Cotisation.builder()
+                        .tontine(tontine)
+                        .membre(membre)
+                        .mois(mois)
+                        .annee(annee)
+                        .montant(cotis)
+                        .montantFondAide(fond)
+                        .montantRepas(repas)
+                        .statut(Cotisation.Statut.PAYEE)
+                        .datePaiement(java.time.OffsetDateTime.now())
+                        .referencePaiement("RATTRAPAGE")
+                        .build();
+                cotisationRepository.save(cot);
+            }
+
+            // Créditer le bénéficiaire passé
+            BigDecimal complement = cotis.add(repas);
+            BigDecimal ancienMontant = obPassé.getMontantRecu() != null ? obPassé.getMontantRecu() : BigDecimal.ZERO;
+            obPassé.setMontantRecu(ancienMontant.add(complement));
+            ordreBeneficiaireRepository.save(obPassé);
+
+            totalRattrapage = totalRattrapage.add(complement);
+            details.add(new MembreEligibleRetardResponse.DetailTourRattrapage(
+                    obPassé.getOrdre(),
+                    obPassé.getMembre().getPrenom() + " " + obPassé.getMembre().getNom(),
+                    dateTour.toString(), cotis, repas, complement));
+        }
+
+        // Ajouter en fin de calendrier
+        List<OrdreBeneficiaire> tousOrdres = ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId);
+        int prochainOrdre = tousOrdres.size() + 1;
+
+        LocalDate derniereDateExistante = tousOrdres.stream()
+                .map(OrdreBeneficiaire::getDateBenefice)
+                .filter(java.util.Objects::nonNull)
+                .max(java.util.Comparator.naturalOrder())
+                .orElse(session.getDateDebut());
+
+        LocalDate dateNouveauMembre = null;
+        try {
+            dateNouveauMembre = periodiciteService.prochainDate(
+                    tontine.getTypeReglePeriodicite(), tontine.getJourReference(), derniereDateExistante);
+        } catch (Exception ignored) {}
+
+        OrdreBeneficiaire nouvelOrdre = OrdreBeneficiaire.builder()
+                .session(session)
+                .membre(membre)
+                .ordre(prochainOrdre)
+                .dateBenefice(dateNouveauMembre)
+                .beneficie(false)
+                .montantRecu(null)
+                .build();
+        ordreBeneficiaireRepository.save(nouvelOrdre);
+
+        // Mettre à jour la session
+        session.setNombreMembres(session.getNombreMembres() + 1);
+        if (dateNouveauMembre != null && (session.getDateFin() == null || dateNouveauMembre.isAfter(session.getDateFin()))) {
+            session.setDateFin(dateNouveauMembre);
+        }
+        sessionRepository.save(session);
+
+        // Renvoyer les rapports des tours passés par email (async)
+        final UUID tontineId = tontine.getId();
+        for (OrdreBeneficiaire obPassé : toursCompletes) {
+            try {
+                RapportTourResponse rapport = getRapportTour(sessionId, obPassé.getId());
+                rapportEmailService.envoyerRapportTour(tontineId, rapport);
+            } catch (Exception ignored) {}
+        }
+
+        SessionResponse sessionMAJ = getById(sessionId);
+        return new InscrireEnRetardResult(
+                membre.getId(), membre.getPrenom() + " " + membre.getNom(), membre.getMatricule(),
+                prochainOrdre, dateNouveauMembre, toursCompletes.size(),
+                totalRattrapage, details, sessionMAJ);
+    }
+
+    private BigDecimal moyenneCotisations(UUID tontineId, short mois, short annee, boolean fondSeulement) {
+        List<Cotisation> cotis = cotisationRepository
+                .findAllByTontineIdAndMoisAndAnneeAndStatut(tontineId, mois, annee, Cotisation.Statut.PAYEE);
+        if (cotis.isEmpty()) return BigDecimal.ZERO;
+        BigDecimal sum = cotis.stream().map(Cotisation::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return sum.divide(BigDecimal.valueOf(cotis.size()), 2, java.math.RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal moyenneRepas(UUID tontineId, short mois, short annee) {
+        List<Cotisation> cotis = cotisationRepository
+                .findAllByTontineIdAndMoisAndAnneeAndStatut(tontineId, mois, annee, Cotisation.Statut.PAYEE);
+        if (cotis.isEmpty()) return BigDecimal.ZERO;
+        BigDecimal sum = cotis.stream().map(c -> safe(c.getMontantRepas())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return sum.divide(BigDecimal.valueOf(cotis.size()), 2, java.math.RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal moyenneFond(UUID tontineId, short mois, short annee) {
+        List<Cotisation> cotis = cotisationRepository
+                .findAllByTontineIdAndMoisAndAnneeAndStatut(tontineId, mois, annee, Cotisation.Statut.PAYEE);
+        if (cotis.isEmpty()) return BigDecimal.ZERO;
+        BigDecimal sum = cotis.stream().map(c -> safe(c.getMontantFondAide())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return sum.divide(BigDecimal.valueOf(cotis.size()), 2, java.math.RoundingMode.HALF_UP);
+    }
+
     private static BigDecimal safe(BigDecimal v) {
         return v != null ? v : BigDecimal.ZERO;
     }

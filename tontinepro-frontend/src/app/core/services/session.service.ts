@@ -9,6 +9,8 @@ import {
   MonTourResponse,
   MonBeneficeResponse,
   RapportTourResponse,
+  MembreEligibleRetardResponse,
+  InscrireEnRetardResult,
   CreerSessionRequest,
   MiseAJourDateRequest,
   ValiderBeneficeRequest,
@@ -108,5 +110,13 @@ export class SessionService {
 
   getRapportTour(sessionId: string, ordreBeneficiaireId: string) {
     return this.http.get<RapportTourResponse>(`${this.api}/${sessionId}/rapport-tour/${ordreBeneficiaireId}`);
+  }
+
+  membresEligiblesRetard(sessionId: string) {
+    return this.http.get<MembreEligibleRetardResponse[]>(`${this.api}/${sessionId}/membres-eligibles-retard`);
+  }
+
+  inscrireEnRetard(sessionId: string, membreId: string) {
+    return this.http.post<InscrireEnRetardResult>(`${this.api}/${sessionId}/inscrire-en-retard/${membreId}`, {});
   }
 }

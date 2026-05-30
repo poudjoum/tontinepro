@@ -10,4 +10,8 @@ public interface OrdreBeneficiaireRepository extends JpaRepository<OrdreBenefici
     List<OrdreBeneficiaire> findAllBySessionIdOrderByOrdre(UUID sessionId);
 
     List<OrdreBeneficiaire> findAllByMembreIdAndBeneficieTrueOrderByCreatedAtDesc(UUID membreId);
+
+    List<OrdreBeneficiaire> findAllBySessionIdAndBeneficieTrueOrderByOrdreAsc(UUID sessionId);
+
+    boolean existsBySessionIdAndMembreId(UUID sessionId, UUID membreId);
 }

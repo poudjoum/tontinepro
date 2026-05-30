@@ -2,7 +2,6 @@ package com.tontinepro.tontinepro_backend.api.session;
 
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
-import com.tontinepro.tontinepro_backend.api.session.dto.MonBeneficeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -158,5 +157,22 @@ public class SessionController {
             @PathVariable UUID id,
             @PathVariable UUID ordreBeneficiaireId) {
         return sessionService.getRapportTour(id, ordreBeneficiaireId);
+    }
+
+    @GetMapping("/{id}/membres-eligibles-retard")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Liste les membres actifs non inscrits dans la session avec le détail du rattrapage")
+    public List<MembreEligibleRetardResponse> membresEligiblesRetard(@PathVariable UUID id) {
+        return sessionService.membresEligiblesRetard(id);
+    }
+
+    @PostMapping("/{id}/inscrire-en-retard/{membreId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Inscrit un membre en retard : cotisations rétroactives + complément aux bénéficiaires passés + ajout au calendrier")
+    public InscrireEnRetardResult inscrireEnRetard(
+            @PathVariable UUID id,
+            @PathVariable UUID membreId) {
+        return sessionService.inscrireEnRetard(id, membreId);
     }
 }

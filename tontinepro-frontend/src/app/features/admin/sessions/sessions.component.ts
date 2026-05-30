@@ -9,6 +9,8 @@ import {
   SessionBilanResponse,
   SessionCotisationsStatutResponse,
   OrdreBeneficiaireResponse,
+  MembreEligibleRetardResponse,
+  InscrireEnRetardResult,
   CreerSessionRequest,
   MiseAJourDateRequest,
   ValiderBeneficeRequest,
@@ -60,6 +62,12 @@ export class SessionsComponent implements OnInit {
   // Echeancier — édition de date par bénéficiaire
   dateEdition: { [id: string]: string } = {};  // ordreBeneficiaireId -> nouvelle date saisie
   editantId = signal<string | null>(null);
+
+  // Inscription en retard
+  eligiblesRetard = signal<MembreEligibleRetardResponse[]>([]);
+  afficherRetard  = signal(false);
+  retardResultat  = signal<InscrireEnRetardResult | null>(null);
+  membreRetardSelectionne = signal<MembreEligibleRetardResponse | null>(null);
 
   sessionEnCours = computed(() =>
     this.sessions().find(s => s.statut === 'EN_COURS') ?? null
@@ -341,6 +349,39 @@ export class SessionsComponent implements OnInit {
 
   voirRapport(sessionId: string, ordreBeneficiaireId: string): void {
     this.router.navigate(['/rapport-tour', sessionId, ordreBeneficiaireId]);
+  }
+
+  // ── Inscription en retard ───────────────────────────────────────────────────
+
+  ouvrirInscriptionRetard(session: SessionResponse): void {
+    this.afficherRetard.set(true);
+    this.retardResultat.set(null);
+    this.membreRetardSelectionne.set(null);
+    this.eligiblesRetard.set([]);
+    this.saving.set(true);
+    this.error.set('');
+    this.sessionSvc.membresEligiblesRetard(session.id).subscribe({
+      next: list => { this.eligiblesRetard.set(list); this.saving.set(false); },
+      error: e   => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur chargement membres'); this.saving.set(false); this.afficherRetard.set(false); },
+    });
+  }
+
+  confirmerInscriptionRetard(session: SessionResponse): void {
+    const m = this.membreRetardSelectionne();
+    if (!m) return;
+    if (!confirm(`Inscrire ${m.prenom} ${m.nom} en retard ? Rattrapage total : ${this.fcfaSeance(m.montantTotalRattrapage)} FCFA`)) return;
+    this.saving.set(true);
+    this.sessionSvc.inscrireEnRetard(session.id, m.membreId).subscribe({
+      next: r => {
+        this.retardResultat.set(r);
+        this.sessions.update(list => list.map(s => s.id === r.sessionMiseAJour.id ? r.sessionMiseAJour : s));
+        this.sessionOuverte.set(r.sessionMiseAJour);
+        this.success.set(`${r.nomMembre} inscrit(e) en position ${r.positionDansSession}. Rattrapage : ${this.fcfaSeance(r.totalRattrapage)} FCFA.`);
+        this.saving.set(false);
+        this.afficherRetard.set(false);
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur inscription'); this.saving.set(false); },
+    });
   }
 
   /**
