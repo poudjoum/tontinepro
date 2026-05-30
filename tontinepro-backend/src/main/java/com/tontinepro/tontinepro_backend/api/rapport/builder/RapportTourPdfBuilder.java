@@ -30,7 +30,7 @@ public class RapportTourPdfBuilder {
 
     public byte[] build(RapportTourResponse r) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document doc = new Document(PageSize.A4, 36f, 36f, 50f, 36f);
+        Document doc = new Document(PageSize.A4.rotate(), 36f, 36f, 50f, 36f);
         try {
             PdfWriter.getInstance(doc, baos);
             doc.open();
@@ -100,7 +100,7 @@ public class RapportTourPdfBuilder {
 
         PdfPTable t = new PdfPTable(6);
         t.setWidthPercentage(100f);
-        t.setWidths(new float[]{22f, 14f, 14f, 14f, 14f, 8f});
+        t.setWidths(new float[]{30f, 14f, 14f, 14f, 14f, 6f});
         t.setHeaderRows(1);
         t.setSpacingAfter(8f);
 
@@ -152,9 +152,14 @@ public class RapportTourPdfBuilder {
 
         lignesBilan(t, "Σ Cotisations collectées", fcfa(r.totalCotisations()), fLabel, fValeur, GRIS_CLAIR);
         lignesBilan(t, "Σ Repas collectés", fcfa(r.totalRepas()), fLabel, fValeur, GRIS_CLAIR);
-        lignesBilan(t, "Pot brut", fcfa(r.potBrut()), fLabel,
+        lignesBilan(t, "Pot brut (cotisations + repas)", fcfa(r.potBrut()), fLabel,
                 FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BLEU_MOYEN),
                 new Color(232, 240, 254));
+        if (r.totalFond().compareTo(BigDecimal.ZERO) > 0) {
+            lignesBilan(t, "Σ Fond d'aide collecté → Trésorier", fcfa(r.totalFond()), fLabel,
+                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(63, 81, 181)),
+                    new Color(232, 234, 246));
+        }
 
         if (r.fondAideObligation().compareTo(BigDecimal.ZERO) > 0) {
             lignesBilan(t, "Obligation fond d'aide annuelle", fcfa(r.fondAideObligation()), fLabel, fValeur, GRIS_CLAIR);

@@ -104,9 +104,15 @@
           <span class="font-medium text-gray-800">{{ fcfa(r.totalRepas) }}</span>
         </div>
         <div class="flex justify-between text-sm font-semibold border-t border-gray-100 pt-2">
-          <span class="text-blue-700">Pot brut</span>
+          <span class="text-blue-700">Pot brut (cotisations + repas)</span>
           <span class="text-blue-800">{{ fcfa(r.potBrut) }}</span>
         </div>
+        @if (r.totalFond > 0) {
+          <div class="flex justify-between text-sm border-t border-gray-100 pt-2">
+            <span class="text-gray-500">Σ Fond d'aide collecté → Trésorier</span>
+            <span class="font-medium text-indigo-700">{{ fcfa(r.totalFond) }}</span>
+          </div>
+        }
 
         @if (r.fondAideObligation > 0) {
           <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-1 mt-2">
