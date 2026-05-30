@@ -149,6 +149,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/documents/documents.component').then(m => m.DocumentsComponent),
       },
+      {
+        path: 'rapport-tour/:sessionId/:ordreBeneficiaireId',
+        loadComponent: () =>
+          import('./features/rapport-tour/rapport-tour.component').then(m => m.RapportTourComponent),
+      },
 
       // Administration (admin only)
       {

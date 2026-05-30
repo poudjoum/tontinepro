@@ -12,13 +12,10 @@ public record SaisirPaiementsSeanceRequest(
 ) {
     public record PaiementMembre(
             @NotNull UUID cotisationId,
-            /** Référence de la transaction (preuve de paiement). */
             String referencePaiement,
-            /** Montant cotisation tontine. Si null → montant déjà sur la cotisation. */
             BigDecimal montantTontine,
-            /** Montant fonds d'aide du mois. Si null → 0. */
             BigDecimal montantFondAide,
-            /** Date du paiement. Si null → maintenant. */
+            BigDecimal montantRepas,
             OffsetDateTime datePaiement
     ) {}
 }

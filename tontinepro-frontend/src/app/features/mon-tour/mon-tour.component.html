@@ -100,7 +100,7 @@
       }
 
       <!-- Calendrier de la session -->
-e      @if (echeancierTrie().length > 0) {
+      @if (echeancierTrie().length > 0) {
         <div class="space-y-2">
           <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide px-1">
             Calendrier de la session
@@ -178,6 +178,10 @@ e      @if (echeancierTrie().length > 0) {
                     Session n°{{ b.sessionNumero }} · Tour {{ b.ordre }}/{{ b.totalMembres }}
                   </p>
                   <p class="text-xs text-gray-400 mt-0.5">{{ formatDate(b.dateBenefice) }}</p>
+                  <a [routerLink]="['/rapport-tour', b.sessionId, b.ordreBeneficiaireId]"
+                     class="text-xs text-primary-600 hover:text-primary-800 underline mt-1 inline-block">
+                    📄 Voir le rapport de tour
+                  </a>
                 </div>
                 <span class="badge-success flex-shrink-0">✓ Reçu</span>
               </div>

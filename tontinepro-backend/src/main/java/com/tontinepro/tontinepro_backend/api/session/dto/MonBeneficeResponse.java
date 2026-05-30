@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record MonBeneficeResponse(
+        UUID ordreBeneficiaireId,
         UUID sessionId,
         int sessionNumero,
         String tontineNom,

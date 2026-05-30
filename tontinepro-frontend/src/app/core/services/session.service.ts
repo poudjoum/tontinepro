@@ -8,6 +8,7 @@ import {
   OrdreBeneficiaireResponse,
   MonTourResponse,
   MonBeneficeResponse,
+  RapportTourResponse,
   CreerSessionRequest,
   MiseAJourDateRequest,
   ValiderBeneficeRequest,
@@ -103,5 +104,9 @@ export class SessionService {
 
   cotisationsStatut(sessionId: string) {
     return this.http.get<SessionCotisationsStatutResponse>(`${this.api}/${sessionId}/cotisations-statut`);
+  }
+
+  getRapportTour(sessionId: string, ordreBeneficiaireId: string) {
+    return this.http.get<RapportTourResponse>(`${this.api}/${sessionId}/rapport-tour/${ordreBeneficiaireId}`);
   }
 }

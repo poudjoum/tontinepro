@@ -3,6 +3,8 @@ package com.tontinepro.tontinepro_backend.api.session;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
+import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
+import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
@@ -31,8 +33,10 @@ public class SessionService {
     private final TontineRepository tontineRepository;
     private final MembreRepository membreRepository;
     private final CotisationRepository cotisationRepository;
+    private final SanctionRepository sanctionRepository;
     private final PeriodiciteService periodiciteService;
     private final NotificationService notificationService;
+    private final RapportEmailService rapportEmailService;
 
     @Transactional
     public SessionResponse creerSession(CreerSessionRequest request) {
@@ -220,7 +224,17 @@ public class SessionService {
         ob.setMontantRecu(request.montantRecu());
         ordreBeneficiaireRepository.save(ob);
 
-        return getById(sessionId);
+        SessionResponse response = getById(sessionId);
+
+        // Générer et envoyer le rapport de tour par email à tous les membres (async)
+        try {
+            RapportTourResponse rapport = getRapportTour(sessionId, ordreBeneficiaireId);
+            rapportEmailService.envoyerRapportTour(ob.getSession().getTontine().getId(), rapport);
+        } catch (Exception e) {
+            // L'envoi d'email ne doit pas bloquer la validation
+        }
+
+        return response;
     }
 
     /**
@@ -582,6 +596,7 @@ public class SessionService {
         int dejaPayes   = 0;
         BigDecimal totalTontine  = BigDecimal.ZERO;
         BigDecimal totalFondAide = BigDecimal.ZERO;
+        BigDecimal totalRepas    = BigDecimal.ZERO;
 
         for (SaisirPaiementsSeanceRequest.PaiementMembre pm : request.paiements()) {
             Cotisation cot = cotisationRepository.findById(pm.cotisationId())
@@ -593,12 +608,10 @@ public class SessionService {
                 continue;
             }
 
-            if (pm.montantTontine() != null) {
-                cot.setMontant(pm.montantTontine());
-            }
-            if (pm.montantFondAide() != null) {
-                cot.setMontantFondAide(pm.montantFondAide());
-            }
+            if (pm.montantTontine() != null)  cot.setMontant(pm.montantTontine());
+            if (pm.montantFondAide() != null)  cot.setMontantFondAide(pm.montantFondAide());
+            if (pm.montantRepas() != null)     cot.setMontantRepas(pm.montantRepas());
+
             cot.setStatut(Cotisation.Statut.PAYEE);
             cot.setDatePaiement(pm.datePaiement() != null
                     ? pm.datePaiement() : java.time.OffsetDateTime.now());
@@ -606,11 +619,10 @@ public class SessionService {
             cotisationRepository.save(cot);
 
             totalTontine  = totalTontine.add(cot.getMontant());
-            totalFondAide = totalFondAide.add(
-                    cot.getMontantFondAide() != null ? cot.getMontantFondAide() : BigDecimal.ZERO);
+            totalFondAide = totalFondAide.add(safe(cot.getMontantFondAide()));
+            totalRepas    = totalRepas.add(safe(cot.getMontantRepas()));
             enregistres++;
 
-            // Notifier le membre
             notificationService.notifier(cot.getMembre().getUser(),
                     com.tontinepro.tontinepro_backend.domain.notification.Notification.Type.COTISATION_PAYEE,
                     "Cotisation enregistrée",
@@ -620,7 +632,8 @@ public class SessionService {
         }
 
         return new SaisieSeanceResult(
-                request.paiements().size(), enregistres, dejaPayes, totalTontine, totalFondAide);
+                request.paiements().size(), enregistres, dejaPayes,
+                totalTontine, totalFondAide, totalRepas);
     }
 
     /**
@@ -661,6 +674,7 @@ public class SessionService {
         return ordreBeneficiaireRepository
                 .findAllByMembreIdAndBeneficieTrueOrderByCreatedAtDesc(membre.getId()).stream()
                 .map(ob -> new MonBeneficeResponse(
+                        ob.getId(),
                         ob.getSession().getId(),
                         ob.getSession().getNumero(),
                         ob.getSession().getTontine().getNom(),
@@ -669,6 +683,86 @@ public class SessionService {
                         ob.getDateBenefice(),
                         ob.getMontantRecu()))
                 .toList();
+    }
+
+    /**
+     * Génère le rapport d'un tour : tableau des cotisations/fond/repas/sanctions
+     * de tous les membres actifs + bilan du bénéficiaire.
+     */
+    @Transactional(readOnly = true)
+    public RapportTourResponse getRapportTour(UUID sessionId, UUID ordreBeneficiaireId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable"));
+
+        OrdreBeneficiaire ob = ordreBeneficiaireRepository.findById(ordreBeneficiaireId)
+                .orElseThrow(() -> new IllegalArgumentException("Tour introuvable"));
+
+        Tontine tontine = session.getTontine();
+
+        java.time.LocalDate dateTour = ob.getDateBenefice() != null
+                ? ob.getDateBenefice() : session.getDateDebut();
+        short mois  = (short) dateTour.getMonthValue();
+        short annee = (short) dateTour.getYear();
+
+        // Cotisations du mois concerné
+        List<Cotisation> cotisations = cotisationRepository
+                .findAllByTontineIdAndMoisAndAnnee(tontine.getId(), mois, annee);
+        Map<UUID, Cotisation> cotParMembre = cotisations.stream()
+                .collect(Collectors.toMap(c -> c.getMembre().getId(), c -> c, (a, b) -> a));
+
+        // Sanctions non payées par membre pour cette tontine
+        Map<UUID, BigDecimal> sanctionsParMembre = sanctionRepository
+                .findAllByTontineId(tontine.getId()).stream()
+                .filter(s -> !s.isPayee())
+                .collect(Collectors.groupingBy(
+                        s -> s.getMembre().getId(),
+                        Collectors.reducing(BigDecimal.ZERO, Sanction::getMontant, BigDecimal::add)));
+
+        // Membres actifs (+ ceux qui ont cotisé même si SUSPENDU)
+        List<Membre> membres = membreRepository.findAllByTontineIdAndStatut(tontine.getId(), Membre.Statut.ACTIF);
+
+        List<RapportTourResponse.LigneRapport> lignes = membres.stream().map(m -> {
+            Cotisation cot = cotParMembre.get(m.getId());
+            BigDecimal cotis  = cot != null && cot.getStatut() == Cotisation.Statut.PAYEE ? cot.getMontant()        : BigDecimal.ZERO;
+            BigDecimal fond   = cot != null && cot.getStatut() == Cotisation.Statut.PAYEE ? safe(cot.getMontantFondAide()) : BigDecimal.ZERO;
+            BigDecimal repas  = cot != null && cot.getStatut() == Cotisation.Statut.PAYEE ? safe(cot.getMontantRepas())    : BigDecimal.ZERO;
+            BigDecimal sanct  = sanctionsParMembre.getOrDefault(m.getId(), BigDecimal.ZERO);
+            return new RapportTourResponse.LigneRapport(
+                    m.getId(), m.getPrenom() + " " + m.getNom(), m.getMatricule(),
+                    cotis, fond, repas, sanct,
+                    cot != null && cot.getStatut() == Cotisation.Statut.PAYEE);
+        }).toList();
+
+        BigDecimal totalCotis  = lignes.stream().map(RapportTourResponse.LigneRapport::cotisation).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalFond   = lignes.stream().map(RapportTourResponse.LigneRapport::fond).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalRepas  = lignes.stream().map(RapportTourResponse.LigneRapport::repas).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalSanct  = lignes.stream().map(RapportTourResponse.LigneRapport::sanctions).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Bilan bénéficiaire
+        BigDecimal potBrut = totalCotis.add(totalRepas);
+        BigDecimal obligation = tontine.getMontantFondAideAnnuelMembre() != null
+                ? tontine.getMontantFondAideAnnuelMembre() : BigDecimal.ZERO;
+        BigDecimal fondAidePaye = cotisationRepository
+                .findAllByMembreIdAndAnneeAndStatut(ob.getMembre().getId(), annee, Cotisation.Statut.PAYEE)
+                .stream().map(c -> safe(c.getMontantFondAide())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal dette = obligation.subtract(fondAidePaye);
+        if (dette.compareTo(BigDecimal.ZERO) < 0) dette = BigDecimal.ZERO;
+        BigDecimal cagnotte = potBrut.subtract(dette);
+        if (cagnotte.compareTo(BigDecimal.ZERO) < 0) cagnotte = BigDecimal.ZERO;
+
+        return new RapportTourResponse(
+                sessionId, session.getNumero(), tontine.getNom(),
+                dateTour, mois, annee,
+                ob.getMembre().getId(),
+                ob.getMembre().getPrenom() + " " + ob.getMembre().getNom(),
+                ob.getMembre().getMatricule(),
+                lignes,
+                totalCotis, totalFond, totalRepas, totalSanct,
+                potBrut, obligation, fondAidePaye, dette, cagnotte);
+    }
+
+    private static BigDecimal safe(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
     }
 
     // ─── helpers ───────────────────────────────────────────────────────────────

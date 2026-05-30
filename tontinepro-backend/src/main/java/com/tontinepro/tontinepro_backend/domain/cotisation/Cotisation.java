@@ -52,6 +52,11 @@ public class Cotisation {
     @Builder.Default
     private BigDecimal montantFondAide = BigDecimal.ZERO;
 
+    /** Contribution repas de la séance. */
+    @Column(name = "montant_repas", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal montantRepas = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     @Builder.Default

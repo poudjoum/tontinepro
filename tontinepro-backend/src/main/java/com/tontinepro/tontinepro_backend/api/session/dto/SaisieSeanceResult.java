@@ -7,5 +7,6 @@ public record SaisieSeanceResult(
         int totalEnregistres,
         int totalDejaPayes,
         BigDecimal montantTontineCollecte,
-        BigDecimal montantFondAideCollecte
+        BigDecimal montantFondAideCollecte,
+        BigDecimal montantRepasCollecte
 ) {}

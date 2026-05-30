@@ -151,4 +151,12 @@ public class SessionController {
             @Valid @RequestBody ValiderBeneficeRequest request) {
         return sessionService.validerBenefice(id, ordreBeneficiaireId, request);
     }
+
+    @GetMapping("/{id}/rapport-tour/{ordreBeneficiaireId}")
+    @Operation(summary = "Rapport de tour : cotisations, fond, repas, sanctions et bilan du bénéficiaire")
+    public RapportTourResponse getRapportTour(
+            @PathVariable UUID id,
+            @PathVariable UUID ordreBeneficiaireId) {
+        return sessionService.getRapportTour(id, ordreBeneficiaireId);
+    }
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, NgIf } from '@angular/common';
+import { Router } from '@angular/router';
 import { SessionService } from '../../../core/services/session.service';
 import { TontineService } from '../../../core/services/tontine.service';
 import {
@@ -21,6 +22,7 @@ import {
 export class SessionsComponent implements OnInit {
   private sessionSvc = inject(SessionService);
   private tontineSvc = inject(TontineService);
+  private router     = inject(Router);
 
   sessions     = signal<SessionResponse[]>([]);
   loading      = signal(true);
@@ -336,6 +338,10 @@ export class SessionsComponent implements OnInit {
   }
 
   ouvrirSession(s: SessionResponse): void { this.sessionOuverte.set(s); }
+
+  voirRapport(sessionId: string, ordreBeneficiaireId: string): void {
+    this.router.navigate(['/rapport-tour', sessionId, ordreBeneficiaireId]);
+  }
 
   /**
    * Prochain bénéficiaire = premier non-bénéficié trié par dateBenefice ASC,

@@ -395,6 +395,10 @@
                   @if (ob.beneficie) {
                     <span class="badge-green text-[10px]">✓ Bénéficié</span>
                     <p class="text-xs text-gray-500">{{ ob.montantRecu | number:'1.0-0' }} FCFA</p>
+                    <button (click)="voirRapport(session.id, ob.id)"
+                            class="mt-1 text-[10px] text-primary-600 hover:text-primary-800 underline">
+                      📄 Voir rapport
+                    </button>
                   } @else {
                     <!-- Date éditable -->
                     @if (editantId() === ob.id) {

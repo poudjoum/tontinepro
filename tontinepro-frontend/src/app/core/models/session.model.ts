@@ -73,6 +73,7 @@ export interface SessionCotisationsStatutResponse {
 }
 
 export interface MonBeneficeResponse {
+  ordreBeneficiaireId: string;
   sessionId: string;
   sessionNumero: number;
   tontineNom: string;
@@ -80,6 +81,39 @@ export interface MonBeneficeResponse {
   totalMembres: number;
   dateBenefice: string | null;
   montantRecu: number | null;
+}
+
+export interface LigneRapport {
+  membreId: string;
+  nomPrenom: string;
+  matricule: string;
+  cotisation: number;
+  fond: number;
+  repas: number;
+  sanctions: number;
+  paye: boolean;
+}
+
+export interface RapportTourResponse {
+  sessionId: string;
+  sessionNumero: number;
+  tontineNom: string;
+  dateTour: string | null;
+  mois: number;
+  annee: number;
+  beneficiaireId: string;
+  beneficiaireNom: string;
+  beneficiaireMatricule: string;
+  lignes: LigneRapport[];
+  totalCotisations: number;
+  totalFond: number;
+  totalRepas: number;
+  totalSanctions: number;
+  potBrut: number;
+  fondAideObligation: number;
+  fondAidePayeAnnee: number;
+  detteFondAide: number;
+  cagnotteBeneficiaire: number;
 }
 
 export interface MonTourResponse {
