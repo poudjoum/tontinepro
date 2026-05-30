@@ -3,6 +3,7 @@ package com.tontinepro.tontinepro_backend.api.cotisation;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CreateCotisationRequest;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.EnregistrerPaiementRequest;
+import com.tontinepro.tontinepro_backend.api.cotisation.dto.ModifierCotisationRequest;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -74,6 +75,15 @@ public class CotisationController {
     @Operation(summary = "Marquer une cotisation en retard")
     public CotisationResponse marquerEnRetard(@PathVariable UUID id) {
         return cotisationService.marquerEnRetard(id);
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Corriger une cotisation (montants, statut, référence, date) — tous les champs sont optionnels")
+    public CotisationResponse modifier(
+            @PathVariable UUID id,
+            @RequestBody ModifierCotisationRequest request) {
+        return cotisationService.modifier(id, request);
     }
 }
 

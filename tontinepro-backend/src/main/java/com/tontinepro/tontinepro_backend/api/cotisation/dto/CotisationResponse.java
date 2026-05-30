@@ -13,6 +13,7 @@ public record CotisationResponse(
         short annee,
         BigDecimal montant,
         BigDecimal montantFondAide,
+        BigDecimal montantRepas,
         BigDecimal montantTotal,
         Cotisation.Statut statut,
         OffsetDateTime datePaiement,
@@ -28,13 +29,15 @@ public record CotisationResponse(
 ) {
     public static CotisationResponse from(Cotisation c) {
         BigDecimal fondAide = c.getMontantFondAide() != null ? c.getMontantFondAide() : BigDecimal.ZERO;
+        BigDecimal repas    = c.getMontantRepas()    != null ? c.getMontantRepas()    : BigDecimal.ZERO;
         return new CotisationResponse(
                 c.getId(),
                 c.getMois(),
                 c.getAnnee(),
                 c.getMontant(),
                 fondAide,
-                c.getMontant().add(fondAide),
+                repas,
+                c.getMontant().add(fondAide).add(repas),
                 c.getStatut(),
                 c.getDatePaiement(),
                 c.getReferencePaiement(),

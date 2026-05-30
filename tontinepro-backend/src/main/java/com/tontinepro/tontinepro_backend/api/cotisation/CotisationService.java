@@ -3,6 +3,7 @@ package com.tontinepro.tontinepro_backend.api.cotisation;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CreateCotisationRequest;
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.EnregistrerPaiementRequest;
+import com.tontinepro.tontinepro_backend.api.cotisation.dto.ModifierCotisationRequest;
 import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
@@ -171,5 +172,25 @@ public class CotisationService {
                 cotisation.getId(), "COTISATION");
 
         return response;
+    }
+
+    @Transactional
+    public CotisationResponse modifier(UUID id, ModifierCotisationRequest request) {
+        Cotisation c = cotisationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Cotisation introuvable : " + id));
+
+        if (request.montant() != null)           c.setMontant(request.montant());
+        if (request.montantFondAide() != null)   c.setMontantFondAide(request.montantFondAide());
+        if (request.montantRepas() != null)      c.setMontantRepas(request.montantRepas());
+        if (request.referencePaiement() != null) c.setReferencePaiement(request.referencePaiement());
+        if (request.datePaiement() != null)      c.setDatePaiement(request.datePaiement());
+        if (request.statut() != null) {
+            c.setStatut(request.statut());
+            if (request.statut() == Cotisation.Statut.PAYEE && c.getDatePaiement() == null) {
+                c.setDatePaiement(OffsetDateTime.now());
+            }
+        }
+
+        return CotisationResponse.from(cotisationRepository.save(c));
     }
 }

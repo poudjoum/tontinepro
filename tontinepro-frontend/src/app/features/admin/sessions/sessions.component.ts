@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import { SessionService } from '../../../core/services/session.service';
+import { CotisationService } from '../../../core/services/cotisation.service';
 import { TontineService } from '../../../core/services/tontine.service';
 import {
   SessionResponse,
@@ -22,9 +23,10 @@ import {
   templateUrl: './sessions.component.html',
 })
 export class SessionsComponent implements OnInit {
-  private sessionSvc = inject(SessionService);
-  private tontineSvc = inject(TontineService);
-  private router     = inject(Router);
+  private sessionSvc  = inject(SessionService);
+  private cotisationSvc = inject(CotisationService);
+  private tontineSvc  = inject(TontineService);
+  private router      = inject(Router);
 
   sessions     = signal<SessionResponse[]>([]);
   loading      = signal(true);
@@ -62,6 +64,10 @@ export class SessionsComponent implements OnInit {
   // Echeancier — édition de date par bénéficiaire
   dateEdition: { [id: string]: string } = {};  // ordreBeneficiaireId -> nouvelle date saisie
   editantId = signal<string | null>(null);
+
+  // Correction de cotisation
+  cotisationEnEdition = signal<string | null>(null); // cotisationId en cours d'édition
+  cotisationEditData: Record<string, { montant: number; montantFondAide: number; montantRepas: number; ref: string; statut: string }> = {};
 
   // Inscription en retard
   eligiblesRetard = signal<MembreEligibleRetardResponse[]>([]);
@@ -349,6 +355,50 @@ export class SessionsComponent implements OnInit {
 
   voirRapport(sessionId: string, ordreBeneficiaireId: string): void {
     this.router.navigate(['/rapport-tour', sessionId, ordreBeneficiaireId]);
+  }
+
+  // ── Correction cotisation ──────────────────────────────────────────────────
+
+  ouvrirEditionCotisation(cotisationId: string): void {
+    this.cotisationSvc.getById(cotisationId).subscribe({
+      next: c => {
+        this.cotisationEditData[cotisationId] = {
+          montant: c.montant,
+          montantFondAide: c.montantFondAide,
+          montantRepas: c.montantRepas,
+          ref: c.referencePaiement ?? '',
+          statut: c.statut,
+        };
+        this.cotisationEnEdition.set(cotisationId);
+      },
+      error: () => this.error.set('Impossible de charger la cotisation.'),
+    });
+  }
+
+  annulerEditionCotisation(): void {
+    this.cotisationEnEdition.set(null);
+  }
+
+  sauvegarderCotisation(session: SessionResponse, cotisationId: string): void {
+    const d = this.cotisationEditData[cotisationId];
+    if (!d) return;
+    this.saving.set(true);
+    this.error.set('');
+    this.cotisationSvc.modifier(cotisationId, {
+      montant:          d.montant,
+      montantFondAide:  d.montantFondAide,
+      montantRepas:     d.montantRepas,
+      referencePaiement: d.ref || null,
+      statut:           d.statut as any,
+    }).subscribe({
+      next: () => {
+        this.cotisationEnEdition.set(null);
+        this.success.set('Cotisation corrigée.');
+        this.chargerStatut(session);
+        this.saving.set(false);
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur correction'); this.saving.set(false); },
+    });
   }
 
   // ── Inscription en retard ───────────────────────────────────────────────────

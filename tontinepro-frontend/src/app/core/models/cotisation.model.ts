@@ -5,6 +5,9 @@ export interface CotisationResponse {
   mois: number;
   annee: number;
   montant: number;
+  montantFondAide: number;
+  montantRepas: number;
+  montantTotal: number;
   statut: StatutCotisation;
   datePaiement: string | null;
   referencePaiement: string | null;
@@ -23,4 +26,13 @@ export interface EnregistrerPaiementRequest {
   referencePaiement?: string;
   montantTontine?: number;
   montantFondAide?: number;
+}
+
+export interface ModifierCotisationRequest {
+  montant?: number | null;
+  montantFondAide?: number | null;
+  montantRepas?: number | null;
+  referencePaiement?: string | null;
+  statut?: StatutCotisation | null;
+  datePaiement?: string | null;
 }
