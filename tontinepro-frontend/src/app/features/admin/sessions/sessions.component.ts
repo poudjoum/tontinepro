@@ -72,6 +72,8 @@ export class SessionsComponent implements OnInit {
   afficherRetard  = signal(false);
   retardResultat  = signal<InscrireEnRetardResult | null>(null);
   membreRetardSelectionne = signal<MembreEligibleRetardResponse | null>(null);
+  retardMontantCotis = signal<number | null>(null);
+  retardMontantRepas = signal<number | null>(null);
 
   sessionEnCours = computed(() =>
     this.sessions().find(s => s.statut === 'EN_COURS') ?? null
@@ -402,6 +404,8 @@ export class SessionsComponent implements OnInit {
     this.afficherRetard.set(true);
     this.retardResultat.set(null);
     this.membreRetardSelectionne.set(null);
+    this.retardMontantCotis.set(null);
+    this.retardMontantRepas.set(null);
     this.eligiblesRetard.set([]);
     this.saving.set(true);
     this.error.set('');
@@ -411,12 +415,23 @@ export class SessionsComponent implements OnInit {
     });
   }
 
+  selectionnerMembreRetard(m: MembreEligibleRetardResponse): void {
+    this.membreRetardSelectionne.set(m);
+    this.retardMontantCotis.set(m.montantCotisationUnitaire ?? null);
+    this.retardMontantRepas.set(m.montantRepasUnitaire ?? null);
+  }
+
   confirmerInscriptionRetard(session: SessionResponse): void {
     const m = this.membreRetardSelectionne();
     if (!m) return;
-    if (!confirm(`Inscrire ${m.prenom} ${m.nom} en retard ? Rattrapage total : ${this.fcfaSeance(m.montantTotalRattrapage)} FCFA`)) return;
+    const cotis = this.retardMontantCotis();
+    const repas = this.retardMontantRepas();
+    const nbTours = m.toursARattraper;
+    const totalEstime = ((cotis ?? 0) + (repas ?? 0)) * nbTours;
+    if (!confirm(`Inscrire ${m.prenom} ${m.nom} en retard ?\nRattrapage : ${cotis ?? 0} + ${repas ?? 0} FCFA × ${nbTours} tour(s) = ${totalEstime} FCFA`)) return;
     this.saving.set(true);
-    this.sessionSvc.inscrireEnRetard(session.id, m.membreId).subscribe({
+    this.sessionSvc.inscrireEnRetard(session.id, m.membreId,
+      cotis ?? undefined, repas ?? undefined).subscribe({
       next: r => {
         this.retardResultat.set(r);
         this.sessions.update(list => list.map(s => s.id === r.sessionMiseAJour.id ? r.sessionMiseAJour : s));

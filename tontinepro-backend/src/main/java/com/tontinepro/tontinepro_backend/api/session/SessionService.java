@@ -945,7 +945,8 @@ public class SessionService {
      * - renvoie les rapports PDF actualisés par email à tous les membres
      */
     @Transactional
-    public InscrireEnRetardResult inscrireEnRetard(UUID sessionId, UUID membreId) {
+    public InscrireEnRetardResult inscrireEnRetard(UUID sessionId, UUID membreId,
+                                                    InscrireEnRetardRequest overrides) {
         SessionTontine session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable"));
         if (session.getStatut() != SessionTontine.Statut.EN_COURS) {
@@ -977,10 +978,14 @@ public class SessionService {
             short mois  = (short) dateTour.getMonthValue();
             short annee = (short) dateTour.getYear();
 
-            BigDecimal cotis = moyenneCotisations(tontine.getId(), mois, annee, false);
-            BigDecimal repas = moyenneRepas(tontine.getId(), mois, annee);
+            BigDecimal cotis = (overrides != null && overrides.montantCotisationParTour() != null)
+                    ? overrides.montantCotisationParTour()
+                    : moyenneCotisations(tontine.getId(), mois, annee, false);
+            BigDecimal repas = (overrides != null && overrides.montantRepasParTour() != null)
+                    ? overrides.montantRepasParTour()
+                    : moyenneRepas(tontine.getId(), mois, annee);
             BigDecimal fond  = moyenneFond(tontine.getId(), mois, annee);
-            if (cotis.compareTo(BigDecimal.ZERO) == 0 && tontine.getMontantCotisationMin() != null) {
+            if (cotis.compareTo(BigDecimal.ZERO) == 0 && overrides == null && tontine.getMontantCotisationMin() != null) {
                 cotis = tontine.getMontantCotisationMin();
             }
 

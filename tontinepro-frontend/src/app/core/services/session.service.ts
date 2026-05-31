@@ -116,7 +116,12 @@ export class SessionService {
     return this.http.get<MembreEligibleRetardResponse[]>(`${this.api}/${sessionId}/membres-eligibles-retard`);
   }
 
-  inscrireEnRetard(sessionId: string, membreId: string) {
-    return this.http.post<InscrireEnRetardResult>(`${this.api}/${sessionId}/inscrire-en-retard/${membreId}`, {});
+  inscrireEnRetard(sessionId: string, membreId: string,
+                   montantCotisationParTour?: number, montantRepasParTour?: number) {
+    const body: Record<string, number> = {};
+    if (montantCotisationParTour != null) body['montantCotisationParTour'] = montantCotisationParTour;
+    if (montantRepasParTour     != null) body['montantRepasParTour']      = montantRepasParTour;
+    return this.http.post<InscrireEnRetardResult>(
+      `${this.api}/${sessionId}/inscrire-en-retard/${membreId}`, body);
   }
 }

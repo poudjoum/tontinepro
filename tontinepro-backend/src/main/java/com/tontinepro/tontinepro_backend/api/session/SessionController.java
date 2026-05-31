@@ -172,7 +172,8 @@ public class SessionController {
     @Operation(summary = "Inscrit un membre en retard : cotisations rétroactives + complément aux bénéficiaires passés + ajout au calendrier")
     public InscrireEnRetardResult inscrireEnRetard(
             @PathVariable UUID id,
-            @PathVariable UUID membreId) {
-        return sessionService.inscrireEnRetard(id, membreId);
+            @PathVariable UUID membreId,
+            @RequestBody(required = false) InscrireEnRetardRequest request) {
+        return sessionService.inscrireEnRetard(id, membreId, request);
     }
 }
