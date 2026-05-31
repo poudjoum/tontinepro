@@ -1,16 +1,18 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import {
   SuperAdminService,
   TontinePlatformeResponse,
   ConfigurerRedevanceRequest,
   SuperAdminCreerTontineRequest,
+  DemandeReinitMdpResponse,
 } from '../../core/services/super-admin.service';
 
 @Component({
   selector: 'app-super-admin',
-  imports: [FormsModule],
+  imports: [FormsModule, DatePipe],
   templateUrl: './super-admin.component.html',
 })
 export class SuperAdminComponent implements OnInit {
@@ -41,6 +43,11 @@ export class SuperAdminComponent implements OnInit {
   };
   motDePasseVisible = signal(false);
 
+  // Demandes de réinitialisation de mot de passe
+  demandesReinit      = signal<DemandeReinitMdpResponse[]>([]);
+  envoyantLienId      = signal<string | null>(null);
+  nbDemandesEnAttente = computed(() => this.demandesReinit().filter(d => d.statut === 'EN_ATTENTE').length);
+
   // Panneau redevance ouvert pour une tontine
   redevancePanelId = signal<string | null>(null);
   revForm: ConfigurerRedevanceRequest = {
@@ -54,6 +61,31 @@ export class SuperAdminComponent implements OnInit {
     this.svc.listerTontines().subscribe({
       next: t => { this.tontines.set(t); this.loading.set(false); },
       error: () => { this.error.set('Impossible de charger les tontines'); this.loading.set(false); },
+    });
+    this.chargerDemandesReinit();
+  }
+
+  chargerDemandesReinit(): void {
+    this.svc.listerDemandesReinit().subscribe({
+      next: d => this.demandesReinit.set(d),
+    });
+  }
+
+  envoyerLienReinit(demande: DemandeReinitMdpResponse): void {
+    this.envoyantLienId.set(demande.id);
+    this.error.set('');
+    this.svc.envoyerLienReinit(demande.id).subscribe({
+      next: r => {
+        this.success.set(r.message);
+        this.demandesReinit.update(list =>
+          list.map(d => d.id === demande.id ? { ...d, statut: 'ENVOYEE' as const } : d)
+        );
+        this.envoyantLienId.set(null);
+      },
+      error: e => {
+        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors de l\'envoi.');
+        this.envoyantLienId.set(null);
+      },
     });
   }
 

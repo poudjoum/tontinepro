@@ -1,8 +1,12 @@
 package com.tontinepro.tontinepro_backend.api.superadmin;
 
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.ConfigurerRedevanceRequest;
+import com.tontinepro.tontinepro_backend.api.superadmin.dto.DemandeReinitMdpResponse;
+import com.tontinepro.tontinepro_backend.api.superadmin.dto.SoumettreReinitMdpRequest;
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.SuperAdminCreerTontineRequest;
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.TontinePlatformeResponse;
+import com.tontinepro.tontinepro_backend.domain.user.DemandeReinitMdp;
+import com.tontinepro.tontinepro_backend.domain.user.DemandeReinitMdpRepository;
 import com.tontinepro.tontinepro_backend.domain.aide.FondsAide;
 import com.tontinepro.tontinepro_backend.domain.aide.FondsAideRepository;
 import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargne;
@@ -36,6 +40,7 @@ public class SuperAdminService {
     private final MembreRepository membreRepository;
     private final RedevanceRepository redevanceRepository;
     private final PasswordResetTokenRepository resetTokenRepository;
+    private final DemandeReinitMdpRepository demandeReinitRepository;
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -200,5 +205,73 @@ public class SuperAdminService {
                 secretaire != null ? secretaire.getNom() : null,
                 secretaire != null ? secretaire.getPrenom() : null,
                 rev);
+    }
+
+    // ── Réinitialisation mot de passe à la demande ──────────────────────────────
+
+    @Transactional
+    public DemandeReinitMdpResponse soumettreDemande(SoumettreReinitMdpRequest request) {
+        DemandeReinitMdp demande = DemandeReinitMdp.builder()
+                .email(request.email().toLowerCase().trim())
+                .nom(request.nom().trim())
+                .prenom(request.prenom().trim())
+                .telephone(request.telephone())
+                .build();
+        return DemandeReinitMdpResponse.from(demandeReinitRepository.save(demande));
+    }
+
+    @Transactional(readOnly = true)
+    public List<DemandeReinitMdpResponse> listerDemandesReinit() {
+        return demandeReinitRepository.findAllByOrderByCreatedAtDesc()
+                .stream().map(DemandeReinitMdpResponse::from).toList();
+    }
+
+    @Transactional
+    public void envoyerLienReinit(UUID demandeId) {
+        DemandeReinitMdp demande = demandeReinitRepository.findById(demandeId)
+                .orElseThrow(() -> new IllegalArgumentException("Demande introuvable : " + demandeId));
+
+        // Chercher le compte associé à cet email (pas obligatoire — on envoie quand même)
+        User user = userRepository.findByEmail(demande.getEmail()).orElse(null);
+        if (user == null) {
+            demande.setStatut(DemandeReinitMdp.Statut.ENVOYEE);
+            demandeReinitRepository.save(demande);
+            emailService.envoyer(
+                    demande.getEmail(),
+                    "Demande de réinitialisation — TontinePro",
+                    String.format(
+                        "Bonjour %s %s,\n\n" +
+                        "Nous n'avons trouvé aucun compte associé à l'adresse %s.\n\n" +
+                        "Si vous pensez qu'il s'agit d'une erreur, contactez votre administrateur de tontine.\n\n" +
+                        "Cordialement,\nL'équipe TontinePro",
+                        demande.getPrenom(), demande.getNom(), demande.getEmail()));
+            return;
+        }
+
+        // Invalider les anciens tokens
+        resetTokenRepository.deleteAllByUserId(user.getId());
+
+        String token = UUID.randomUUID().toString();
+        resetTokenRepository.save(PasswordResetToken.builder()
+                .user(user)
+                .token(token)
+                .expiresAt(OffsetDateTime.now().plusHours(24))
+                .build());
+
+        String lien = frontendUrl + "/auth/reset-password?token=" + token;
+        emailService.envoyer(
+                demande.getEmail(),
+                "Réinitialisation de votre mot de passe TontinePro",
+                String.format(
+                    "Bonjour %s %s,\n\n" +
+                    "Vous avez demandé la réinitialisation de votre mot de passe.\n\n" +
+                    "Cliquez sur le lien ci-dessous pour définir un nouveau mot de passe :\n%s\n\n" +
+                    "Ce lien est valable 24 heures.\n\n" +
+                    "Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.\n\n" +
+                    "Cordialement,\nL'équipe TontinePro",
+                    demande.getPrenom(), demande.getNom(), lien));
+
+        demande.setStatut(DemandeReinitMdp.Statut.ENVOYEE);
+        demandeReinitRepository.save(demande);
     }
 }

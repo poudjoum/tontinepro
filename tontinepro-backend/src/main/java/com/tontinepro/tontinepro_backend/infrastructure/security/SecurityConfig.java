@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/api/v1/tontines/*/documents-officiels/*/fichier",
                                 "/api/v1/auth/reset-password/verify",
                                 "/api/v1/auth/reset-password/confirmer",
+                                "/api/v1/auth/mot-de-passe-oublie",
                                 "/api/v1/auth/activer-compte",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",

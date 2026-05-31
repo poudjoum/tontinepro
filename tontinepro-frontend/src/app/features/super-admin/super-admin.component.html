@@ -278,5 +278,49 @@
       }
     }
 
+    <!-- Demandes de réinitialisation de mot de passe -->
+    @if (demandesReinit().length > 0) {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <h2 class="text-sm font-bold text-gray-900">Demandes de réinitialisation</h2>
+          <span class="text-xs bg-amber-100 text-amber-700 font-medium px-2 py-0.5 rounded-full">
+            {{ nbDemandesEnAttente() }} en attente
+          </span>
+        </div>
+        <div class="divide-y divide-gray-50">
+          @for (d of demandesReinit(); track d.id) {
+            <div class="px-4 py-3 flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900">{{ d.prenom }} {{ d.nom }}</p>
+                <p class="text-xs text-gray-500">{{ d.email }}</p>
+                @if (d.telephone) {
+                  <p class="text-xs text-gray-400">{{ d.telephone }}</p>
+                }
+                <p class="text-[10px] text-gray-400 mt-0.5">
+                  {{ d.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                </p>
+              </div>
+              <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <span class="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                      [class]="d.statut === 'EN_ATTENTE'
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-green-100 text-green-700'">
+                  {{ d.statut === 'EN_ATTENTE' ? 'En attente' : 'Lien envoyé' }}
+                </span>
+                @if (d.statut === 'EN_ATTENTE') {
+                  <button (click)="envoyerLienReinit(d)"
+                          [disabled]="envoyantLienId() === d.id"
+                          class="text-xs font-medium px-3 py-1.5 rounded-lg border border-primary-200
+                                 text-primary-700 bg-primary-50 hover:bg-primary-100 disabled:opacity-50">
+                    @if (envoyantLienId() === d.id) { Envoi… } @else { Envoyer le lien }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
   </div>
 </div>

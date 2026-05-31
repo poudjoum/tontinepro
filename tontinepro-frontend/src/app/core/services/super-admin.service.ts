@@ -48,6 +48,16 @@ export interface ConfigurerRedevanceRequest {
   prochainPaiement?: string;
 }
 
+export interface DemandeReinitMdpResponse {
+  id: string;
+  email: string;
+  nom: string;
+  prenom: string;
+  telephone: string | null;
+  statut: 'EN_ATTENTE' | 'ENVOYEE';
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SuperAdminService {
   private api = `${environment.apiUrl}/super-admin`;
@@ -78,5 +88,13 @@ export class SuperAdminService {
     return this.http.post<{ message: string; nbEnvois: number }>(
       `${this.api}/tontines/${tontineId}/reset-password`, {}
     );
+  }
+
+  listerDemandesReinit(): Observable<DemandeReinitMdpResponse[]> {
+    return this.http.get<DemandeReinitMdpResponse[]>(`${this.api}/reinit-mdp`);
+  }
+
+  envoyerLienReinit(demandeId: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.api}/reinit-mdp/${demandeId}/envoyer`, {});
   }
 }

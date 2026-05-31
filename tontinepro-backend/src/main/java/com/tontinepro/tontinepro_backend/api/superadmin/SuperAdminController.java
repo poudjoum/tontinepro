@@ -1,6 +1,8 @@
 package com.tontinepro.tontinepro_backend.api.superadmin;
 
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.ConfigurerRedevanceRequest;
+import com.tontinepro.tontinepro_backend.api.superadmin.dto.DemandeReinitMdpResponse;
+import com.tontinepro.tontinepro_backend.api.superadmin.dto.SoumettreReinitMdpRequest;
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.SuperAdminCreerTontineRequest;
 import com.tontinepro.tontinepro_backend.api.superadmin.dto.TontinePlatformeResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,5 +63,20 @@ public class SuperAdminController {
     public Map<String, Object> reinitialiserMotDePasse(@PathVariable UUID id) {
         int nbEnvois = superAdminService.reinitialiserMotDePasse(id);
         return Map.of("message", nbEnvois + " lien(s) de réinitialisation envoyé(s)", "nbEnvois", nbEnvois);
+    }
+
+    // ── Demandes de réinitialisation mot de passe ──────────────────────────────
+
+    @GetMapping("/reinit-mdp")
+    @Operation(summary = "Lister toutes les demandes de réinitialisation de mot de passe")
+    public List<DemandeReinitMdpResponse> listerDemandesReinit() {
+        return superAdminService.listerDemandesReinit();
+    }
+
+    @PostMapping("/reinit-mdp/{id}/envoyer")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Envoyer le lien de réinitialisation au membre")
+    public void envoyerLienReinit(@PathVariable UUID id) {
+        superAdminService.envoyerLienReinit(id);
     }
 }

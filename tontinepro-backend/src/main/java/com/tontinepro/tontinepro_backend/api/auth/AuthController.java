@@ -2,6 +2,9 @@ package com.tontinepro.tontinepro_backend.api.auth;
 
 import com.tontinepro.tontinepro_backend.api.auth.dto.*;
 import com.tontinepro.tontinepro_backend.api.auth.dto.ClaimerCompteRequest;
+import com.tontinepro.tontinepro_backend.api.superadmin.SuperAdminService;
+import com.tontinepro.tontinepro_backend.api.superadmin.dto.DemandeReinitMdpResponse;
+import com.tontinepro.tontinepro_backend.api.superadmin.dto.SoumettreReinitMdpRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,8 +21,9 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Authentification")
 public class AuthController {
 
-    private final AuthService  authService;
-    private final TwoFaService twoFaService;
+    private final AuthService       authService;
+    private final TwoFaService      twoFaService;
+    private final SuperAdminService superAdminService;
 
     // ── Auth de base ─────────────────────────────────────────────────────
 
@@ -102,6 +106,15 @@ public class AuthController {
     }
 
     // ── Réinitialisation mot de passe (lien envoyé par le super admin) ───
+
+    // ── Demande de réinitialisation de mot de passe (public) ─────────────────────
+
+    @PostMapping("/mot-de-passe-oublie")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Soumettre une demande de réinitialisation de mot de passe (public)")
+    public DemandeReinitMdpResponse motDePasseOublie(@Valid @RequestBody SoumettreReinitMdpRequest request) {
+        return superAdminService.soumettreDemande(request);
+    }
 
     @GetMapping("/reset-password/verify")
     @Operation(summary = "Vérifier la validité d'un token de réinitialisation (public)")

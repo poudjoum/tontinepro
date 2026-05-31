@@ -71,6 +71,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
       },
+      {
+        path: 'mot-de-passe-oublie',
+        loadComponent: () =>
+          import('./features/auth/mot-de-passe-oublie/mot-de-passe-oublie.component').then(m => m.MotDePasseOublieComponent),
+      },
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
