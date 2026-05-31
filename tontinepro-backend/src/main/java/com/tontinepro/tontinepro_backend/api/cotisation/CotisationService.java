@@ -184,6 +184,7 @@ public class CotisationService {
         if (request.montantRepas() != null)      c.setMontantRepas(request.montantRepas());
         if (request.referencePaiement() != null) c.setReferencePaiement(request.referencePaiement());
         if (request.datePaiement() != null)      c.setDatePaiement(request.datePaiement());
+        if (request.moyenPaiement() != null)     c.setMoyenPaiement(request.moyenPaiement());
         if (request.statut() != null) {
             c.setStatut(request.statut());
             if (request.statut() == Cotisation.Statut.PAYEE && c.getDatePaiement() == null) {

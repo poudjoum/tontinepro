@@ -68,6 +68,10 @@ public class Cotisation {
     @Column(name = "reference_paiement", length = 100)
     private String referencePaiement;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "moyen_paiement", length = 20)
+    private MoyenPaiement moyenPaiement;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();
@@ -78,5 +82,9 @@ public class Cotisation {
 
     public enum Statut {
         EN_ATTENTE, PAYEE, EN_RETARD
+    }
+
+    public enum MoyenPaiement {
+        CASH, ORANGE_MONEY, VIREMENT, AUTRE
     }
 }

@@ -16,6 +16,7 @@ public record SaisirPaiementsSeanceRequest(
             BigDecimal montantTontine,
             BigDecimal montantFondAide,
             BigDecimal montantRepas,
-            OffsetDateTime datePaiement
+            OffsetDateTime datePaiement,
+            com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation.MoyenPaiement moyenPaiement
     ) {}
 }

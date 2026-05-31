@@ -11,5 +11,6 @@ public record ModifierCotisationRequest(
         BigDecimal montantRepas,
         String referencePaiement,
         Cotisation.Statut statut,
-        OffsetDateTime datePaiement
+        OffsetDateTime datePaiement,
+        Cotisation.MoyenPaiement moyenPaiement
 ) {}

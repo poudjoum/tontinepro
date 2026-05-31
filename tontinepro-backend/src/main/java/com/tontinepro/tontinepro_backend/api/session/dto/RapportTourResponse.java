@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.session.dto;
 
+import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 
 import java.math.BigDecimal;
@@ -50,7 +51,8 @@ public record RapportTourResponse(
             BigDecimal fond,
             BigDecimal repas,
             BigDecimal sanctions,
-            boolean paye
+            boolean paye,
+            Cotisation.MoyenPaiement moyenPaiement
     ) {}
 
     public record ContributeurAideSociale(
