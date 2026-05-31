@@ -220,8 +220,33 @@ public class SessionService {
             throw new IllegalStateException("Ce membre a déjà bénéficié pour cette session");
         }
 
+        // Calcul automatique : Σcotisations(PAYEE) + Σrepas(PAYEE) - fondAideAnnuelMembre
+        Tontine tontine = ob.getSession().getTontine();
+        short mois  = (short) ob.getSession().getDateDebut().getMonthValue();
+        short annee = (short) ob.getSession().getDateDebut().getYear();
+
+        List<Cotisation> cotisations = cotisationRepository
+                .findAllByTontineIdAndMoisAndAnnee(tontine.getId(), mois, annee);
+
+        BigDecimal totalCotisations = cotisations.stream()
+                .filter(c -> c.getStatut() == Cotisation.Statut.PAYEE
+                          && c.getMembre().getTypeParticipation() == Membre.TypeParticipation.TONTINE)
+                .map(c -> c.getMontant() != null ? c.getMontant() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalRepas = cotisations.stream()
+                .filter(c -> c.getStatut() == Cotisation.Statut.PAYEE)
+                .map(c -> c.getMontantRepas() != null ? c.getMontantRepas() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal fondAideAnnuel = tontine.getMontantFondAideAnnuelMembre() != null
+                ? tontine.getMontantFondAideAnnuelMembre() : BigDecimal.ZERO;
+
+        BigDecimal montantRecu = totalCotisations.add(totalRepas).subtract(fondAideAnnuel);
+        if (montantRecu.compareTo(BigDecimal.ZERO) < 0) montantRecu = BigDecimal.ZERO;
+
         ob.setBeneficie(true);
-        ob.setMontantRecu(request.montantRecu());
+        ob.setMontantRecu(montantRecu);
         ordreBeneficiaireRepository.save(ob);
 
         SessionResponse response = getById(sessionId);

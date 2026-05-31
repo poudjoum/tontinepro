@@ -53,8 +53,6 @@ export class SessionsComponent implements OnInit {
   saisieData: Record<string, { montantTontine: number; montantFondAide: number; ref: string }> = {};
   saisieResultat = signal<{ totalEnregistres: number; montantTontineCollecte: number; montantFondAideCollecte: number } | null>(null);
 
-  // Validation bénéfice
-  montantValide: { [id: string]: number } = {};
 
   // Date manuelle session
   nouvelleDateProchaine = '';
@@ -129,15 +127,12 @@ export class SessionsComponent implements OnInit {
   }
 
   validerBenefice(session: SessionResponse, ob: OrdreBeneficiaireResponse): void {
-    const montant = this.montantValide[ob.id];
-    if (montant == null || montant < 0) { this.error.set('Veuillez saisir un montant valide.'); return; }
     this.saving.set(true);
-    this.sessionSvc.validerBenefice(session.id, ob.id, { montantRecu: montant }).subscribe({
+    this.sessionSvc.validerBenefice(session.id, ob.id, {}).subscribe({
       next: updated => {
         this.sessions.update(list => list.map(s => s.id === updated.id ? updated : s));
         this.sessionOuverte.set(updated);
         this.success.set(`Bénéfice de ${ob.membrePrenom} ${ob.membreNom} validé.`);
-        delete this.montantValide[ob.id];
         this.saving.set(false);
       },
       error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur validation.'); this.saving.set(false); },
@@ -454,6 +449,11 @@ export class SessionsComponent implements OnInit {
         const diff = new Date(a.dateBenefice).getTime() - new Date(b.dateBenefice).getTime();
         return diff !== 0 ? diff : a.ordre - b.ordre;
       });
+  }
+
+  datePassee(dateStr: string | null): boolean {
+    if (!dateStr) return false;
+    return new Date(dateStr).setHours(23, 59, 59, 999) < Date.now();
   }
 
   joursRestants(dateStr: string | null): string {

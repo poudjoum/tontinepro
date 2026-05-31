@@ -38,9 +38,7 @@ export interface MiseAJourDateRequest {
   dateProchaineTontine: string;
 }
 
-export interface ValiderBeneficeRequest {
-  montantRecu: number;
-}
+export interface ValiderBeneficeRequest {}
 
 export interface ReordonnerBeneficiairesRequest {
   ordreMembreIds: string[];
