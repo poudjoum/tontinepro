@@ -984,10 +984,13 @@ public class SessionService {
             BigDecimal repas = (overrides != null && overrides.montantRepasParTour() != null)
                     ? overrides.montantRepasParTour()
                     : moyenneRepas(tontine.getId(), mois, annee);
-            BigDecimal fond  = moyenneFond(tontine.getId(), mois, annee);
             if (cotis.compareTo(BigDecimal.ZERO) == 0 && overrides == null && tontine.getMontantCotisationMin() != null) {
                 cotis = tontine.getMontantCotisationMin();
             }
+
+            // Fond d'aide : 0 par défaut sur le rattrapage, sauf si explicitement saisi
+            BigDecimal fond = (overrides != null && overrides.montantFondAideParTour() != null)
+                    ? overrides.montantFondAideParTour() : BigDecimal.ZERO;
 
             // Cotisation rétroactive (idempotente)
             if (!cotisationRepository.existsByMembreIdAndMoisAndAnnee(membreId, mois, annee)) {

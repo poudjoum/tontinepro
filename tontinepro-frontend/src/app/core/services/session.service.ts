@@ -117,10 +117,13 @@ export class SessionService {
   }
 
   inscrireEnRetard(sessionId: string, membreId: string,
-                   montantCotisationParTour?: number, montantRepasParTour?: number) {
+                   montantCotisationParTour?: number,
+                   montantRepasParTour?: number,
+                   montantFondAideParTour?: number) {
     const body: Record<string, number> = {};
     if (montantCotisationParTour != null) body['montantCotisationParTour'] = montantCotisationParTour;
-    if (montantRepasParTour     != null) body['montantRepasParTour']      = montantRepasParTour;
+    if (montantRepasParTour      != null) body['montantRepasParTour']      = montantRepasParTour;
+    if (montantFondAideParTour   != null) body['montantFondAideParTour']   = montantFondAideParTour;
     return this.http.post<InscrireEnRetardResult>(
       `${this.api}/${sessionId}/inscrire-en-retard/${membreId}`, body);
   }

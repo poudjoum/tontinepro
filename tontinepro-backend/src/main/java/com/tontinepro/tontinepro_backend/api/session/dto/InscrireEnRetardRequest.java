@@ -4,5 +4,6 @@ import java.math.BigDecimal;
 
 public record InscrireEnRetardRequest(
         BigDecimal montantCotisationParTour,
-        BigDecimal montantRepasParTour
+        BigDecimal montantRepasParTour,
+        BigDecimal montantFondAideParTour
 ) {}

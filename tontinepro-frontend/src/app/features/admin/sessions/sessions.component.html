@@ -362,10 +362,10 @@
 
                       <!-- Saisie des montants unitaires -->
                       <p class="text-xs font-semibold text-orange-800">Montant par tour (FCFA)</p>
-                      <div class="grid grid-cols-2 gap-2">
+                      <div class="grid grid-cols-3 gap-2">
                         <div>
                           <label class="text-[10px] text-orange-700 block mb-0.5">Cotisation tontine</label>
-                          <input type="number" min="0" [(ngModel)]="retardMontantCotis"
+                          <input type="number" min="0"
                                  [ngModel]="retardMontantCotis()"
                                  (ngModelChange)="retardMontantCotis.set($event)"
                                  class="w-full border border-orange-300 rounded-lg px-2 py-1 text-sm text-right bg-white focus:outline-none focus:ring-1 focus:ring-orange-400" />
@@ -377,9 +377,16 @@
                                  (ngModelChange)="retardMontantRepas.set($event)"
                                  class="w-full border border-orange-300 rounded-lg px-2 py-1 text-sm text-right bg-white focus:outline-none focus:ring-1 focus:ring-orange-400" />
                         </div>
+                        <div>
+                          <label class="text-[10px] text-orange-700 block mb-0.5">Fond d'aide</label>
+                          <input type="number" min="0"
+                                 [ngModel]="retardMontantFond()"
+                                 (ngModelChange)="retardMontantFond.set($event)"
+                                 class="w-full border border-orange-300 rounded-lg px-2 py-1 text-sm text-right bg-white focus:outline-none focus:ring-1 focus:ring-orange-400" />
+                        </div>
                       </div>
                       <p class="text-xs text-orange-700 text-right">
-                        Total : <span class="font-bold">{{ ((retardMontantCotis() ?? 0) + (retardMontantRepas() ?? 0)) * m.toursARattraper | number:'1.0-0' }} FCFA</span>
+                        Total : <span class="font-bold">{{ ((retardMontantCotis() ?? 0) + (retardMontantRepas() ?? 0) + retardMontantFond()) * m.toursARattraper | number:'1.0-0' }} FCFA</span>
                         ({{ m.toursARattraper }} tour{{ m.toursARattraper > 1 ? 's' : '' }})
                       </p>
 

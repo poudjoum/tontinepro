@@ -74,6 +74,7 @@ export class SessionsComponent implements OnInit {
   membreRetardSelectionne = signal<MembreEligibleRetardResponse | null>(null);
   retardMontantCotis = signal<number | null>(null);
   retardMontantRepas = signal<number | null>(null);
+  retardMontantFond  = signal<number>(0);
 
   sessionEnCours = computed(() =>
     this.sessions().find(s => s.statut === 'EN_COURS') ?? null
@@ -419,6 +420,7 @@ export class SessionsComponent implements OnInit {
     this.membreRetardSelectionne.set(m);
     this.retardMontantCotis.set(m.montantCotisationUnitaire ?? null);
     this.retardMontantRepas.set(m.montantRepasUnitaire ?? null);
+    this.retardMontantFond.set(0);
   }
 
   confirmerInscriptionRetard(session: SessionResponse): void {
@@ -430,8 +432,9 @@ export class SessionsComponent implements OnInit {
     const totalEstime = ((cotis ?? 0) + (repas ?? 0)) * nbTours;
     if (!confirm(`Inscrire ${m.prenom} ${m.nom} en retard ?\nRattrapage : ${cotis ?? 0} + ${repas ?? 0} FCFA × ${nbTours} tour(s) = ${totalEstime} FCFA`)) return;
     this.saving.set(true);
+    const fond = this.retardMontantFond();
     this.sessionSvc.inscrireEnRetard(session.id, m.membreId,
-      cotis ?? undefined, repas ?? undefined).subscribe({
+      cotis ?? undefined, repas ?? undefined, fond).subscribe({
       next: r => {
         this.retardResultat.set(r);
         this.sessions.update(list => list.map(s => s.id === r.sessionMiseAJour.id ? r.sessionMiseAJour : s));
