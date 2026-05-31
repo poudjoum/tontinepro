@@ -71,6 +71,17 @@ export class DocumentsComponent implements OnInit {
         next: m => { this.membres.set(m); this.loading.set(false); },
         error: () => this.loading.set(false),
       });
+      // Charger les docs officiels si le gestionnaire a aussi un profil membre
+      this.mbrSvc.getMonProfil().subscribe({
+        next: m => {
+          this.tontineId = m.tontineId;
+          this.demSvc.documentsOfficielsTontine(m.tontineId).subscribe({
+            next: d => this.documentsOfficiel.set(d),
+            error: () => {},
+          });
+        },
+        error: () => {},
+      });
     } else {
       this.mbrSvc.getMonProfil().subscribe({
         next: m => {

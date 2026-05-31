@@ -328,7 +328,10 @@
       </div>
     }
 
-    <!-- Documents officiels de la tontine -->
+  }
+
+  <!-- Documents officiels de la tontine (visible par tous les membres, y compris gestionnaires avec profil membre) -->
+  @if (!loading() && tontineId) {
     <div class="space-y-2 pt-2">
       <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Documents officiels de la tontine</h2>
       <p class="text-xs text-gray-400 -mt-1">Règlement intérieur, statuts et autres documents publiés par le Secrétariat.</p>
