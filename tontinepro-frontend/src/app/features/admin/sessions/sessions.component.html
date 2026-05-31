@@ -163,13 +163,18 @@
 
             <!-- Liste membres -->
             <div class="space-y-1.5">
-              @for (m of statutCotisations()!.membres; track m.membreId) {
+              @for (m of statutCotisations()!.membres; track m.membreId; let i = $index) {
                 <div class="bg-white rounded-lg px-3 py-2 space-y-2">
                   <!-- Ligne principale -->
                   <div class="flex items-center justify-between gap-2">
-                    <div class="flex-1 min-w-0">
-                      <p class="text-xs font-medium text-gray-800 truncate">{{ m.prenom }} {{ m.nom }}</p>
-                      <p class="text-[10px] text-gray-400">{{ m.matricule }}</p>
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                      <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                        {{ i + 1 }}
+                      </span>
+                      <div class="min-w-0">
+                        <p class="text-xs font-medium text-gray-800 truncate">{{ m.prenom }} {{ m.nom }}</p>
+                        <p class="text-[10px] text-gray-400">{{ m.matricule }}</p>
+                      </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                       <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
@@ -510,7 +515,7 @@
             <span class="text-[11px] text-gray-400">{{ session.nombreMembres }} tour(s)</span>
           </div>
 
-          @for (ob of beneficiairesTriesParDate(session); track ob.id) {
+          @for (ob of beneficiairesTriesParDate(session); track ob.id; let i = $index) {
             <div [class]="'rounded-lg border p-3 space-y-2 ' +
               (ob.beneficie ? 'bg-gray-50 border-gray-200' :
                prochainBeneficiaire(session)?.id === ob.id ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-200')">
@@ -520,7 +525,7 @@
                   <span [class]="'w-7 h-7 rounded-full flex-shrink-0 text-xs font-bold flex items-center justify-center ' +
                     (ob.beneficie ? 'bg-green-100 text-green-700' :
                      prochainBeneficiaire(session)?.id === ob.id ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700')">
-                    {{ ob.ordre }}
+                    {{ i + 1 }}
                   </span>
                   <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900 truncate">{{ ob.membrePrenom }} {{ ob.membreNom }}</p>
