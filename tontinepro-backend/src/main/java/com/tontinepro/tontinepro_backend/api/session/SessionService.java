@@ -684,6 +684,7 @@ public class SessionService {
             cot.setDatePaiement(pm.datePaiement() != null
                     ? pm.datePaiement() : java.time.OffsetDateTime.now());
             cot.setReferencePaiement(pm.referencePaiement());
+            if (pm.moyenPaiement() != null)    cot.setMoyenPaiement(pm.moyenPaiement());
             cotisationRepository.save(cot);
 
             totalTontine  = totalTontine.add(cot.getMontant());
@@ -792,14 +793,15 @@ public class SessionService {
 
         List<RapportTourResponse.LigneRapport> lignes = membres.stream().map(m -> {
             Cotisation cot = cotParMembre.get(m.getId());
-            BigDecimal cotis  = cot != null && cot.getStatut() == Cotisation.Statut.PAYEE ? cot.getMontant()        : BigDecimal.ZERO;
-            BigDecimal fond   = cot != null && cot.getStatut() == Cotisation.Statut.PAYEE ? safe(cot.getMontantFondAide()) : BigDecimal.ZERO;
-            BigDecimal repas  = cot != null && cot.getStatut() == Cotisation.Statut.PAYEE ? safe(cot.getMontantRepas())    : BigDecimal.ZERO;
+            boolean payee  = cot != null && cot.getStatut() == Cotisation.Statut.PAYEE;
+            BigDecimal cotis  = payee ? cot.getMontant()                 : BigDecimal.ZERO;
+            BigDecimal fond   = payee ? safe(cot.getMontantFondAide())   : BigDecimal.ZERO;
+            BigDecimal repas  = payee ? safe(cot.getMontantRepas())      : BigDecimal.ZERO;
             BigDecimal sanct  = sanctionsParMembre.getOrDefault(m.getId(), BigDecimal.ZERO);
+            Cotisation.MoyenPaiement moyen = payee ? cot.getMoyenPaiement() : null;
             return new RapportTourResponse.LigneRapport(
                     m.getId(), m.getPrenom() + " " + m.getNom(), m.getMatricule(),
-                    cotis, fond, repas, sanct,
-                    cot != null && cot.getStatut() == Cotisation.Statut.PAYEE);
+                    cotis, fond, repas, sanct, payee, moyen);
         }).toList();
 
         BigDecimal totalCotis  = lignes.stream().map(RapportTourResponse.LigneRapport::cotisation).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -883,7 +885,18 @@ public class SessionService {
                 .collect(Collectors.toSet());
 
         return membresActifs.stream()
-                .filter(m -> !dejaDansSession.contains(m.getId()))
+                .filter(m -> {
+                    if (!dejaDansSession.contains(m.getId())) {
+                        // Pas encore dans la session : éligible si au moins un tour est clôturé
+                        return !toursCompletes.isEmpty();
+                    }
+                    // Déjà dans la session (recalibrer) : éligible si une cotisation rétroactive manque
+                    return toursCompletes.stream().anyMatch(ob -> {
+                        LocalDate dt = ob.getDateBenefice() != null ? ob.getDateBenefice() : LocalDate.now();
+                        return !cotisationRepository.existsByMembreIdAndMoisAndAnnee(
+                                m.getId(), (short) dt.getMonthValue(), (short) dt.getYear());
+                    });
+                })
                 .map(m -> buildEligibleResponse(m, toursCompletes, tontine))
                 .toList();
     }
@@ -944,9 +957,7 @@ public class SessionService {
         if (!membre.getTontine().getId().equals(session.getTontine().getId())) {
             throw new IllegalArgumentException("Ce membre n'appartient pas à cette tontine");
         }
-        if (ordreBeneficiaireRepository.existsBySessionIdAndMembreId(sessionId, membreId)) {
-            throw new IllegalStateException("Ce membre est déjà inscrit dans cette session");
-        }
+        boolean dejaDansSession = ordreBeneficiaireRepository.existsBySessionIdAndMembreId(sessionId, membreId);
 
         List<OrdreBeneficiaire> toursCompletes =
                 ordreBeneficiaireRepository.findAllBySessionIdAndBeneficieTrueOrderByOrdreAsc(sessionId);
@@ -1003,38 +1014,50 @@ public class SessionService {
                     dateTour.toString(), cotis, repas, complement));
         }
 
-        // Ajouter en fin de calendrier
+        // Ajouter en fin de calendrier (seulement si pas déjà dans la session)
         List<OrdreBeneficiaire> tousOrdres = ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId);
-        int prochainOrdre = tousOrdres.size() + 1;
-
-        LocalDate derniereDateExistante = tousOrdres.stream()
-                .map(OrdreBeneficiaire::getDateBenefice)
-                .filter(java.util.Objects::nonNull)
-                .max(java.util.Comparator.naturalOrder())
-                .orElse(session.getDateDebut());
-
+        int prochainOrdre;
         LocalDate dateNouveauMembre = null;
-        try {
-            dateNouveauMembre = periodiciteService.prochainDate(
-                    tontine.getTypeReglePeriodicite(), tontine.getJourReference(), derniereDateExistante);
-        } catch (Exception ignored) {}
 
-        OrdreBeneficiaire nouvelOrdre = OrdreBeneficiaire.builder()
-                .session(session)
-                .membre(membre)
-                .ordre(prochainOrdre)
-                .dateBenefice(dateNouveauMembre)
-                .beneficie(false)
-                .montantRecu(null)
-                .build();
-        ordreBeneficiaireRepository.save(nouvelOrdre);
+        if (!dejaDansSession) {
+            prochainOrdre = tousOrdres.size() + 1;
 
-        // Mettre à jour la session
-        session.setNombreMembres(session.getNombreMembres() + 1);
-        if (dateNouveauMembre != null && (session.getDateFin() == null || dateNouveauMembre.isAfter(session.getDateFin()))) {
-            session.setDateFin(dateNouveauMembre);
+            LocalDate derniereDateExistante = tousOrdres.stream()
+                    .map(OrdreBeneficiaire::getDateBenefice)
+                    .filter(java.util.Objects::nonNull)
+                    .max(java.util.Comparator.naturalOrder())
+                    .orElse(session.getDateDebut());
+
+            try {
+                dateNouveauMembre = periodiciteService.prochainDate(
+                        tontine.getTypeReglePeriodicite(), tontine.getJourReference(), derniereDateExistante);
+            } catch (Exception ignored) {}
+
+            ordreBeneficiaireRepository.save(OrdreBeneficiaire.builder()
+                    .session(session)
+                    .membre(membre)
+                    .ordre(prochainOrdre)
+                    .dateBenefice(dateNouveauMembre)
+                    .beneficie(false)
+                    .montantRecu(null)
+                    .build());
+
+            session.setNombreMembres(session.getNombreMembres() + 1);
+            if (dateNouveauMembre != null && (session.getDateFin() == null || dateNouveauMembre.isAfter(session.getDateFin()))) {
+                session.setDateFin(dateNouveauMembre);
+            }
+            sessionRepository.save(session);
+        } else {
+            // Membre déjà dans le calendrier (ajouté par recalibrer) — on récupère sa position
+            prochainOrdre = tousOrdres.stream()
+                    .filter(ob -> ob.getMembre().getId().equals(membreId))
+                    .mapToInt(OrdreBeneficiaire::getOrdre)
+                    .findFirst().orElse(tousOrdres.size());
+            dateNouveauMembre = tousOrdres.stream()
+                    .filter(ob -> ob.getMembre().getId().equals(membreId))
+                    .map(OrdreBeneficiaire::getDateBenefice)
+                    .findFirst().orElse(null);
         }
-        sessionRepository.save(session);
 
         // Renvoyer les rapports des tours passés par email (async)
         final UUID tontineId = tontine.getId();
