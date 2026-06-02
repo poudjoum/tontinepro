@@ -1,0 +1,184 @@
+<div class="space-y-4">
+
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Reprendre une tontine en cours</h1>
+    <p class="text-xs text-gray-500 mt-1">
+      Pour une tontine démarrée hors application : on recrée le calendrier depuis le mois
+      réel de démarrage, puis on saisit les cotisations et on valide les bénéficiaires
+      des tours déjà passés, mois par mois.
+    </p>
+  </div>
+
+  <!-- Fil d'étapes -->
+  <div class="flex items-center gap-2 text-[11px] font-medium">
+    <span [class]="etape() === 'creation' ? 'text-primary-700' : 'text-gray-400'">1. Calendrier</span>
+    <span class="text-gray-300">›</span>
+    <span [class]="etape() === 'rattrapage' ? 'text-primary-700' : 'text-gray-400'">2. Tours antérieurs</span>
+    <span class="text-gray-300">›</span>
+    <span [class]="etape() === 'termine' ? 'text-primary-700' : 'text-gray-400'">3. Terminé</span>
+  </div>
+
+  @if (error()) {
+    <div class="bg-red-50 text-red-700 text-sm rounded-lg p-3">{{ error() }}</div>
+  }
+  @if (success()) {
+    <div class="bg-green-50 text-green-700 text-sm rounded-lg p-3">{{ success() }}</div>
+  }
+
+  <!-- ÉTAPE 1 : création + ordre des membres -->
+  @if (etape() === 'creation') {
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-4">
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Tontine</label>
+        <select [(ngModel)]="tontineId" (ngModelChange)="chargerMembres()"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+          @for (t of tontines(); track t.id) {
+            <option [value]="t.id">{{ t.nom }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">
+          Date de début réelle (1er tour)
+        </label>
+        <input type="date" [(ngModel)]="dateDebut"
+               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+        <p class="text-[11px] text-gray-400 mt-1">
+          Ex. le mois où la tontine a réellement démarré (février). Le calendrier des
+          tours est calculé automatiquement à partir de cette date.
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">
+          Ordre de passage des membres ({{ membres().length }})
+        </label>
+        <p class="text-[11px] text-gray-400 mb-2">
+          Réglez l'ordre tel qu'il s'est réellement déroulé : le 1er a bénéficié au mois
+          de début, le 2e au tour suivant, etc.
+        </p>
+        <ul class="divide-y divide-gray-100 border border-gray-100 rounded-lg">
+          @for (m of membres(); track m.id; let i = $index) {
+            <li class="flex items-center gap-2 px-3 py-2">
+              <span class="w-6 text-xs font-bold text-primary-700">{{ i + 1 }}</span>
+              <span class="flex-1 text-sm text-gray-800">{{ m.prenom }} {{ m.nom }}
+                <span class="text-[11px] text-gray-400">({{ m.matricule }})</span>
+              </span>
+              <button type="button" (click)="monter(i)" [disabled]="i === 0"
+                      class="px-2 py-1 text-xs rounded bg-gray-100 disabled:opacity-30">↑</button>
+              <button type="button" (click)="descendre(i)" [disabled]="i === membres().length - 1"
+                      class="px-2 py-1 text-xs rounded bg-gray-100 disabled:opacity-30">↓</button>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <button type="button" (click)="creerSession()" [disabled]="saving()"
+              class="w-full bg-primary-600 text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-50">
+        {{ saving() ? 'Création…' : 'Créer la session et démarrer le rattrapage' }}
+      </button>
+    </div>
+  }
+
+  <!-- ÉTAPE 2 : rattrapage mois par mois -->
+  @if (etape() === 'rattrapage' && tourCourant(); as ob) {
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-4">
+
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-wide text-gray-400">
+            Tour {{ tourIdx() + 1 }} / {{ toursPasses().length }}
+          </p>
+          <p class="text-sm font-bold text-gray-900">
+            {{ moisLabel(moisCourant(), anneeCourante()) }}
+          </p>
+        </div>
+        <div class="text-right">
+          <p class="text-[11px] text-gray-400">Bénéficiaire</p>
+          <p class="text-sm font-semibold text-primary-700">{{ ob.membrePrenom }} {{ ob.membreNom }}</p>
+        </div>
+      </div>
+
+      @if (statut(); as s) {
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-left text-gray-500 border-b border-gray-100">
+                <th class="py-2">Membre</th>
+                <th class="py-2 text-right">Cotisation</th>
+                <th class="py-2 text-right">Fond d'aide</th>
+                <th class="py-2 text-right">Repas</th>
+                <th class="py-2 text-center">État</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (m of s.membres; track m.membreId) {
+                <tr class="border-b border-gray-50">
+                  <td class="py-1.5 pr-2">{{ m.prenom }} {{ m.nom }}</td>
+                  @if (m.cotisationId && m.statutCotisation !== 'PAYEE') {
+                    <td class="py-1.5"><input type="number" [(ngModel)]="saisie[m.cotisationId].montantTontine"
+                          class="w-20 border border-gray-200 rounded px-1.5 py-1 text-right" /></td>
+                    <td class="py-1.5"><input type="number" [(ngModel)]="saisie[m.cotisationId].montantFondAide"
+                          class="w-20 border border-gray-200 rounded px-1.5 py-1 text-right" /></td>
+                    <td class="py-1.5"><input type="number" [(ngModel)]="saisie[m.cotisationId].montantRepas"
+                          class="w-16 border border-gray-200 rounded px-1.5 py-1 text-right" /></td>
+                  } @else {
+                    <td class="py-1.5 text-right text-gray-400">—</td>
+                    <td class="py-1.5 text-right text-gray-400">—</td>
+                    <td class="py-1.5 text-right text-gray-400">—</td>
+                  }
+                  <td class="py-1.5 text-center">
+                    <span [class]="'px-1.5 py-0.5 rounded text-[10px] ' + badgeStatutCot(m.statutCotisation)">
+                      {{ m.statutCotisation }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex gap-2">
+          <button type="button" (click)="enregistrerCotisations()" [disabled]="saving()"
+                  class="flex-1 bg-gray-800 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
+            {{ saving() ? '…' : 'Enregistrer les cotisations du mois' }}
+          </button>
+          <button type="button" (click)="validerEtSuivant()" [disabled]="saving() || !cotisationsEnregistrees()"
+                  class="flex-1 bg-primary-600 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50"
+                  title="Valide le bénéficiaire (montant reçu calculé automatiquement sur ce mois)">
+            Valider le bénéficiaire & tour suivant
+          </button>
+        </div>
+        @if (!cotisationsEnregistrees()) {
+          <p class="text-[11px] text-amber-600">
+            Enregistrez d'abord les cotisations du mois — le montant reçu par le bénéficiaire en sera déduit.
+          </p>
+        }
+      }
+    </div>
+  }
+
+  <!-- ÉTAPE 3 : terminé -->
+  @if (etape() === 'termine') {
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center space-y-3">
+      <div class="text-4xl">✅</div>
+      <p class="text-sm font-semibold text-gray-900">Rattrapage terminé</p>
+      <p class="text-xs text-gray-500">
+        Les tours antérieurs ont été validés. La session est à jour : vous pouvez désormais
+        gérer le mois courant normalement depuis l'écran Sessions.
+      </p>
+      @if (session(); as sess) {
+        <p class="text-xs text-gray-400">
+          Session n°{{ sess.numero }} — {{ sess.nombreMembres }} membre(s) — début {{ sess.dateDebut }}
+        </p>
+      }
+      <button type="button" (click)="allerAuxSessions()"
+              class="bg-primary-600 text-white rounded-lg px-4 py-2 text-sm font-semibold">
+        Aller à l'écran Sessions
+      </button>
+    </div>
+  }
+
+</div>

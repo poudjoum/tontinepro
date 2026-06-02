@@ -221,9 +221,14 @@ public class SessionService {
         }
 
         // Calcul automatique : Σcotisations(PAYEE) + Σrepas(PAYEE) - fondAideAnnuelMembre
+        // Le montant reçu est calculé sur les cotisations du MOIS DU TOUR (dateBenefice),
+        // pas sur le mois de début de session (sinon tous les tours d'une session
+        // multi-mois seraient calculés sur le premier mois).
         Tontine tontine = ob.getSession().getTontine();
-        short mois  = (short) ob.getSession().getDateDebut().getMonthValue();
-        short annee = (short) ob.getSession().getDateDebut().getYear();
+        LocalDate dateTour = ob.getDateBenefice() != null
+                ? ob.getDateBenefice() : ob.getSession().getDateDebut();
+        short mois  = (short) dateTour.getMonthValue();
+        short annee = (short) dateTour.getYear();
 
         List<Cotisation> cotisations = cotisationRepository
                 .findAllByTontineIdAndMoisAndAnnee(tontine.getId(), mois, annee);
@@ -499,12 +504,23 @@ public class SessionService {
      */
     @Transactional
     public List<CotisationResponse> genererCotisations(UUID sessionId) {
+        return genererCotisations(sessionId, null, null);
+    }
+
+    /**
+     * Génère les cotisations EN_ATTENTE pour un mois/année donné. Si {@code moisParam}
+     * ou {@code anneeParam} est null, on retombe sur le mois de début de session
+     * (comportement historique). Utilisé par l'assistant de reprise pour générer les
+     * cotisations de chaque mois passé.
+     */
+    @Transactional
+    public List<CotisationResponse> genererCotisations(UUID sessionId, Short moisParam, Short anneeParam) {
         SessionTontine session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
 
         Tontine tontine = session.getTontine();
-        short mois  = (short) session.getDateDebut().getMonthValue();
-        short annee = (short) session.getDateDebut().getYear();
+        short mois  = moisParam  != null ? moisParam  : (short) session.getDateDebut().getMonthValue();
+        short annee = anneeParam != null ? anneeParam : (short) session.getDateDebut().getYear();
 
         List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository
                 .findAllBySessionIdOrderByOrdre(sessionId);
@@ -589,11 +605,20 @@ public class SessionService {
      */
     @Transactional(readOnly = true)
     public SessionCotisationsStatutResponse cotisationsStatut(UUID sessionId) {
+        return cotisationsStatut(sessionId, null, null);
+    }
+
+    /**
+     * Statut des cotisations par membre pour un mois/année donné. Si {@code moisParam}
+     * ou {@code anneeParam} est null, on retombe sur le mois de début de session.
+     */
+    @Transactional(readOnly = true)
+    public SessionCotisationsStatutResponse cotisationsStatut(UUID sessionId, Short moisParam, Short anneeParam) {
         SessionTontine session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
 
-        short mois  = (short) session.getDateDebut().getMonthValue();
-        short annee = (short) session.getDateDebut().getYear();
+        short mois  = moisParam  != null ? moisParam  : (short) session.getDateDebut().getMonthValue();
+        short annee = anneeParam != null ? anneeParam : (short) session.getDateDebut().getYear();
 
         List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository
                 .findAllBySessionIdOrderByOrdre(sessionId);

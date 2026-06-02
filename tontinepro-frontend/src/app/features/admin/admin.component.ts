@@ -122,5 +122,12 @@ export class AdminComponent {
       icon: '📤',
       color: 'bg-cyan-50',
     },
+    {
+      title: 'Reprendre en cours',
+      desc: 'Tontine démarrée hors app : rattrapage guidé mois par mois',
+      route: '/admin/reprise-session',
+      icon: '⏪',
+      color: 'bg-lime-50',
+    },
   ];
 }

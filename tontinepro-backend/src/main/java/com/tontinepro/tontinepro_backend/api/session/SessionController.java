@@ -129,16 +129,24 @@ public class SessionController {
     @PostMapping("/{id}/generer-cotisations")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Générer les cotisations EN_ATTENTE pour tous les membres de la session (idempotent)")
-    public List<CotisationResponse> genererCotisations(@PathVariable UUID id) {
-        return sessionService.genererCotisations(id);
+    @Operation(summary = "Générer les cotisations EN_ATTENTE pour tous les membres de la session (idempotent). "
+            + "mois/annee optionnels : par défaut le mois de début de session (utilisés par la reprise mois par mois).")
+    public List<CotisationResponse> genererCotisations(
+            @PathVariable UUID id,
+            @RequestParam(required = false) Short mois,
+            @RequestParam(required = false) Short annee) {
+        return sessionService.genererCotisations(id, mois, annee);
     }
 
     @GetMapping("/{id}/cotisations-statut")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Statut des cotisations par membre pour la période de la session")
-    public SessionCotisationsStatutResponse cotisationsStatut(@PathVariable UUID id) {
-        return sessionService.cotisationsStatut(id);
+    @Operation(summary = "Statut des cotisations par membre pour la période de la session "
+            + "(mois/annee optionnels : par défaut le mois de début de session)")
+    public SessionCotisationsStatutResponse cotisationsStatut(
+            @PathVariable UUID id,
+            @RequestParam(required = false) Short mois,
+            @RequestParam(required = false) Short annee) {
+        return sessionService.cotisationsStatut(id, mois, annee);
     }
 
     @PostMapping("/{id}/valider-benefice/{ordreBeneficiaireId}")

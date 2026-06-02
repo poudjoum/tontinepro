@@ -220,6 +220,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/admin/historique-import/historique-import.component').then(m => m.HistoriqueImportComponent),
           },
+          {
+            path: 'reprise-session',
+            loadComponent: () =>
+              import('./features/admin/reprise-session/reprise-session.component').then(m => m.RepriseSessionComponent),
+          },
         ],
       },
     ],
