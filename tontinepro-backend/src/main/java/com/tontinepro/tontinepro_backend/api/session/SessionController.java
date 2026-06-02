@@ -167,6 +167,23 @@ public class SessionController {
         return sessionService.getRapportTour(id, ordreBeneficiaireId);
     }
 
+    @PostMapping("/{id}/annuler-benefice/{ordreBeneficiaireId}")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Annuler la validation d'un tour (remet le membre comme non bénéficié pour correction)")
+    public SessionResponse annulerBenefice(
+            @PathVariable UUID id,
+            @PathVariable UUID ordreBeneficiaireId) {
+        return sessionService.annulerBenefice(id, ordreBeneficiaireId);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Supprimer une session et ses données (ordre des bénéficiaires + cotisations des mois couverts) — table rase pour recommencer")
+    public void supprimerSession(@PathVariable UUID id) {
+        sessionService.supprimerSession(id);
+    }
+
     @GetMapping("/{id}/membres-eligibles-retard")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Liste les membres actifs non inscrits dans la session avec le détail du rattrapage")

@@ -60,6 +60,15 @@ export class SessionService {
     return this.http.post<SessionResponse>(`${this.api}/${sessionId}/recalibrer`, {});
   }
 
+  annulerBenefice(sessionId: string, ordreBeneficiaireId: string) {
+    return this.http.post<SessionResponse>(
+      `${this.api}/${sessionId}/annuler-benefice/${ordreBeneficiaireId}`, {});
+  }
+
+  supprimerSession(sessionId: string) {
+    return this.http.delete<void>(`${this.api}/${sessionId}`);
+  }
+
   echeancier(sessionId: string) {
     return this.http.get<OrdreBeneficiaireResponse[]>(`${this.api}/${sessionId}/echeancier`);
   }

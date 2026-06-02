@@ -128,6 +128,12 @@
                            disabled:opacity-50">
               @if (saving()) { … } @else { 🔒 Clôturer la session }
             </button>
+            <button (click)="supprimerSession(session)" [disabled]="saving()"
+                    class="col-span-2 py-2 text-sm font-medium rounded-lg border border-red-300
+                           text-red-700 bg-red-50 hover:bg-red-100 transition-colors
+                           disabled:opacity-50">
+              @if (saving()) { … } @else { 🗑 Supprimer la session (recommencer) }
+            </button>
           </div>
         }
 
@@ -577,6 +583,12 @@
                             class="mt-1 text-[10px] text-primary-600 hover:text-primary-800 underline">
                       📄 Voir rapport
                     </button>
+                    @if (session.statut === 'EN_COURS') {
+                      <button (click)="annulerBenefice(session, ob)" [disabled]="saving()"
+                              class="block ml-auto mt-1 text-[10px] text-red-600 hover:text-red-800 underline">
+                        ↩ Annuler la validation
+                      </button>
+                    }
                   } @else {
                     <!-- Date éditable -->
                     @if (editantId() === ob.id) {
