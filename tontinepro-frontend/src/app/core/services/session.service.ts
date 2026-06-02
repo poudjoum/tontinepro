@@ -80,6 +80,7 @@ export class SessionService {
     referencePaiement?: string;
     montantTontine?: number;
     montantFondAide?: number;
+    montantRepas?: number;
   }>) {
     return this.http.post<{
       totalDemandes: number;
@@ -100,12 +101,18 @@ export class SessionService {
     return this.http.get<MonBeneficeResponse[]>(`${this.api}/mes-benefices`);
   }
 
-  genererCotisations(sessionId: string) {
-    return this.http.post<CotisationResponse[]>(`${this.api}/${sessionId}/generer-cotisations`, {});
+  genererCotisations(sessionId: string, mois?: number, annee?: number) {
+    let params = new HttpParams();
+    if (mois  != null) params = params.set('mois', String(mois));
+    if (annee != null) params = params.set('annee', String(annee));
+    return this.http.post<CotisationResponse[]>(`${this.api}/${sessionId}/generer-cotisations`, {}, { params });
   }
 
-  cotisationsStatut(sessionId: string) {
-    return this.http.get<SessionCotisationsStatutResponse>(`${this.api}/${sessionId}/cotisations-statut`);
+  cotisationsStatut(sessionId: string, mois?: number, annee?: number) {
+    let params = new HttpParams();
+    if (mois  != null) params = params.set('mois', String(mois));
+    if (annee != null) params = params.set('annee', String(annee));
+    return this.http.get<SessionCotisationsStatutResponse>(`${this.api}/${sessionId}/cotisations-statut`, { params });
   }
 
   getRapportTour(sessionId: string, ordreBeneficiaireId: string) {
