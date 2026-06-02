@@ -142,6 +142,42 @@ export class SessionsComponent implements OnInit {
     });
   }
 
+  annulerBenefice(session: SessionResponse, ob: OrdreBeneficiaireResponse): void {
+    if (!confirm(`Annuler la validation du tour de ${ob.membrePrenom} ${ob.membreNom} ?\n`
+      + `Le membre repassera en "non bénéficié" : vous pourrez corriger les cotisations du mois puis revalider.`)) return;
+    this.saving.set(true);
+    this.error.set('');
+    this.sessionSvc.annulerBenefice(session.id, ob.id).subscribe({
+      next: updated => {
+        this.sessions.update(list => list.map(s => s.id === updated.id ? updated : s));
+        this.sessionOuverte.set(updated);
+        this.success.set(`Validation de ${ob.membrePrenom} ${ob.membreNom} annulée.`);
+        this.saving.set(false);
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur annulation.'); this.saving.set(false); },
+    });
+  }
+
+  supprimerSession(session: SessionResponse): void {
+    if (!confirm(`⚠️ Supprimer DÉFINITIVEMENT la session n°${session.numero} ?\n\n`
+      + `Cela efface l'ordre des bénéficiaires ET toutes les cotisations des mois couverts par la session. `
+      + `Cette action est irréversible — à utiliser pour recommencer un rattrapage erroné.`)) return;
+    this.saving.set(true);
+    this.error.set('');
+    this.sessionSvc.supprimerSession(session.id).subscribe({
+      next: () => {
+        this.sessions.update(list => list.filter(s => s.id !== session.id));
+        if (this.sessionOuverte()?.id === session.id) this.sessionOuverte.set(null);
+        this.afficherStatut.set(false);
+        this.afficherSaisie.set(false);
+        this.afficherBilan.set(false);
+        this.success.set(`Session n°${session.numero} supprimée. Vous pouvez recommencer.`);
+        this.saving.set(false);
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur suppression.'); this.saving.set(false); },
+    });
+  }
+
   mettreAJourDate(session: SessionResponse): void {
     if (!this.nouvelleDateProchaine) { this.error.set('Veuillez saisir une date.'); return; }
     this.saving.set(true);

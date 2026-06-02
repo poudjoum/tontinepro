@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -265,6 +266,75 @@ public class SessionService {
         }
 
         return response;
+    }
+
+    /**
+     * Annule la validation d'un tour : remet le membre comme non bénéficié
+     * (beneficie=false, montantRecu=null) afin de pouvoir corriger les cotisations
+     * du mois puis revalider. Recalcule la prochaine date de tontine.
+     */
+    @Transactional
+    public SessionResponse annulerBenefice(UUID sessionId, UUID ordreBeneficiaireId) {
+        OrdreBeneficiaire ob = ordreBeneficiaireRepository.findById(ordreBeneficiaireId)
+                .orElseThrow(() -> new IllegalArgumentException("Enregistrement introuvable : " + ordreBeneficiaireId));
+
+        if (!ob.getSession().getId().equals(sessionId)) {
+            throw new IllegalArgumentException("Cet enregistrement n'appartient pas à la session " + sessionId);
+        }
+        if (!ob.isBeneficie()) {
+            throw new IllegalStateException("Ce membre n'a pas encore été validé — rien à annuler");
+        }
+
+        ob.setBeneficie(false);
+        ob.setMontantRecu(null);
+        ordreBeneficiaireRepository.save(ob);
+
+        // Recalculer dateProchaineTontine = date la plus proche parmi les non-bénéficiés
+        SessionTontine session = ob.getSession();
+        ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId).stream()
+                .filter(o -> !o.isBeneficie() && o.getDateBenefice() != null)
+                .min(Comparator.comparing(OrdreBeneficiaire::getDateBenefice))
+                .ifPresent(prochain -> {
+                    session.setDateProchaineTontine(prochain.getDateBenefice());
+                    sessionRepository.save(session);
+                });
+
+        return getById(sessionId);
+    }
+
+    /**
+     * Supprime une session et toutes ses données pour permettre de recommencer
+     * (table rase) : ordre des bénéficiaires + cotisations des mois couverts par la
+     * session [dateDebut .. dateFin]. Opération destructive réservée à l'admin/secrétaire.
+     */
+    @Transactional
+    public void supprimerSession(UUID sessionId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+        Tontine tontine = session.getTontine();
+
+        // 1. Cotisations des mois couverts par la session
+        LocalDate debut = session.getDateDebut();
+        LocalDate fin   = session.getDateFin() != null ? session.getDateFin() : debut;
+        YearMonth ymDebut = YearMonth.from(debut);
+        YearMonth ymFin   = YearMonth.from(fin);
+        List<Cotisation> cotisationsASupprimer = new ArrayList<>();
+        for (YearMonth ym = ymDebut; !ym.isAfter(ymFin); ym = ym.plusMonths(1)) {
+            cotisationsASupprimer.addAll(cotisationRepository.findAllByTontineIdAndMoisAndAnnee(
+                    tontine.getId(), (short) ym.getMonthValue(), (short) ym.getYear()));
+        }
+        if (!cotisationsASupprimer.isEmpty()) {
+            cotisationRepository.deleteAll(cotisationsASupprimer);
+        }
+
+        // 2. Ordre des bénéficiaires
+        List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId);
+        if (!ordres.isEmpty()) {
+            ordreBeneficiaireRepository.deleteAll(ordres);
+        }
+
+        // 3. La session elle-même
+        sessionRepository.delete(session);
     }
 
     /**
