@@ -311,6 +311,12 @@ public class SessionService {
     public void supprimerSession(UUID sessionId) {
         SessionTontine session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+
+        if (session.getStatut() != SessionTontine.Statut.EN_COURS) {
+            throw new IllegalStateException(
+                    "Seule une session en cours peut être supprimée. Une session clôturée ou annulée est conservée pour l'historique.");
+        }
+
         Tontine tontine = session.getTontine();
 
         // 1. Cotisations des mois couverts par la session
