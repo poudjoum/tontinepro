@@ -85,3 +85,47 @@ body {
 
   .min-h-tap { min-height: 44px; }
 }
+
+/* ── Impression : rendu professionnel des rapports ────────────────── */
+@media print {
+  /* Format A4 portrait avec marges régulières (le bénéficiaire/tableau tiennent en largeur) */
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+
+  /* Forcer le rendu des fonds colorés (bandeaux d'en-tête, totaux, cagnotte) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Fond blanc, pas de padding lié aux safe-areas mobiles */
+  html, body {
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* La page de rapport occupe toute la largeur disponible à l'impression */
+  .print-report {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Éviter les coupures disgracieuses au milieu d'un bloc ou d'une ligne */
+  .print-card { break-inside: avoid; page-break-inside: avoid; }
+  tr, img     { break-inside: avoid; page-break-inside: avoid; }
+
+  /* Répéter l'en-tête du tableau sur chaque page d'un rapport long */
+  thead { display: table-header-group; }
+  tfoot { display: table-row-group; }
+
+  /* Tableaux nets : bordures fines homogènes */
+  table { border-collapse: collapse !important; width: 100% !important; }
+  th, td { border: 0.5pt solid #d1d5db !important; }
+
+  /* Ombres inutiles à l'impression */
+  .shadow-sm, .shadow, .shadow-md, .shadow-lg { box-shadow: none !important; }
+}

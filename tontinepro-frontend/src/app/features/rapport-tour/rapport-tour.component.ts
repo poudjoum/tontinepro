@@ -16,6 +16,7 @@ export class RapportTourComponent implements OnInit {
   rapport  = signal<RapportTourResponse | null>(null);
   loading  = signal(true);
   error    = signal('');
+  today    = new Date().toISOString();
 
   private MOIS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai',
     'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
