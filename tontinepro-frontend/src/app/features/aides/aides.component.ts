@@ -1,6 +1,7 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect, untracked } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { AideService } from '../../core/services/aide.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { AideResponse, TypeAide, TYPE_AIDE_LABELS, TYPES_AIDE, StatutAide } from '../../core/models/aide.model';
 
 const STATUT_BADGE: Record<string, string> = {
@@ -17,6 +18,14 @@ const STATUT_LABEL: Record<string, string> = {
 export class AidesComponent implements OnInit {
   auth = inject(AuthService);
   private svc = inject(AideService);
+  private ctx = inject(TontineContextService);
+
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) untracked(() => this.charger());
+    });
+  }
 
   aides      = signal<AideResponse[]>([]);
   loading    = signal(true);
@@ -39,13 +48,13 @@ export class AidesComponent implements OnInit {
   readonly TYPES_AIDE = TYPES_AIDE;
   readonly TYPE_AIDE_LABELS = TYPE_AIDE_LABELS;
 
-  ngOnInit(): void { this.charger(); }
+  ngOnInit(): void { this.ctx.init(); }
 
   charger(): void {
     this.loading.set(true);
     const obs = this.auth.isAdmin()
       ? this.svc.getAll(this.filtre() || undefined)
-      : this.svc.getMesDemandes();
+      : this.svc.getMesDemandes(this.ctx.tontineCouranteId() ?? undefined);
     obs.subscribe({
       next:  data => { this.aides.set(data); this.loading.set(false); },
       error: e    => { this.error.set(e.message ?? 'Erreur'); this.loading.set(false); },

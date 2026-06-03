@@ -9,8 +9,10 @@ export class EpargneService {
 
   constructor(private http: HttpClient) {}
 
-  getMonCompte() {
-    return this.http.get<CompteEpargneResponse>(`${this.api}/mon-compte`);
+  getMonCompte(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<CompteEpargneResponse>(`${this.api}/mon-compte`, { params });
   }
 
   depot(montant: number, reference?: string) {
@@ -21,8 +23,10 @@ export class EpargneService {
     return this.http.post<CompteEpargneResponse>(`${this.api}/retrait`, { montant, reference });
   }
 
-  getHistorique() {
-    return this.http.get<MouvementEpargneResponse[]>(`${this.api}/historique`);
+  getHistorique(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<MouvementEpargneResponse[]>(`${this.api}/historique`, { params });
   }
 
   getAllComptes(tontineId?: string) {

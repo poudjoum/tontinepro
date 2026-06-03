@@ -9,8 +9,10 @@ export class PretService {
 
   constructor(private http: HttpClient) {}
 
-  getMesPrets() {
-    return this.http.get<PretResponse[]>(`${this.api}/mes-prets`);
+  getMesPrets(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<PretResponse[]>(`${this.api}/mes-prets`, { params });
   }
 
   getAll(statut?: string) {

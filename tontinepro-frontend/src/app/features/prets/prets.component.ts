@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, effect, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { PretService } from '../../core/services/pret.service';
 import { MembreService } from '../../core/services/membre.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { DocumentService } from '../../core/services/document.service';
 import { PretResponse, EcheancePretResponse, SimulationPretResponse } from '../../core/models/pret.model';
 import { DocumentResponse } from '../../core/models/document.model';
@@ -29,6 +30,14 @@ export class PretsComponent implements OnInit {
   private svc = inject(PretService);
   private membreSvc = inject(MembreService);
   private docSvc = inject(DocumentService);
+  private ctx = inject(TontineContextService);
+
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) { this.tontineId.set(id); untracked(() => this.charger()); }
+    });
+  }
 
   prets       = signal<PretResponse[]>([]);
   echeances   = signal<EcheancePretResponse[]>([]);
@@ -57,9 +66,8 @@ export class PretsComponent implements OnInit {
   echeanceId  = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.charger();
+    this.ctx.init();
     if (!this.auth.isAdmin()) {
-      this.membreSvc.getMonProfil().subscribe(m => this.tontineId.set(m.tontineId));
       this.docSvc.mesDocuments().subscribe({ next: d => this.mesDocs.set(d), error: () => {} });
     }
   }
@@ -68,7 +76,7 @@ export class PretsComponent implements OnInit {
     this.loading.set(true);
     const obs = this.auth.isAdmin()
       ? this.svc.getAll(this.filtre() || undefined)
-      : this.svc.getMesPrets();
+      : this.svc.getMesPrets(this.tontineId() || undefined);
     obs.subscribe({
       next:  data => { this.prets.set(data); this.loading.set(false); },
       error: e    => { this.error.set(e.message ?? 'Erreur'); this.loading.set(false); },

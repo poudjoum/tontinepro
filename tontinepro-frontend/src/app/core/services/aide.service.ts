@@ -9,8 +9,10 @@ export class AideService {
 
   constructor(private http: HttpClient) {}
 
-  getMesDemandes() {
-    return this.http.get<AideResponse[]>(`${this.api}/mes-demandes`);
+  getMesDemandes(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<AideResponse[]>(`${this.api}/mes-demandes`, { params });
   }
 
   getAll(statut?: string) {

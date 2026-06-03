@@ -91,10 +91,18 @@ public class AideService {
 
     @Transactional(readOnly = true)
     public List<AideResponse> getMesDemandes(String email) {
-        return membreRepository.findByUserEmail(email)
+        return getMesDemandes(email, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AideResponse> getMesDemandes(String email, java.util.UUID tontineId) {
+        var membre = tontineId != null
+                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
+                : membreRepository.findByUserEmail(email);
+        return membre
                 .map(m -> aideRepository.findAllByMembreId(m.getId())
                         .stream().map(AideResponse::from).toList())
-                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
+                .orElse(List.of());
     }
 
     @Transactional

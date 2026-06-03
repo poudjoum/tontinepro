@@ -28,9 +28,10 @@ public class EpargneController {
     // â”€â”€ Endpoints membre â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @GetMapping("/mon-compte")
-    @Operation(summary = "Mon compte Ã©pargne (solde)")
-    public CompteEpargneResponse getMonCompte(@AuthenticationPrincipal UserDetails principal) {
-        return epargneService.getMonCompte(principal.getUsername());
+    @Operation(summary = "Mon compte Ã©pargne (solde) â€” tontine courante si tontineId fourni")
+    public CompteEpargneResponse getMonCompte(@AuthenticationPrincipal UserDetails principal,
+                                              @RequestParam(required = false) UUID tontineId) {
+        return epargneService.getMonCompte(principal.getUsername(), tontineId);
     }
 
     @PostMapping("/depot")
@@ -52,9 +53,10 @@ public class EpargneController {
     }
 
     @GetMapping("/historique")
-    @Operation(summary = "Historique de mes transactions Ã©pargne")
-    public List<MouvementEpargneResponse> getHistorique(@AuthenticationPrincipal UserDetails principal) {
-        return epargneService.getHistorique(principal.getUsername());
+    @Operation(summary = "Historique de mes transactions Ã©pargne â€” tontine courante si tontineId fourni")
+    public List<MouvementEpargneResponse> getHistorique(@AuthenticationPrincipal UserDetails principal,
+                                                        @RequestParam(required = false) UUID tontineId) {
+        return epargneService.getHistorique(principal.getUsername(), tontineId);
     }
 
     // â”€â”€ Endpoints admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

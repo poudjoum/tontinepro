@@ -66,11 +66,12 @@ public class FondsAideController {
     }
 
     @GetMapping("/mes-contributions")
-    @Operation(summary = "Mes contributions au fonds d'aide")
+    @Operation(summary = "Mes contributions au fonds d'aide (tontine courante si tontineId fourni)")
     public List<ContributionFondsAideResponse> getMesContributions(
-            @AuthenticationPrincipal UserDetails principal
+            @AuthenticationPrincipal UserDetails principal,
+            @RequestParam(required = false) UUID tontineId
     ) {
-        return fondsAideService.getMesContributions(principal.getUsername());
+        return fondsAideService.getMesContributions(principal.getUsername(), tontineId);
     }
 }
 

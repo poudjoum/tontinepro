@@ -1,6 +1,7 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect, untracked } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { EpargneService } from '../../core/services/epargne.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { CompteEpargneResponse, MouvementEpargneResponse } from '../../core/models/epargne.model';
 
 @Component({
@@ -10,6 +11,26 @@ import { CompteEpargneResponse, MouvementEpargneResponse } from '../../core/mode
 export class EpargneComponent implements OnInit {
   auth = inject(AuthService);
   private svc = inject(EpargneService);
+  private ctx = inject(TontineContextService);
+
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) untracked(() => this.recharger());
+    });
+  }
+
+  private recharger(): void {
+    if (this.auth.isAdmin()) {
+      this.loading.set(true);
+      this.svc.getAllComptes(this.ctx.tontineCouranteId() ?? undefined).subscribe({
+        next:  data => { this.comptes.set(data); this.loading.set(false); },
+        error: e    => { this.error.set(e.message ?? 'Erreur'); this.loading.set(false); },
+      });
+    } else {
+      this.chargerMembreData();
+    }
+  }
 
   // Membre
   compte      = signal<CompteEpargneResponse | null>(null);
@@ -30,22 +51,17 @@ export class EpargneComponent implements OnInit {
   error       = signal('');
 
   ngOnInit(): void {
-    if (this.auth.isAdmin()) {
-      this.svc.getAllComptes().subscribe({
-        next:  data => { this.comptes.set(data); this.loading.set(false); },
-        error: e    => { this.error.set(e.message ?? 'Erreur'); this.loading.set(false); },
-      });
-    } else {
-      this.chargerMembreData();
-    }
+    this.ctx.init();
+    if (!this.ctx.tontineCouranteId()) this.loading.set(false);
   }
 
   chargerMembreData(): void {
+    const id = this.ctx.tontineCouranteId() ?? undefined;
     this.loading.set(true);
-    this.svc.getMonCompte().subscribe({
+    this.svc.getMonCompte(id).subscribe({
       next: c => {
         this.compte.set(c);
-        this.svc.getHistorique().subscribe({
+        this.svc.getHistorique(id).subscribe({
           next: h => { this.mouvements.set(h); this.loading.set(false); },
           error: () => this.loading.set(false),
         });
@@ -68,7 +84,7 @@ export class EpargneComponent implements OnInit {
         this.montant.set(0);
         this.reference.set('');
         this.submitting.set(false);
-        this.svc.getHistorique().subscribe(h => this.mouvements.set(h));
+        this.svc.getHistorique(this.ctx.tontineCouranteId() ?? undefined).subscribe(h => this.mouvements.set(h));
       },
       error: e => { this.error.set(e.message ?? 'Erreur'); this.submitting.set(false); },
     });
@@ -85,7 +101,7 @@ export class EpargneComponent implements OnInit {
   }
 
   distribuerInterets(): void {
-    const tontineId = this.comptes()[0]?.tontineId;
+    const tontineId = this.ctx.tontineCouranteId() ?? this.comptes()[0]?.tontineId;
     if (!tontineId) return;
     this.submitting.set(true);
     this.svc.distribuerInterets(tontineId).subscribe({
@@ -93,7 +109,7 @@ export class EpargneComponent implements OnInit {
         this.resultatInterets.set(r.comptesCredites);
         this.confirmInterets.set(false);
         this.submitting.set(false);
-        this.svc.getAllComptes().subscribe(c => this.comptes.set(c));
+        this.svc.getAllComptes(tontineId).subscribe(c => this.comptes.set(c));
       },
       error: e => { this.error.set(e.message ?? 'Erreur'); this.submitting.set(false); },
     });

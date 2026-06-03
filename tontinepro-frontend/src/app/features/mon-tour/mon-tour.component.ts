@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, effect, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
 import { CotisationService } from '../../core/services/cotisation.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { CotisationResponse } from '../../core/models/cotisation.model';
 import { MonTourResponse, MonBeneficeResponse, OrdreBeneficiaireResponse } from '../../core/models/session.model';
 
@@ -13,6 +14,14 @@ import { MonTourResponse, MonBeneficeResponse, OrdreBeneficiaireResponse } from 
 export class MonTourComponent implements OnInit {
   private svc    = inject(SessionService);
   private cotSvc = inject(CotisationService);
+  private ctx    = inject(TontineContextService);
+
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) untracked(() => this.charger());
+    });
+  }
 
   tour          = signal<MonTourResponse | null>(null);
   benefices     = signal<MonBeneficeResponse[]>([]);
@@ -37,10 +46,17 @@ export class MonTourComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.ctx.init();
+    if (!this.ctx.tontineCouranteId()) this.loading.set(false);
+  }
+
+  charger(): void {
+    const id = this.ctx.tontineCouranteId() ?? undefined;
+    this.loading.set(true);
     let pending = 3;
     const done = () => { if (--pending === 0) this.loading.set(false); };
 
-    this.svc.monTour().subscribe({
+    this.svc.monTour(id).subscribe({
       next: t => {
         this.tour.set(t);
         this.svc.echeancier(t.sessionId).subscribe({
@@ -57,7 +73,7 @@ export class MonTourComponent implements OnInit {
       error: () => { done(); },
     });
 
-    this.cotSvc.getMesCotisations().subscribe({
+    this.cotSvc.getMesCotisations(id).subscribe({
       next: c => { this.mesCotisations.set(c); done(); },
       error: () => { done(); },
     });

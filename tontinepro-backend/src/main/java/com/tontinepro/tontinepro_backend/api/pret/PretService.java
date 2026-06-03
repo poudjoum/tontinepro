@@ -80,10 +80,18 @@ public class PretService {
 
     @Transactional(readOnly = true)
     public List<PretResponse> getMesPrets(String email) {
-        return membreRepository.findByUserEmail(email)
+        return getMesPrets(email, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PretResponse> getMesPrets(String email, java.util.UUID tontineId) {
+        var membre = tontineId != null
+                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
+                : membreRepository.findByUserEmail(email);
+        return membre
                 .map(m -> pretRepository.findAllByMembreIdOrderByCreatedAtDesc(m.getId())
                         .stream().map(PretResponse::from).toList())
-                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
+                .orElse(List.of());
     }
 
     @Transactional(readOnly = true)

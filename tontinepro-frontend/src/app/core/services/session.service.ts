@@ -88,8 +88,10 @@ export class SessionService {
     return this.http.get<OrdreBeneficiaireResponse[]>(`${this.api}/${sessionId}/echeancier`);
   }
 
-  monTour() {
-    return this.http.get<MonTourResponse>(`${this.api}/mon-tour`);
+  monTour(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<MonTourResponse>(`${this.api}/mon-tour`, { params });
   }
 
   mettreAJourDateBenefice(sessionId: string, ordreBeneficiaireId: string, dateBenefice: string) {
