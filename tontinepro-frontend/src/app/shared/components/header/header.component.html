@@ -9,6 +9,16 @@
       <span class="font-bold text-gray-900 text-base">TontinePro</span>
     </a>
 
+    <!-- Sélecteur de tontine courante (si le compte en a plusieurs) -->
+    @if (ctx.tontines().length > 1) {
+      <select [ngModel]="ctx.tontineCouranteId()" (ngModelChange)="changerTontine($event)"
+              class="ml-2 flex-1 min-w-0 max-w-[45%] text-xs border border-gray-200 rounded-lg px-2 py-1 bg-gray-50 text-gray-700 truncate">
+        @for (t of ctx.tontines(); track t.id) {
+          <option [value]="t.id">{{ t.nom }}</option>
+        }
+      </select>
+    }
+
     <!-- Actions -->
     <div class="flex items-center gap-3">
 

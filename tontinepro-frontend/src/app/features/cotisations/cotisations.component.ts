@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { CotisationService } from '../../core/services/cotisation.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { CotisationResponse } from '../../core/models/cotisation.model';
 
 const MOIS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -15,6 +16,15 @@ const MOIS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
 export class CotisationsComponent implements OnInit {
   auth = inject(AuthService);
   private svc = inject(CotisationService);
+  private ctx = inject(TontineContextService);
+
+  constructor() {
+    // Recharge dès que la tontine courante change (sélecteur du header).
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) untracked(() => this.charger());
+    });
+  }
 
   cotisations  = signal<CotisationResponse[]>([]);
   loading      = signal(true);
@@ -35,14 +45,15 @@ export class CotisationsComponent implements OnInit {
     this.cotisations().filter(c => c.statut === 'PAYEE').reduce((s, c) => s + c.montant, 0)
   );
 
-  ngOnInit(): void { this.charger(); }
+  ngOnInit(): void { this.ctx.init(); }
 
   charger(): void {
     this.loading.set(true);
     this.error.set('');
+    const tontineId = this.ctx.tontineCouranteId() ?? undefined;
     const obs = this.auth.isGestionnaire()
-      ? this.svc.getAll(this.mois(), this.annee())
-      : this.svc.getMesCotisations();
+      ? this.svc.getAll(this.mois(), this.annee(), undefined, tontineId)
+      : this.svc.getMesCotisations(tontineId);
     obs.subscribe({
       next:  data => { this.cotisations.set(data); this.loading.set(false); },
       error: e    => { this.error.set(e.message ?? 'Erreur'); this.loading.set(false); },

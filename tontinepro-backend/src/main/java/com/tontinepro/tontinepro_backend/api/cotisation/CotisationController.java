@@ -36,21 +36,24 @@ public class CotisationController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Lister les cotisations (filtrables par membre, tontine, pÃ©riode, statut)")
+    @Operation(summary = "Lister les cotisations (filtrables par membre, tontine, pÃ©riode, statut) — cloisonné par tontine du compte")
     public List<CotisationResponse> list(
             @RequestParam(required = false) UUID membreId,
             @RequestParam(required = false) UUID tontineId,
             @RequestParam(required = false) Short mois,
             @RequestParam(required = false) Short annee,
-            @RequestParam(required = false) Cotisation.Statut statut
+            @RequestParam(required = false) Cotisation.Statut statut,
+            @AuthenticationPrincipal UserDetails principal
     ) {
-        return cotisationService.list(membreId, tontineId, mois, annee, statut);
+        return cotisationService.list(membreId, tontineId, mois, annee, statut, principal.getUsername());
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Mes cotisations")
-    public List<CotisationResponse> getMe(@AuthenticationPrincipal UserDetails principal) {
-        return cotisationService.getMe(principal.getUsername());
+    @Operation(summary = "Mes cotisations (filtrables par tontine courante)")
+    public List<CotisationResponse> getMe(
+            @AuthenticationPrincipal UserDetails principal,
+            @RequestParam(required = false) UUID tontineId) {
+        return cotisationService.getMe(principal.getUsername(), tontineId);
     }
 
     @GetMapping("/{id}")

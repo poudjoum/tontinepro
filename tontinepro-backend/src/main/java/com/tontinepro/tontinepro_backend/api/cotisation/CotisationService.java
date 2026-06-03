@@ -68,30 +68,44 @@ public class CotisationService {
     }
 
     @Transactional(readOnly = true)
-    public List<CotisationResponse> list(UUID membreId, UUID tontineId, Short mois, Short annee, Cotisation.Statut statut) {
-        List<Cotisation> cotisations;
-
-        if (tontineId != null && mois != null && annee != null) {
-            cotisations = cotisationRepository.findAllByTontineIdAndMoisAndAnnee(tontineId, mois, annee);
-        } else if (membreId != null) {
-            cotisations = cotisationRepository.findAllByMembreId(membreId);
-        } else if (tontineId != null) {
-            cotisations = cotisationRepository.findAllByTontineId(tontineId);
-        } else if (statut != null) {
-            cotisations = cotisationRepository.findAllByStatut(statut);
-        } else {
-            cotisations = cotisationRepository.findAll();
+    public List<CotisationResponse> list(UUID membreId, UUID tontineId, Short mois, Short annee,
+                                         Cotisation.Statut statut, String emailConnecte) {
+        // Cloisonnement : si aucune tontine n'est fournie (et pas de filtre membre précis),
+        // se rabattre sur la tontine du compte connecté — JAMAIS sur toutes les tontines.
+        if (tontineId == null && membreId == null && emailConnecte != null) {
+            tontineId = membreRepository.findByUserEmail(emailConnecte)
+                    .map(m -> m.getTontine().getId())
+                    .orElse(null);
         }
 
+        List<Cotisation> cotisations;
+        if (membreId != null) {
+            cotisations = cotisationRepository.findAllByMembreId(membreId);
+        } else if (tontineId != null && mois != null && annee != null) {
+            cotisations = cotisationRepository.findAllByTontineIdAndMoisAndAnnee(tontineId, mois, annee);
+        } else if (tontineId != null) {
+            cotisations = cotisationRepository.findAllByTontineId(tontineId);
+        } else {
+            // Aucune tontine résoluble → ne rien renvoyer (pas de fuite inter-tontines)
+            cotisations = List.of();
+        }
+
+        if (statut != null) {
+            cotisations = cotisations.stream().filter(c -> c.getStatut() == statut).toList();
+        }
         return cotisations.stream().map(CotisationResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
-    public List<CotisationResponse> getMe(String email) {
-        return membreRepository.findByUserEmail(email)
+    public List<CotisationResponse> getMe(String email, UUID tontineId) {
+        // Cible le profil de la tontine courante si fournie, sinon le 1ᵉʳ profil (compat).
+        var membre = tontineId != null
+                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
+                : membreRepository.findByUserEmail(email);
+        return membre
                 .map(m -> cotisationRepository.findAllByMembreId(m.getId())
                         .stream().map(CotisationResponse::from).toList())
-                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
+                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte pour cette tontine"));
     }
 
     @Transactional
