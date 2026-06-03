@@ -27,6 +27,23 @@
 
   <!-- ÉTAPE 1 : création + ordre des membres -->
   @if (etape() === 'creation') {
+
+    <!-- Reprise déjà en cours → proposer de continuer -->
+    @if (sessionExistante(); as sess) {
+      <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 space-y-2">
+        <p class="text-sm font-semibold text-amber-900">Une reprise est déjà en cours</p>
+        <p class="text-xs text-amber-700">
+          Session n°{{ sess.numero }} (depuis le {{ sess.dateDebut }}) —
+          <strong>{{ toursARattraper(sess) }}</strong> tour(s) passé(s) non encore validé(s).
+          Vous pouvez continuer là où vous vous êtes arrêté, ou créer une nouvelle session ci-dessous.
+        </p>
+        <button type="button" (click)="continuer()" [disabled]="saving()"
+                class="w-full bg-amber-600 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
+          ▶ Continuer la reprise (session n°{{ sess.numero }})
+        </button>
+      </div>
+    }
+
     <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-4">
 
       <div>

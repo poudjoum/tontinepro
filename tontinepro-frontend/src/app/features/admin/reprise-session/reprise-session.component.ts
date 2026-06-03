@@ -56,6 +56,9 @@ export class RepriseSessionComponent implements OnInit {
   toursPasses  = signal<OrdreBeneficiaireResponse[]>([]);
   tourIdx      = signal(0);
 
+  /** Session EN_COURS déjà existante pour la tontine (reprise à continuer). */
+  sessionExistante = signal<SessionResponse | null>(null);
+
   // Saisie du tour courant
   statut    = signal<SessionCotisationsStatutResponse | null>(null);
   saisie: Record<string, SaisieLigne> = {};
@@ -81,6 +84,29 @@ export class RepriseSessionComponent implements OnInit {
       },
       error: () => this.error.set('Impossible de charger les membres.'),
     });
+    // Détecter une reprise déjà en cours (session EN_COURS) pour la continuer
+    this.sessionSvc.listerSessions(this.tontineId).subscribe({
+      next: list => this.sessionExistante.set(list.find(s => s.statut === 'EN_COURS') ?? null),
+      error: () => this.sessionExistante.set(null),
+    });
+  }
+
+  /** Nombre de tours passés non encore validés sur la session existante. */
+  toursARattraper(s: SessionResponse): number {
+    const now = new Date();
+    const repere = now.getFullYear() * 12 + now.getMonth();
+    return s.beneficiaires.filter(ob => ob.dateBenefice && !ob.beneficie
+      && (new Date(ob.dateBenefice).getFullYear() * 12 + new Date(ob.dateBenefice).getMonth()) < repere).length;
+  }
+
+  /** Reprendre une session existante : continuer sur les tours non encore validés. */
+  continuer(): void {
+    const s = this.sessionExistante();
+    if (!s) return;
+    this.session.set(s);
+    this.success.set('');
+    this.error.set('');
+    this.demarrerRattrapage(s);
   }
 
   // ── Étape 1 : ordre des membres ───────────────────────────────────────────
