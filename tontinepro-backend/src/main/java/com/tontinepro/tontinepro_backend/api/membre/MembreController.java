@@ -102,10 +102,11 @@ public class MembreController {
     @Operation(summary = "Suivi mensuel du membre connecté (cotisations, épargne, sanctions, prêts)")
     public List<SuiviMoisResponse> getMonSuivi(
             @RequestParam(required = false) Integer annee,
+            @RequestParam(required = false) UUID tontineId,
             @AuthenticationPrincipal UserDetails principal
     ) {
         int anneeEffective = annee != null ? annee : LocalDate.now().getYear();
-        return suiviService.getSuiviAnnuel(principal.getUsername(), anneeEffective);
+        return suiviService.getSuiviAnnuel(principal.getUsername(), anneeEffective, tontineId);
     }
 }
 

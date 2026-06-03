@@ -35,7 +35,13 @@ export class PretsComponent implements OnInit {
   constructor() {
     effect(() => {
       const id = this.ctx.tontineCouranteId();
-      if (id) { this.tontineId.set(id); untracked(() => this.charger()); }
+      if (id) {
+        this.tontineId.set(id);
+        untracked(() => {
+          this.charger();
+          if (!this.auth.isAdmin()) this.chargerMesDocs();
+        });
+      }
     });
   }
 
@@ -67,9 +73,11 @@ export class PretsComponent implements OnInit {
 
   ngOnInit(): void {
     this.ctx.init();
-    if (!this.auth.isAdmin()) {
-      this.docSvc.mesDocuments().subscribe({ next: d => this.mesDocs.set(d), error: () => {} });
-    }
+  }
+
+  chargerMesDocs(): void {
+    this.docSvc.mesDocuments(this.tontineId() || undefined)
+      .subscribe({ next: d => this.mesDocs.set(d), error: () => {} });
   }
 
   charger(): void {

@@ -47,9 +47,12 @@ public class DocumentController {
     }
 
     @GetMapping("/mes-documents")
-    @Operation(summary = "Mes documents")
-    public List<DocumentResponse> mesDocuments(@AuthenticationPrincipal UserDetails principal) {
-        return documentService.mesDocuments(principal.getUsername());
+    @Operation(summary = "Mes documents (dans la tontine courante si tontineId fourni)")
+    public List<DocumentResponse> mesDocuments(
+            @AuthenticationPrincipal UserDetails principal,
+            @RequestParam(required = false) UUID tontineId
+    ) {
+        return documentService.mesDocuments(principal.getUsername(), tontineId);
     }
 
     @GetMapping("/{id}/fichier")

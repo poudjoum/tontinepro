@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MembreService } from '../../core/services/membre.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { SuiviMois } from '../../core/models/suivi.model';
 
 const MOIS_FR = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -14,6 +15,14 @@ const MOIS_FR = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
 })
 export class SuiviComponent implements OnInit {
   private svc = inject(MembreService);
+  private ctx = inject(TontineContextService);
+
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) untracked(() => this.load());
+    });
+  }
 
   annee = signal(new Date().getFullYear());
   suivi = signal<SuiviMois[]>([]);
@@ -24,13 +33,13 @@ export class SuiviComponent implements OnInit {
   annees = Array.from({ length: 3 }, (_, i) => new Date().getFullYear() - i);
 
   ngOnInit(): void {
-    this.load();
+    this.ctx.init();
   }
 
   load(): void {
     this.loading.set(true);
     this.error.set('');
-    this.svc.getSuivi(this.annee()).subscribe({
+    this.svc.getSuivi(this.annee(), this.ctx.tontineCouranteId() ?? undefined).subscribe({
       next: d => { this.suivi.set(d); this.loading.set(false); },
       error: () => { this.error.set('Impossible de charger le suivi'); this.loading.set(false); },
     });
