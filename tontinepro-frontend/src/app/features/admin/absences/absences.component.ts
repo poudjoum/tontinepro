@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AbsenceService } from '../../../core/services/absence.service';
 import { MembreService } from '../../../core/services/membre.service';
 import { TontineService } from '../../../core/services/tontine.service';
+import { TontineContextService } from '../../../core/services/tontine-context.service';
 import { AbsenceResponse, AppelPresenceResult } from '../../../core/models/absence.model';
 import { MembreResponse } from '../../../core/models/membre.model';
 import { TontineResponse } from '../../../core/models/tontine.model';
@@ -18,6 +19,15 @@ export class AbsencesComponent implements OnInit {
   private absSvc  = inject(AbsenceService);
   private mbrSvc  = inject(MembreService);
   private tontSvc = inject(TontineService);
+  private ctx     = inject(TontineContextService);
+
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      this.tontines.set(this.ctx.tontines());
+      if (id) { this.tontineId = id; untracked(() => this.charger()); }
+    });
+  }
 
   tontines  = signal<TontineResponse[]>([]);
   membres   = signal<MembreResponse[]>([]);
@@ -44,18 +54,8 @@ export class AbsencesComponent implements OnInit {
   appelResult     = signal<AppelPresenceResult | null>(null);
 
   ngOnInit(): void {
-    this.tontSvc.getAll().subscribe({
-      next: list => {
-        this.tontines.set(list);
-        if (list[0]) {
-          this.tontineId = list[0].id;
-          this.charger();
-        } else {
-          this.loading.set(false);
-        }
-      },
-      error: () => this.loading.set(false),
-    });
+    this.ctx.init();
+    if (!this.ctx.tontineCouranteId()) this.loading.set(false);
   }
 
   charger(): void {

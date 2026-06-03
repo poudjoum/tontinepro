@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { MembreResponse } from '../models/membre.model';
 import { SuiviMois } from '../models/suivi.model';
@@ -10,8 +10,10 @@ export class MembreService {
 
   constructor(private http: HttpClient) {}
 
-  getMonProfil() {
-    return this.http.get<MembreResponse>(`${this.api}/me`);
+  getMonProfil(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<MembreResponse>(`${this.api}/me`, { params });
   }
 
   getAll(tontineId?: string, statut?: string) {

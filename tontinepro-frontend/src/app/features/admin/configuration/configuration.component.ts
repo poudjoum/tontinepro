@@ -1,6 +1,7 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TontineService } from '../../../core/services/tontine.service';
+import { TontineContextService } from '../../../core/services/tontine-context.service';
 import {
   TontineResponse,
   UpdateTontineConfigRequest,
@@ -14,6 +15,15 @@ import {
 })
 export class ConfigurationComponent implements OnInit {
   private svc = inject(TontineService);
+  private ctx = inject(TontineContextService);
+
+  constructor() {
+    // Configure la tontine actuellement sélectionnée dans le header.
+    effect(() => {
+      const t = this.ctx.tontineCourante();
+      if (t) untracked(() => this.remplirForm(t));
+    });
+  }
 
   tontine  = signal<TontineResponse | null>(null);
   loading  = signal(true);
@@ -53,48 +63,42 @@ export class ConfigurationComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.svc.getAll().subscribe({
-      next: list => {
-        const t = list[0];
-        if (t) {
-          this.tontine.set(t);
-          this.form = {
-            nom:                  t.nom,
-            description:          t.description,
-            montantCotisationMin: t.montantCotisationMin,
-            montantCotisationMax: t.montantCotisationMax ?? undefined,
-            montantConsensuel:    t.montantConsensuel ?? undefined,
-            jourReference:        t.jourReference ?? undefined,
-            typeReglePeriodicite: t.typeReglePeriodicite,
-            dateProchaineTontine: t.dateProchaineTontine ?? undefined,
-            tauxInteretPret:      t.tauxInteretPret,
-            tauxInteretEpargne:   t.tauxInteretEpargne,
-            montantAmende:              t.montantAmende,
-            montantPenaliteRetard:      t.montantPenaliteRetard,
-            montantRetardReunionT1:     t.montantRetardReunionT1,
-            montantRetardReunionT2:     t.montantRetardReunionT2,
-            montantRetardReunionT3:     t.montantRetardReunionT3,
-            montantEchecTontineAvant:   t.montantEchecTontineAvant,
-            montantEchecTontineApres:   t.montantEchecTontineApres,
-            montantReverseBeneficiaire: t.montantReverseBeneficiaire,
-            montantTroubleBagarre:      t.montantTroubleBagarre,
-            montantTroubleEngueulade:   t.montantTroubleEngueulade,
-            montantTroubleInsulte:      t.montantTroubleInsulte,
-            montantFondAideAnnuelMembre: t.montantFondAideAnnuelMembre ?? undefined,
-            modeContributionAide: t.modeContributionAide,
-            montantCotisationAide: t.montantCotisationAide ?? undefined,
-            mode:                 t.mode,
-            montantLot:           t.montantLot ?? undefined,
-            moisClotureAdhesions: t.moisClotureAdhesions ?? 3,
-          };
-        }
-        this.loading.set(false);
-      },
-      error: e => {
-        this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors du chargement');
-        this.loading.set(false);
-      },
-    });
+    this.ctx.init();
+    this.loading.set(false);
+  }
+
+  private remplirForm(t: TontineResponse): void {
+    this.tontine.set(t);
+    this.form = {
+      nom:                  t.nom,
+      description:          t.description,
+      montantCotisationMin: t.montantCotisationMin,
+      montantCotisationMax: t.montantCotisationMax ?? undefined,
+      montantConsensuel:    t.montantConsensuel ?? undefined,
+      jourReference:        t.jourReference ?? undefined,
+      typeReglePeriodicite: t.typeReglePeriodicite,
+      dateProchaineTontine: t.dateProchaineTontine ?? undefined,
+      tauxInteretPret:      t.tauxInteretPret,
+      tauxInteretEpargne:   t.tauxInteretEpargne,
+      montantAmende:              t.montantAmende,
+      montantPenaliteRetard:      t.montantPenaliteRetard,
+      montantRetardReunionT1:     t.montantRetardReunionT1,
+      montantRetardReunionT2:     t.montantRetardReunionT2,
+      montantRetardReunionT3:     t.montantRetardReunionT3,
+      montantEchecTontineAvant:   t.montantEchecTontineAvant,
+      montantEchecTontineApres:   t.montantEchecTontineApres,
+      montantReverseBeneficiaire: t.montantReverseBeneficiaire,
+      montantTroubleBagarre:      t.montantTroubleBagarre,
+      montantTroubleEngueulade:   t.montantTroubleEngueulade,
+      montantTroubleInsulte:      t.montantTroubleInsulte,
+      montantFondAideAnnuelMembre: t.montantFondAideAnnuelMembre ?? undefined,
+      modeContributionAide: t.modeContributionAide,
+      montantCotisationAide: t.montantCotisationAide ?? undefined,
+      mode:                 t.mode,
+      montantLot:           t.montantLot ?? undefined,
+      moisClotureAdhesions: t.moisClotureAdhesions ?? 3,
+    };
+    this.loading.set(false);
   }
 
   sauvegarder(): void {

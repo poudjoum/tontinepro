@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { MembreService } from '../../core/services/membre.service';
 import { TontineService } from '../../core/services/tontine.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { RapportService } from '../../core/services/rapport.service';
 
 const MOIS = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -15,7 +16,16 @@ export class RapportsComponent implements OnInit {
   auth = inject(AuthService);
   private membreSvc  = inject(MembreService);
   private tontineSvc = inject(TontineService);
+  private ctx        = inject(TontineContextService);
   private rapportSvc = inject(RapportService);
+
+  constructor() {
+    // Rapports de la tontine courante sélectionnée.
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) { this.tontineId.set(id); this.loading.set(false); }
+    });
+  }
 
   tontineId = signal('');
   loading   = signal(true);
@@ -45,21 +55,8 @@ export class RapportsComponent implements OnInit {
   readonly ANNEES = Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i);
 
   ngOnInit(): void {
-    // Gestionnaire : récupérer la tontine via le profil membre
-    // Fallback si pas de profil membre : utiliser la liste des tontines
-    this.membreSvc.getMonProfil().subscribe({
-      next: m => { this.tontineId.set(m.tontineId); this.loading.set(false); },
-      error: () => {
-        this.tontineSvc.getAll().subscribe({
-          next: list => {
-            if (list[0]) this.tontineId.set(list[0].id);
-            else this.error.set('Aucune tontine disponible');
-            this.loading.set(false);
-          },
-          error: () => { this.error.set('Impossible de récupérer la tontine'); this.loading.set(false); },
-        });
-      },
-    });
+    this.ctx.init();
+    if (!this.ctx.tontineCouranteId()) this.loading.set(false);
   }
 
   downloadMensuel(): void {
