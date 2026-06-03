@@ -1,5 +1,6 @@
 export type PeriodeCotisation = 'HEBDOMADAIRE' | 'MENSUEL' | 'BIMENSUEL' | 'TRIMESTRIEL' | 'SEMESTRIEL' | 'ANNUEL';
 export type ModeContributionAide = 'AUCUN' | 'MENSUEL' | 'A_LA_BENEFICIATION';
+export type ModeTontine = 'CLASSIQUE' | 'A_LOT';
 export type TypeReglePeriodicite =
   | 'HEBDOMADAIRE'
   | 'MENSUEL_JOUR_FIXE'
@@ -38,6 +39,9 @@ export interface TontineResponse {
   montantTroubleEngueulade: number;
   montantTroubleInsulte: number;
   montantFondAideAnnuelMembre: number | null;
+  mode: ModeTontine;
+  montantLot: number | null;
+  moisClotureAdhesions: number;
   typeAcces: 'OUVERTE' | 'RESTREINTE';
   visible: boolean;
   descriptionAcces: string | null;
@@ -72,4 +76,24 @@ export interface UpdateTontineConfigRequest {
   montantTroubleEngueulade?: number;
   montantTroubleInsulte?: number;
   montantFondAideAnnuelMembre?: number;
+  mode?: ModeTontine;
+  montantLot?: number;
+  moisClotureAdhesions?: number;
+}
+
+export interface SessionLotResponse {
+  sessionId: string;
+  figee: boolean;
+  dateFigeage: string | null;
+  montantLot: number | null;
+  cagnotte: number | null;
+  nombreTours: number | null;
+  tresorerieLots: number;
+  adhesions: Array<{
+    membreId: string; nom: string; prenom: string; matricule: string; montantMensuel: number;
+  }>;
+  lots: Array<{
+    ordreBeneficiaireId: string; ordre: number; beneficie: boolean; montantRecu: number | null;
+    membres: Array<{ membreId: string; nom: string; prenom: string; montantMensuel: number; partCagnotte: number | null }>;
+  }>;
 }

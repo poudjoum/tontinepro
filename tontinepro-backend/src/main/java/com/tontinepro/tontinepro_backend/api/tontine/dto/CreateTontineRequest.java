@@ -38,5 +38,16 @@ public record CreateTontineRequest(
         Tontine.ModeContributionAide modeContributionAide,
 
         @DecimalMin("0.01")
-        BigDecimal montantCotisationAide
+        BigDecimal montantCotisationAide,
+
+        /** Mode de la tontine (CLASSIQUE par défaut, ou A_LOT). */
+        Tontine.ModeTontine mode,
+
+        /** Montant d'un lot (requis si mode = A_LOT). */
+        @DecimalMin("0.01")
+        BigDecimal montantLot,
+
+        /** Mois de clôture des adhésions (mode A_LOT, défaut 3). */
+        @Min(1) @Max(12)
+        Integer moisClotureAdhesions
 ) {}

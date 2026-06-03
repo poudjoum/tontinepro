@@ -129,5 +129,12 @@ export class AdminComponent {
       icon: '⏪',
       color: 'bg-lime-50',
     },
+    {
+      title: 'Tontine à lot',
+      desc: 'Mises, cagnotte et lots partageables',
+      route: '/admin/tontine-lot',
+      icon: '🎲',
+      color: 'bg-fuchsia-50',
+    },
   ];
 }

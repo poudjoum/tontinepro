@@ -225,6 +225,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/admin/reprise-session/reprise-session.component').then(m => m.RepriseSessionComponent),
           },
+          {
+            path: 'tontine-lot',
+            loadComponent: () =>
+              import('./features/admin/tontine-lot/tontine-lot.component').then(m => m.TontineLotComponent),
+          },
         ],
       },
     ],

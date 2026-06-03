@@ -61,7 +61,14 @@ public class TontineService {
                 .tauxInteretEpargne(request.tauxInteretEpargne())
                 .modeContributionAide(mode)
                 .montantCotisationAide(request.montantCotisationAide())
+                .mode(request.mode() != null ? request.mode() : Tontine.ModeTontine.CLASSIQUE)
+                .montantLot(request.montantLot())
+                .moisClotureAdhesions(request.moisClotureAdhesions() != null ? request.moisClotureAdhesions() : 3)
                 .build();
+
+        if (tontine.getMode() == Tontine.ModeTontine.A_LOT && tontine.getMontantLot() == null) {
+            throw new IllegalArgumentException("montantLot est obligatoire pour une tontine à lot (mode A_LOT)");
+        }
 
         Tontine saved = tontineRepository.save(tontine);
 
@@ -230,6 +237,21 @@ public class TontineService {
         }
         if (request.montantTroubleInsulte() != null) {
             tontine.setMontantTroubleInsulte(request.montantTroubleInsulte());
+        }
+        if (request.montantFondAideAnnuelMembre() != null) {
+            tontine.setMontantFondAideAnnuelMembre(request.montantFondAideAnnuelMembre());
+        }
+        if (request.mode() != null) {
+            tontine.setMode(request.mode());
+        }
+        if (request.montantLot() != null) {
+            tontine.setMontantLot(request.montantLot());
+        }
+        if (request.moisClotureAdhesions() != null) {
+            tontine.setMoisClotureAdhesions(request.moisClotureAdhesions());
+        }
+        if (tontine.getMode() == Tontine.ModeTontine.A_LOT && tontine.getMontantLot() == null) {
+            throw new IllegalArgumentException("montantLot est obligatoire pour une tontine à lot (mode A_LOT)");
         }
 
         return TontineResponse.from(tontineRepository.save(tontine));

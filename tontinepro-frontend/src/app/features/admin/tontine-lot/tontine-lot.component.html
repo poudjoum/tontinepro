@@ -1,0 +1,114 @@
+<div class="space-y-4">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Tontine à lot</h1>
+    <p class="text-xs text-gray-500 mt-1">
+      Inscription des mises, figeage (cagnotte + lots), et répartition par tour.
+    </p>
+  </div>
+
+  @if (error()) { <div class="bg-red-50 text-red-700 text-sm rounded-lg p-3">{{ error() }}</div> }
+  @if (success()) { <div class="bg-green-50 text-green-700 text-sm rounded-lg p-3">{{ success() }}</div> }
+
+  @if (loading()) {
+    <div class="text-center py-8 text-gray-400">Chargement…</div>
+  } @else {
+
+    @if (tontines().length > 1) {
+      <select [(ngModel)]="tontineId" (ngModelChange)="charger()"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+        @for (t of tontines(); track t.id) { <option [value]="t.id">{{ t.nom }}</option> }
+      </select>
+    }
+
+    @if (lot(); as l) {
+
+      <!-- Bandeau état -->
+      <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-semibold text-gray-800">
+              {{ l.figee ? 'Session figée' : 'Adhésions ouvertes' }}
+            </p>
+            <p class="text-[11px] text-gray-500">
+              Lot : {{ l.montantLot | number:'1.0-0' }} FCFA
+              @if (l.figee) { · figée le {{ l.dateFigeage }} }
+            </p>
+          </div>
+          @if (l.figee) {
+            <div class="text-right">
+              <p class="text-xs text-gray-500">Cagnotte</p>
+              <p class="text-lg font-bold text-primary-700">{{ l.cagnotte | number:'1.0-0' }} FCFA</p>
+              <p class="text-[11px] text-gray-400">{{ l.nombreTours }} tour(s) · trésorerie {{ l.tresorerieLots | number:'1.0-0' }}</p>
+            </div>
+          }
+        </div>
+      </section>
+
+      @if (!l.figee) {
+        <!-- Adhésion -->
+        <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+          <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Inscrire une mise</h2>
+          <div class="grid grid-cols-[1fr_120px] gap-2">
+            <select [(ngModel)]="membreId" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+              <option value="">— Membre —</option>
+              @for (m of membres(); track m.id) {
+                <option [value]="m.id">{{ m.prenom }} {{ m.nom }}</option>
+              }
+            </select>
+            <input type="number" [(ngModel)]="montantMensuel" placeholder="Mise"
+                   class="border border-gray-200 rounded-lg px-3 py-2 text-sm text-right" />
+          </div>
+          <button type="button" (click)="adherer()" [disabled]="saving()"
+                  class="w-full bg-gray-800 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
+            Ajouter / mettre à jour la mise
+          </button>
+          <button type="button" (click)="figer()" [disabled]="saving()"
+                  class="w-full bg-primary-600 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
+            Figer maintenant (cagnotte + lots)
+          </button>
+        </section>
+
+        <!-- Adhésions en cours -->
+        <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Mises ({{ l.adhesions.length }})</h2>
+            <span class="text-xs text-gray-500">Total/mois : {{ totalAdhesions() | number:'1.0-0' }} FCFA</span>
+          </div>
+          <ul class="divide-y divide-gray-100 text-sm">
+            @for (a of l.adhesions; track a.membreId) {
+              <li class="flex justify-between py-1.5">
+                <span>{{ a.prenom }} {{ a.nom }}</span>
+                <span class="font-medium">{{ a.montantMensuel | number:'1.0-0' }} FCFA</span>
+              </li>
+            }
+          </ul>
+        </section>
+      } @else {
+        <!-- Lots constitués -->
+        <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-2">
+          <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Lots / tours ({{ l.lots.length }})</h2>
+          @for (lotItem of l.lots; track lotItem.ordreBeneficiaireId) {
+            <div class="border border-gray-100 rounded-lg p-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-primary-700">Tour {{ lotItem.ordre }}</span>
+                @if (lotItem.beneficie) {
+                  <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded">✓ {{ lotItem.montantRecu | number:'1.0-0' }} FCFA</span>
+                } @else {
+                  <span class="text-[10px] text-gray-400">en attente</span>
+                }
+              </div>
+              <ul class="mt-1 space-y-0.5">
+                @for (p of lotItem.membres; track p.membreId) {
+                  <li class="flex justify-between text-xs text-gray-600">
+                    <span>{{ p.prenom }} {{ p.nom }} <span class="text-gray-400">({{ p.montantMensuel | number:'1.0-0' }}/mois)</span></span>
+                    <span class="font-medium">part : {{ p.partCagnotte | number:'1.0-0' }} FCFA</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </section>
+      }
+    }
+  }
+</div>

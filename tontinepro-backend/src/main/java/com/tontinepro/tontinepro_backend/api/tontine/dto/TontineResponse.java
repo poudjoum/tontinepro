@@ -34,6 +34,9 @@ public record TontineResponse(
         BigDecimal montantTroubleEngueulade,
         BigDecimal montantTroubleInsulte,
         BigDecimal montantFondAideAnnuelMembre,
+        Tontine.ModeTontine mode,
+        BigDecimal montantLot,
+        int moisClotureAdhesions,
         Tontine.TypeAcces typeAcces,
         boolean visible,
         String descriptionAcces,
@@ -54,6 +57,7 @@ public record TontineResponse(
                 t.getMontantReverseBeneficiaire(),
                 t.getMontantTroubleBagarre(), t.getMontantTroubleEngueulade(), t.getMontantTroubleInsulte(),
                 t.getMontantFondAideAnnuelMembre(),
+                t.getMode(), t.getMontantLot(), t.getMoisClotureAdhesions(),
                 t.getTypeAcces(), t.isVisible(), t.getDescriptionAcces(),
                 t.isActif(), t.getCreatedAt(), t.getUpdatedAt());
     }
