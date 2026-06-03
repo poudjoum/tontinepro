@@ -221,11 +221,23 @@ public class SessionService {
             throw new IllegalStateException("Ce membre a déjà bénéficié pour cette session");
         }
 
+        Tontine tontine = ob.getSession().getTontine();
+
+        // Mode « à lot » figé : le bénéficiaire (slot) encaisse la cagnotte entière.
+        // La répartition entre membres groupés est déjà portée par les PartLot.
+        if (tontine.getMode() == Tontine.ModeTontine.A_LOT
+                && ob.getSession().isFigee()
+                && ob.getSession().getCagnotte() != null) {
+            ob.setBeneficie(true);
+            ob.setMontantRecu(ob.getSession().getCagnotte());
+            ordreBeneficiaireRepository.save(ob);
+            return getById(sessionId);
+        }
+
         // Calcul automatique : Σcotisations(PAYEE) + Σrepas(PAYEE) - fondAideAnnuelMembre
         // Le montant reçu est calculé sur les cotisations du MOIS DU TOUR (dateBenefice),
         // pas sur le mois de début de session (sinon tous les tours d'une session
         // multi-mois seraient calculés sur le premier mois).
-        Tontine tontine = ob.getSession().getTontine();
         LocalDate dateTour = ob.getDateBenefice() != null
                 ? ob.getDateBenefice() : ob.getSession().getDateDebut();
         short mois  = (short) dateTour.getMonthValue();

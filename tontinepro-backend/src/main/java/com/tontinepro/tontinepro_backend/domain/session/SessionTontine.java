@@ -56,6 +56,25 @@ public class SessionTontine {
     @Builder.Default
     private BigDecimal potReserve = BigDecimal.ZERO;
 
+    // ── Mode « tontine à lot » ────────────────────────────────────────────────
+
+    /** Cagnotte (pot versé à chaque tour) figée au moment de la clôture des adhésions. */
+    @Column(name = "cagnotte", precision = 15, scale = 2)
+    private BigDecimal cagnotte;
+
+    /** Poste de trésorerie dédié : surplus/reliquats pour payer les parts des membres partiels. */
+    @Column(name = "tresorerie_lots", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal tresorerieLots = BigDecimal.ZERO;
+
+    /** Vrai une fois les adhésions closes et les lots constitués (mode A_LOT). */
+    @Column(name = "figee", nullable = false)
+    @Builder.Default
+    private boolean figee = false;
+
+    @Column(name = "date_figeage")
+    private LocalDate dateFigeage;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

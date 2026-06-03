@@ -17,6 +17,7 @@ import {
   ReordonnerBeneficiairesRequest,
 } from '../models/session.model';
 import { CotisationResponse } from '../models/cotisation.model';
+import { SessionLotResponse } from '../models/tontine.model';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -67,6 +68,20 @@ export class SessionService {
 
   supprimerSession(sessionId: string) {
     return this.http.delete<void>(`${this.api}/${sessionId}`);
+  }
+
+  // ── Tontine à lot ──────────────────────────────────────────────────────────
+  getLot(sessionId: string) {
+    return this.http.get<SessionLotResponse>(`${this.api}/${sessionId}/lot`);
+  }
+
+  adhererLot(sessionId: string, membreId: string, montantMensuel: number) {
+    return this.http.post<SessionLotResponse>(
+      `${this.api}/${sessionId}/lot/adherer`, { membreId, montantMensuel });
+  }
+
+  figerLot(sessionId: string) {
+    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/figer`, {});
   }
 
   echeancier(sessionId: string) {

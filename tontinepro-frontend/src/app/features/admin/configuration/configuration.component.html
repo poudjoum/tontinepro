@@ -22,6 +22,37 @@
         </div>
       </section>
 
+      <!-- Mode de fonctionnement -->
+      <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Mode de fonctionnement</h2>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Type de tontine</label>
+          <select [(ngModel)]="form.mode" name="mode" class="input-field">
+            <option value="CLASSIQUE">Classique (1 membre = 1 tour)</option>
+            <option value="A_LOT">À lot (cagnotte, lots partageables, figeage)</option>
+          </select>
+        </div>
+        @if (afficherChampsLot) {
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Montant du lot (FCFA)</label>
+              <input [(ngModel)]="form.montantLot" name="montantLot" type="number" min="0"
+                     class="input-field" placeholder="Ex : 50000" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Clôture des adhésions (mois)</label>
+              <input [(ngModel)]="form.moisClotureAdhesions" name="moisClotureAdhesions" type="number" min="1" max="12"
+                     class="input-field" placeholder="3" />
+            </div>
+          </div>
+          <p class="text-[11px] text-gray-400">
+            La cagnotte (= nombre de lots × montant du lot) et le nombre de tours sont figés
+            automatiquement à la fin du mois de clôture. Les membres partiels sont regroupés
+            aléatoirement pour former des lots.
+          </p>
+        }
+      </section>
+
       <!-- Cotisation -->
       <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
         <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Cotisation</h2>

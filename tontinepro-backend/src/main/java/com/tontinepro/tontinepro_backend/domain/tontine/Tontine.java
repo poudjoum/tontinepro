@@ -116,6 +116,22 @@ public class Tontine {
     @Column(name = "montant_fond_aide_annuel_membre", precision = 15, scale = 2)
     private BigDecimal montantFondAideAnnuelMembre;
 
+    // ── Mode « tontine à lot » ────────────────────────────────────────────────
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode", nullable = false, length = 20)
+    @Builder.Default
+    private ModeTontine mode = ModeTontine.CLASSIQUE;
+
+    /** Montant d'un lot (unité de mise mensuelle) en mode A_LOT. */
+    @Column(name = "montant_lot", precision = 15, scale = 2)
+    private BigDecimal montantLot;
+
+    /** Mois (depuis le début de session) après lequel les adhésions sont figées. */
+    @Column(name = "mois_cloture_adhesions", nullable = false)
+    @Builder.Default
+    private int moisClotureAdhesions = 3;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "type_acces", nullable = false, length = 20)
     @Builder.Default
@@ -143,6 +159,11 @@ public class Tontine {
     public enum TypeAcces {
         OUVERTE,      // Tontine ouverte à tous
         RESTREINTE    // Groupe spécifique (anciens élèves, entreprise…)
+    }
+
+    public enum ModeTontine {
+        CLASSIQUE,    // 1 membre = 1 tour
+        A_LOT         // unité = lot (montant fixe), tours partageables, cagnotte figée au Xe mois
     }
 
     public enum ModeContributionAide {

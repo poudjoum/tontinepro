@@ -77,5 +77,13 @@ public record UpdateTontineConfigRequest(
         BigDecimal montantTroubleInsulte,
 
         @DecimalMin("0.0")
-        BigDecimal montantFondAideAnnuelMembre
+        BigDecimal montantFondAideAnnuelMembre,
+
+        Tontine.ModeTontine mode,
+
+        @DecimalMin("0.01")
+        BigDecimal montantLot,
+
+        @Min(1) @Max(12)
+        Integer moisClotureAdhesions
 ) {}

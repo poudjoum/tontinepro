@@ -48,6 +48,10 @@ export class ConfigurationComponent implements OnInit {
     return this.form.typeReglePeriodicite === 'DATE_MANUELLE';
   }
 
+  get afficherChampsLot(): boolean {
+    return this.form.mode === 'A_LOT';
+  }
+
   ngOnInit(): void {
     this.svc.getAll().subscribe({
       next: list => {
@@ -79,6 +83,9 @@ export class ConfigurationComponent implements OnInit {
             montantFondAideAnnuelMembre: t.montantFondAideAnnuelMembre ?? undefined,
             modeContributionAide: t.modeContributionAide,
             montantCotisationAide: t.montantCotisationAide ?? undefined,
+            mode:                 t.mode,
+            montantLot:           t.montantLot ?? undefined,
+            moisClotureAdhesions: t.moisClotureAdhesions ?? 3,
           };
         }
         this.loading.set(false);
