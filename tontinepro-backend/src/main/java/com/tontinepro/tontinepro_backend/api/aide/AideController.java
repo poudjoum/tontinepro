@@ -37,9 +37,10 @@ public class AideController {
     }
 
     @GetMapping("/mes-demandes")
-    @Operation(summary = "Mes demandes d'aide")
-    public List<AideResponse> getMesDemandes(@AuthenticationPrincipal UserDetails principal) {
-        return aideService.getMesDemandes(principal.getUsername());
+    @Operation(summary = "Mes demandes d'aide (tontine courante si tontineId fourni)")
+    public List<AideResponse> getMesDemandes(@AuthenticationPrincipal UserDetails principal,
+                                             @RequestParam(required = false) UUID tontineId) {
+        return aideService.getMesDemandes(principal.getUsername(), tontineId);
     }
 
     @GetMapping("/demandes")

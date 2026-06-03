@@ -12,5 +12,7 @@ public interface CompteEpargneRepository extends JpaRepository<CompteEpargne, UU
 
     Optional<CompteEpargne> findByMembreUserEmail(String email);
 
+    Optional<CompteEpargne> findByMembreUserEmailAndMembreTontineId(String email, UUID tontineId);
+
     List<CompteEpargne> findAllByMembreTontineId(UUID tontineId);
 }

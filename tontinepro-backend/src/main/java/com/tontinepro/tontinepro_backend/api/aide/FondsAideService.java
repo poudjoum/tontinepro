@@ -49,10 +49,18 @@ public class FondsAideService {
 
     @Transactional(readOnly = true)
     public List<ContributionFondsAideResponse> getMesContributions(String email) {
-        return membreRepository.findByUserEmail(email)
+        return getMesContributions(email, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ContributionFondsAideResponse> getMesContributions(String email, java.util.UUID tontineId) {
+        var membre = tontineId != null
+                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
+                : membreRepository.findByUserEmail(email);
+        return membre
                 .map(m -> contributionRepository.findAllByMembreId(m.getId())
                         .stream().map(ContributionFondsAideResponse::from).toList())
-                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
+                .orElse(List.of());
     }
 
     /**

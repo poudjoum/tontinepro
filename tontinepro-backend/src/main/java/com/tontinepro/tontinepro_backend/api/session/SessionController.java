@@ -52,9 +52,10 @@ public class SessionController {
 
     /** Mon tour — vue membre */
     @GetMapping("/mon-tour")
-    @Operation(summary = "Ma date de passage dans la session en cours (vue membre)")
-    public MonTourResponse monTour(@AuthenticationPrincipal UserDetails principal) {
-        return sessionService.monTour(principal.getUsername());
+    @Operation(summary = "Ma date de passage dans la session en cours (vue membre) — tontine courante si tontineId fourni")
+    public MonTourResponse monTour(@AuthenticationPrincipal UserDetails principal,
+                                   @RequestParam(required = false) UUID tontineId) {
+        return sessionService.monTour(principal.getUsername(), tontineId);
     }
 
     @PatchMapping("/{id}/prochaine-date")

@@ -35,9 +35,17 @@ public class EpargneService {
 
     @Transactional(readOnly = true)
     public CompteEpargneResponse getMonCompte(String email) {
-        return compteRepository.findByMembreUserEmail(email)
+        return getMonCompte(email, null);
+    }
+
+    @Transactional(readOnly = true)
+    public CompteEpargneResponse getMonCompte(String email, UUID tontineId) {
+        var compte = tontineId != null
+                ? compteRepository.findByMembreUserEmailAndMembreTontineId(email, tontineId)
+                : compteRepository.findByMembreUserEmail(email);
+        return compte
                 .map(CompteEpargneResponse::from)
-                .orElseThrow(() -> new IllegalArgumentException("Aucun compte épargne associé à ce membre"));
+                .orElseThrow(() -> new IllegalArgumentException("Aucun compte épargne associé à ce membre pour cette tontine"));
     }
 
     @Transactional(readOnly = true)
@@ -57,8 +65,15 @@ public class EpargneService {
 
     @Transactional(readOnly = true)
     public List<MouvementEpargneResponse> getHistorique(String email) {
-        CompteEpargne compte = compteRepository.findByMembreUserEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Aucun compte épargne associé à ce membre"));
+        return getHistorique(email, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MouvementEpargneResponse> getHistorique(String email, UUID tontineId) {
+        CompteEpargne compte = (tontineId != null
+                ? compteRepository.findByMembreUserEmailAndMembreTontineId(email, tontineId)
+                : compteRepository.findByMembreUserEmail(email))
+                .orElseThrow(() -> new IllegalArgumentException("Aucun compte épargne associé à ce membre pour cette tontine"));
         return mouvementRepository.findAllByCompteIdOrderByCreatedAtDesc(compte.getId())
                 .stream().map(MouvementEpargneResponse::from).toList();
     }

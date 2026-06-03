@@ -37,9 +37,10 @@ public class PretController {
     }
 
     @GetMapping("/mes-prets")
-    @Operation(summary = "Mes prÃªts")
-    public List<PretResponse> getMesPrets(@AuthenticationPrincipal UserDetails principal) {
-        return pretService.getMesPrets(principal.getUsername());
+    @Operation(summary = "Mes prÃªts (tontine courante si tontineId fourni)")
+    public List<PretResponse> getMesPrets(@AuthenticationPrincipal UserDetails principal,
+                                          @RequestParam(required = false) UUID tontineId) {
+        return pretService.getMesPrets(principal.getUsername(), tontineId);
     }
 
     @GetMapping("/{id}/echeances")

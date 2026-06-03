@@ -396,7 +396,14 @@ public class SessionService {
      */
     @Transactional(readOnly = true)
     public MonTourResponse monTour(String email) {
-        Membre membre = membreRepository.findByUserEmail(email)
+        return monTour(email, null);
+    }
+
+    @Transactional(readOnly = true)
+    public MonTourResponse monTour(String email, java.util.UUID tontineId) {
+        Membre membre = (tontineId != null
+                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
+                : membreRepository.findByUserEmail(email))
                 .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
 
         // Chercher la session en cours de la tontine du membre
