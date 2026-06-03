@@ -807,6 +807,55 @@ public class SessionService {
     }
 
     /**
+     * Saisie groupée des cotisations d'un mois passé lors d'une reprise (rattrapage).
+     * Crée la cotisation si elle n'existe pas (membre sans ligne pour ce mois) — quel
+     * que soit le statut actuel du membre, car il s'agit d'historique — puis renseigne
+     * les montants et passe le statut à PAYEE. Renvoie le statut mis à jour du mois.
+     */
+    @Transactional
+    public SessionCotisationsStatutResponse saisirRattrapage(UUID sessionId, Short moisParam,
+                                                             Short anneeParam, SaisirRattrapageRequest request) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+        Tontine tontine = session.getTontine();
+
+        short mois  = moisParam  != null ? moisParam  : (short) session.getDateDebut().getMonthValue();
+        short annee = anneeParam != null ? anneeParam : (short) session.getDateDebut().getYear();
+
+        // Index des cotisations existantes du mois, par membre
+        Map<UUID, Cotisation> parMembre = cotisationRepository
+                .findAllByTontineIdAndMoisAndAnnee(tontine.getId(), mois, annee)
+                .stream().collect(Collectors.toMap(c -> c.getMembre().getId(), c -> c, (a, b) -> a));
+
+        for (SaisirRattrapageRequest.LigneRattrapage l : request.lignes()) {
+            Membre membre = membreRepository.findById(l.membreId()).orElse(null);
+            if (membre == null) continue;
+
+            Cotisation cot = parMembre.get(membre.getId());
+            if (cot == null) {
+                cot = Cotisation.builder()
+                        .membre(membre)
+                        .tontine(tontine)
+                        .mois(mois)
+                        .annee(annee)
+                        .montant(BigDecimal.ZERO)
+                        .build();
+            }
+            if (l.montantTontine()  != null) cot.setMontant(l.montantTontine());
+            if (l.montantFondAide() != null) cot.setMontantFondAide(l.montantFondAide());
+            if (l.montantRepas()    != null) cot.setMontantRepas(l.montantRepas());
+            cot.setStatut(Cotisation.Statut.PAYEE);
+            if (cot.getDatePaiement() == null) {
+                cot.setDatePaiement(java.time.OffsetDateTime.now());
+            }
+            if (l.referencePaiement() != null) cot.setReferencePaiement(l.referencePaiement());
+            cotisationRepository.save(cot);
+        }
+
+        return cotisationsStatut(sessionId, mois, annee);
+    }
+
+    /**
      * Clôture une session : passe son statut à TERMINEE.
      * Avertit si des membres n'ont pas encore bénéficié (mais laisse l'admin forcer).
      */

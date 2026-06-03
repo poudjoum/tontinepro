@@ -69,6 +69,18 @@ export class SessionService {
     return this.http.delete<void>(`${this.api}/${sessionId}`);
   }
 
+  saisirRattrapage(sessionId: string, mois: number, annee: number, lignes: Array<{
+    membreId: string;
+    montantTontine?: number;
+    montantFondAide?: number;
+    montantRepas?: number;
+    referencePaiement?: string;
+  }>) {
+    const params = new HttpParams().set('mois', String(mois)).set('annee', String(annee));
+    return this.http.post<SessionCotisationsStatutResponse>(
+      `${this.api}/${sessionId}/rattrapage-saisie`, { lignes }, { params });
+  }
+
   echeancier(sessionId: string) {
     return this.http.get<OrdreBeneficiaireResponse[]>(`${this.api}/${sessionId}/echeancier`);
   }

@@ -117,12 +117,12 @@
               @for (m of s.membres; track m.membreId) {
                 <tr class="border-b border-gray-50">
                   <td class="py-1.5 pr-2">{{ m.prenom }} {{ m.nom }}</td>
-                  @if (m.cotisationId && m.statutCotisation !== 'PAYEE') {
-                    <td class="py-1.5"><input type="number" [(ngModel)]="saisie[m.cotisationId].montantTontine"
+                  @if (m.statutCotisation !== 'PAYEE' && saisie[m.membreId]) {
+                    <td class="py-1.5"><input type="number" [(ngModel)]="saisie[m.membreId].montantTontine"
                           class="w-20 border border-gray-200 rounded px-1.5 py-1 text-right" /></td>
-                    <td class="py-1.5"><input type="number" [(ngModel)]="saisie[m.cotisationId].montantFondAide"
+                    <td class="py-1.5"><input type="number" [(ngModel)]="saisie[m.membreId].montantFondAide"
                           class="w-20 border border-gray-200 rounded px-1.5 py-1 text-right" /></td>
-                    <td class="py-1.5"><input type="number" [(ngModel)]="saisie[m.cotisationId].montantRepas"
+                    <td class="py-1.5"><input type="number" [(ngModel)]="saisie[m.membreId].montantRepas"
                           class="w-16 border border-gray-200 rounded px-1.5 py-1 text-right" /></td>
                   } @else {
                     <td class="py-1.5 text-right text-gray-400">—</td>

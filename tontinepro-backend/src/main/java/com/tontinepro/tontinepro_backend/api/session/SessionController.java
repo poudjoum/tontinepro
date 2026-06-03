@@ -184,6 +184,17 @@ public class SessionController {
         sessionService.supprimerSession(id);
     }
 
+    @PostMapping("/{id}/rattrapage-saisie")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Reprise : saisir/créer les cotisations d'un mois passé pour tous les membres listés (crée la ligne si absente)")
+    public SessionCotisationsStatutResponse saisirRattrapage(
+            @PathVariable UUID id,
+            @RequestParam(required = false) Short mois,
+            @RequestParam(required = false) Short annee,
+            @Valid @RequestBody SaisirRattrapageRequest request) {
+        return sessionService.saisirRattrapage(id, mois, annee, request);
+    }
+
     @GetMapping("/{id}/membres-eligibles-retard")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
     @Operation(summary = "Liste les membres actifs non inscrits dans la session avec le détail du rattrapage")

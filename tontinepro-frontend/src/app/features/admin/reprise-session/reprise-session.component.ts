@@ -180,11 +180,13 @@ export class RepriseSessionComponent implements OnInit {
             this.saisie = {};
             const defCot  = s.montantCotisationDefaut ?? 0;
             const defFond = s.montantFondAideDefaut   ?? 0;
+            // Champ de saisie pour TOUS les membres non encore payés (y compris ceux
+            // sans cotisation existante "ABSENTE") : la cotisation sera créée à l'enregistrement.
             s.membres.forEach(m => {
-              if (m.cotisationId) {
-                this.saisie[m.cotisationId] = {
-                  montantTontine:  m.statutCotisation === 'PAYEE' ? 0 : defCot,
-                  montantFondAide: m.statutCotisation === 'PAYEE' ? 0 : defFond,
+              if (m.statutCotisation !== 'PAYEE') {
+                this.saisie[m.membreId] = {
+                  montantTontine: defCot,
+                  montantFondAide: defFond,
                   montantRepas: 0,
                   ref: '',
                 };
@@ -204,13 +206,16 @@ export class RepriseSessionComponent implements OnInit {
     const sess = this.session();
     const s = this.statut();
     if (!sess || !s) return;
+    const mois = this.moisCourant();
+    const annee = this.anneeCourante();
 
-    const paiements = s.membres
-      .filter(m => m.cotisationId && m.statutCotisation !== 'PAYEE')
+    // Tous les membres non encore payés — la cotisation est créée si absente.
+    const lignes = s.membres
+      .filter(m => m.statutCotisation !== 'PAYEE')
       .map(m => {
-        const d = this.saisie[m.cotisationId!];
+        const d = this.saisie[m.membreId];
         return {
-          cotisationId:      m.cotisationId!,
+          membreId:          m.membreId,
           montantTontine:    d?.montantTontine ?? 0,
           montantFondAide:   d?.montantFondAide ?? 0,
           montantRepas:      d?.montantRepas ?? 0,
@@ -218,8 +223,7 @@ export class RepriseSessionComponent implements OnInit {
         };
       });
 
-    if (paiements.length === 0) {
-      // Rien à enregistrer (tout déjà payé) — on autorise directement la validation
+    if (lignes.length === 0) {
       this.cotisationsEnregistrees.set(true);
       this.success.set('Toutes les cotisations de ce mois sont déjà enregistrées.');
       return;
@@ -227,15 +231,12 @@ export class RepriseSessionComponent implements OnInit {
 
     this.saving.set(true);
     this.error.set('');
-    this.sessionSvc.saisirPaiementsSeance(sess.id, paiements).subscribe({
-      next: r => {
-        this.success.set(`${r.totalEnregistres} cotisation(s) enregistrée(s) pour ${this.moisCourant()}/${this.anneeCourante()}.`);
+    this.sessionSvc.saisirRattrapage(sess.id, mois, annee, lignes).subscribe({
+      next: st => {
+        this.statut.set(st);
+        this.success.set(`${st.nbPayes}/${st.totalMembres} cotisation(s) enregistrée(s) pour ${mois}/${annee}.`);
         this.cotisationsEnregistrees.set(true);
         this.saving.set(false);
-        // Recharger le statut pour refléter les PAYEE
-        this.sessionSvc.cotisationsStatut(sess.id, this.moisCourant(), this.anneeCourante()).subscribe({
-          next: st => this.statut.set(st),
-        });
       },
       error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur enregistrement.'); this.saving.set(false); },
     });
