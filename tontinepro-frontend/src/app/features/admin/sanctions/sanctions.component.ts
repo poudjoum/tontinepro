@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SanctionService } from '../../../core/services/sanction.service';
 import { MembreService } from '../../../core/services/membre.service';
 import { TontineService } from '../../../core/services/tontine.service';
+import { TontineContextService } from '../../../core/services/tontine-context.service';
 import { SanctionResponse, TypeSanction } from '../../../core/models/sanction.model';
 import { TontineResponse } from '../../../core/models/tontine.model';
 import { MembreResponse } from '../../../core/models/membre.model';
@@ -16,6 +17,15 @@ export class SanctionsComponent implements OnInit {
   private svc     = inject(SanctionService);
   private mbrSvc  = inject(MembreService);
   private tontSvc = inject(TontineService);
+  private ctx     = inject(TontineContextService);
+
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      this.tontines.set(this.ctx.tontines());
+      if (id) { this.tontineId = id; untracked(() => this.charger()); }
+    });
+  }
 
   tontines  = signal<TontineResponse[]>([]);
   membres   = signal<MembreResponse[]>([]);
@@ -53,14 +63,8 @@ export class SanctionsComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    this.tontSvc.getAll().subscribe({
-      next: list => {
-        this.tontines.set(list);
-        if (list[0]) { this.tontineId = list[0].id; this.charger(); }
-        else this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.ctx.init();
+    if (!this.ctx.tontineCouranteId()) this.loading.set(false);
   }
 
   charger(): void {

@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InvitationService } from '../../../core/services/invitation.service';
 import { TontineService } from '../../../core/services/tontine.service';
+import { TontineContextService } from '../../../core/services/tontine-context.service';
 import { InvitationResponse } from '../../../core/models/invitation.model';
 import { TontineResponse } from '../../../core/models/tontine.model';
 
@@ -13,6 +14,15 @@ import { TontineResponse } from '../../../core/models/tontine.model';
 export class InvitationsComponent implements OnInit {
   private svc     = inject(InvitationService);
   private tontSvc = inject(TontineService);
+  private ctx     = inject(TontineContextService);
+
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      this.tontines.set(this.ctx.tontines());
+      if (id) { this.tontineId = id; untracked(() => this.chargerInvitations()); }
+    });
+  }
 
   tontines     = signal<TontineResponse[]>([]);
   invitations  = signal<InvitationResponse[]>([]);
@@ -29,14 +39,8 @@ export class InvitationsComponent implements OnInit {
   actives = computed(() => this.invitations().filter(i => !i.utilise && new Date(i.expiresAt) > new Date()));
 
   ngOnInit(): void {
-    this.tontSvc.getAll().subscribe({
-      next: list => {
-        this.tontines.set(list);
-        if (list[0]) this.tontineId = list[0].id;
-        this.chargerInvitations();
-      },
-      error: () => this.loading.set(false),
-    });
+    this.ctx.init();
+    if (!this.ctx.tontineCouranteId()) this.loading.set(false);
   }
 
   chargerInvitations(): void {

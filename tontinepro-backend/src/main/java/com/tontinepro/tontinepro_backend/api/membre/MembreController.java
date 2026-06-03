@@ -50,9 +50,10 @@ public class MembreController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Mon profil membre")
-    public MembreResponse getMe(@AuthenticationPrincipal UserDetails principal) {
-        return membreService.getMe(principal.getUsername());
+    @Operation(summary = "Mon profil membre (dans la tontine courante si tontineId fourni)")
+    public MembreResponse getMe(@AuthenticationPrincipal UserDetails principal,
+                                @RequestParam(required = false) UUID tontineId) {
+        return membreService.getMe(principal.getUsername(), tontineId);
     }
 
     @GetMapping("/{id}")

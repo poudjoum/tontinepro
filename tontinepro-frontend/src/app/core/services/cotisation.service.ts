@@ -9,15 +9,18 @@ export class CotisationService {
 
   constructor(private http: HttpClient) {}
 
-  getMesCotisations() {
-    return this.http.get<CotisationResponse[]>(`${this.api}/me`);
+  getMesCotisations(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<CotisationResponse[]>(`${this.api}/me`, { params });
   }
 
-  getAll(mois?: number, annee?: number, statut?: string) {
+  getAll(mois?: number, annee?: number, statut?: string, tontineId?: string) {
     let params = new HttpParams();
-    if (mois)   params = params.set('mois',   mois);
-    if (annee)  params = params.set('annee',  annee);
-    if (statut) params = params.set('statut', statut);
+    if (mois)      params = params.set('mois',      mois);
+    if (annee)     params = params.set('annee',     annee);
+    if (statut)    params = params.set('statut',    statut);
+    if (tontineId) params = params.set('tontineId', tontineId);
     return this.http.get<CotisationResponse[]>(this.api, { params });
   }
 

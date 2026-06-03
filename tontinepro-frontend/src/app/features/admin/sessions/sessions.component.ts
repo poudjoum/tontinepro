@@ -1,10 +1,11 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, NgIf } from '@angular/common';
 import { Router } from '@angular/router';
 import { SessionService } from '../../../core/services/session.service';
 import { CotisationService } from '../../../core/services/cotisation.service';
 import { TontineService } from '../../../core/services/tontine.service';
+import { TontineContextService } from '../../../core/services/tontine-context.service';
 import {
   SessionResponse,
   SessionBilanResponse,
@@ -26,7 +27,23 @@ export class SessionsComponent implements OnInit {
   private sessionSvc  = inject(SessionService);
   private cotisationSvc = inject(CotisationService);
   private tontineSvc  = inject(TontineService);
+  private ctx         = inject(TontineContextService);
   private router      = inject(Router);
+
+  constructor() {
+    // Suit la tontine courante : recharge à chaque changement de sélection.
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) untracked(() => this.onTontineCourante(id));
+    });
+  }
+
+  private onTontineCourante(id: string): void {
+    this.tontineId.set(id);
+    this.modeDate.set(this.ctx.tontineCourante()?.typeReglePeriodicite === 'DATE_MANUELLE');
+    this.sessionOuverte.set(null);
+    this.chargerSessions(id);
+  }
 
   sessions     = signal<SessionResponse[]>([]);
   loading      = signal(true);
@@ -81,20 +98,11 @@ export class SessionsComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    this.tontineSvc.getAll().subscribe({
-      next: list => {
-        const t = list[0];
-        if (t) {
-          this.tontineId.set(t.id);
-          this.modeDate.set(t.typeReglePeriodicite === 'DATE_MANUELLE');
-          this.chargerSessions(t.id);
-        } else {
-          this.loading.set(false);
-          this.error.set('Aucune tontine configurée.');
-        }
-      },
-      error: () => { this.loading.set(false); this.error.set('Impossible de charger la tontine.'); },
-    });
+    this.ctx.init();
+    if (!this.ctx.tontineCouranteId()) {
+      // Aucune tontine : laisser l'effet réagir quand le contexte sera chargé.
+      this.loading.set(false);
+    }
   }
 
   chargerSessions(tontineId: string): void {

@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DemandeService } from '../../../core/services/demande.service';
 import { TontineService } from '../../../core/services/tontine.service';
+import { TontineContextService } from '../../../core/services/tontine-context.service';
 import { DocumentTontineResponse, TypeDocumentTontine } from '../../../core/models/demande.model';
 import { TontineResponse } from '../../../core/models/tontine.model';
 import { environment } from '../../../../environments/environment';
@@ -14,6 +15,7 @@ import { environment } from '../../../../environments/environment';
 export class DocumentsTontineComponent implements OnInit {
   private svc     = inject(DemandeService);
   private tontSvc = inject(TontineService);
+  private ctx     = inject(TontineContextService);
 
   tontines  = signal<TontineResponse[]>([]);
   documents = signal<DocumentTontineResponse[]>([]);
@@ -35,14 +37,17 @@ export class DocumentsTontineComponent implements OnInit {
       desc: 'Tout autre document utile aux membres' },
   ];
 
-  ngOnInit(): void {
-    this.tontSvc.getAll().subscribe({
-      next: list => {
-        this.tontines.set(list);
-        if (list[0]) { this.tontineId = list[0].id; this.charger(); }
-        else this.loading.set(false);
-      },
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      this.tontines.set(this.ctx.tontines());
+      if (id) { this.tontineId = id; untracked(() => this.charger()); }
     });
+  }
+
+  ngOnInit(): void {
+    this.ctx.init();
+    if (!this.ctx.tontineCouranteId()) this.loading.set(false);
   }
 
   charger(): void {
