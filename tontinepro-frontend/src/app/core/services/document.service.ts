@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { DocumentResponse, TypeDocument } from '../models/document.model';
 
@@ -21,8 +21,10 @@ export class DocumentService {
     return this.http.get<DocumentResponse[]>(`${this.api}/membre/${membreId}`);
   }
 
-  mesDocuments() {
-    return this.http.get<DocumentResponse[]>(`${this.api}/mes-documents`);
+  mesDocuments(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<DocumentResponse[]>(`${this.api}/mes-documents`, { params });
   }
 
   urlFichier(id: string): string {

@@ -35,9 +35,10 @@ export class MembreService {
     return this.http.patch<MembreResponse>(`${this.api}/${id}/fonction`, { fonction });
   }
 
-  getSuivi(annee?: number) {
+  getSuivi(annee?: number, tontineId?: string) {
     const params: Record<string, string> = {};
     if (annee) params['annee'] = String(annee);
+    if (tontineId) params['tontineId'] = tontineId;
     return this.http.get<SuiviMois[]>(`${this.api}/me/suivi`, { params });
   }
 }

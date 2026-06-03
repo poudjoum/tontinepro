@@ -1,9 +1,10 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DocumentService } from '../../core/services/document.service';
 import { DemandeService } from '../../core/services/demande.service';
 import { AuthService } from '../../core/services/auth.service';
 import { MembreService } from '../../core/services/membre.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { DocumentResponse, TypeDocument } from '../../core/models/document.model';
 import { DocumentTontineResponse, TypeDocumentTontine } from '../../core/models/demande.model';
 import { MembreResponse } from '../../core/models/membre.model';
@@ -19,6 +20,14 @@ export class DocumentsComponent implements OnInit {
   private demSvc  = inject(DemandeService);
   auth            = inject(AuthService);
   private mbrSvc  = inject(MembreService);
+  private ctx     = inject(TontineContextService);
+
+  constructor() {
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) untracked(() => this.chargerContexte(id));
+    });
+  }
 
   // ── État commun ────────────────────────────────────────────────────────────
   loading   = signal(true);
@@ -66,13 +75,18 @@ export class DocumentsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.ctx.init();
+  }
+
+  /** (Re)charge le contexte membre/documents pour la tontine courante. */
+  private chargerContexte(tontineId: string): void {
     if (this.auth.isGestionnaire()) {
-      this.mbrSvc.getAll(undefined, 'ACTIF').subscribe({
+      this.mbrSvc.getAll(tontineId, 'ACTIF').subscribe({
         next: m => { this.membres.set(m); this.loading.set(false); },
         error: () => this.loading.set(false),
       });
       // Charger les docs officiels si le gestionnaire a aussi un profil membre
-      this.mbrSvc.getMonProfil().subscribe({
+      this.mbrSvc.getMonProfil(tontineId).subscribe({
         next: m => {
           this.tontineId = m.tontineId;
           this.demSvc.documentsOfficielsTontine(m.tontineId).subscribe({
@@ -83,7 +97,7 @@ export class DocumentsComponent implements OnInit {
         error: () => {},
       });
     } else {
-      this.mbrSvc.getMonProfil().subscribe({
+      this.mbrSvc.getMonProfil(tontineId).subscribe({
         next: m => {
           this.membreId = m.id;
           this.tontineId = m.tontineId;
@@ -101,7 +115,7 @@ export class DocumentsComponent implements OnInit {
   // ── Vue membre ─────────────────────────────────────────────────────────────
 
   chargerMesDocs(): void {
-    this.svc.mesDocuments().subscribe({
+    this.svc.mesDocuments(this.tontineId || undefined).subscribe({
       next: d => { this.documents.set(d); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

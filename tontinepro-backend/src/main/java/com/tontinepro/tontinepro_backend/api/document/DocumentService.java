@@ -86,9 +86,19 @@ public class DocumentService {
 
     @Transactional(readOnly = true)
     public List<DocumentResponse> mesDocuments(String email) {
+        return mesDocuments(email, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DocumentResponse> mesDocuments(String email, UUID tontineId) {
         List<Membre> membres = membreRepository.findAllByUserEmail(email);
         if (membres.isEmpty()) {
             throw new IllegalArgumentException("Aucun profil membre associé à ce compte");
+        }
+        if (tontineId != null) {
+            membres = membres.stream()
+                    .filter(m -> m.getTontine().getId().equals(tontineId))
+                    .toList();
         }
         return membres.stream()
                 .flatMap(m -> documentRepository.findAllByMembreIdOrderByCreatedAtDesc(m.getId()).stream())

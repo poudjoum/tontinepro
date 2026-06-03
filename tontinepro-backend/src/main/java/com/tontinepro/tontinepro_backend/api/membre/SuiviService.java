@@ -31,7 +31,17 @@ public class SuiviService {
 
     @Transactional(readOnly = true)
     public List<SuiviMoisResponse> getSuiviAnnuel(String email, int annee) {
+        return getSuiviAnnuel(email, annee, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SuiviMoisResponse> getSuiviAnnuel(String email, int annee, UUID tontineId) {
         List<Membre> membres = membreRepository.findAllByUserEmail(email);
+        if (tontineId != null) {
+            membres = membres.stream()
+                    .filter(m -> m.getTontine().getId().equals(tontineId))
+                    .toList();
+        }
 
         Map<Integer, List<SuiviMoisResponse.CotisationItem>>      cotisationsMap    = new TreeMap<>();
         Map<Integer, List<SuiviMoisResponse.ContributionItem>>     contributionsMap  = new TreeMap<>();
