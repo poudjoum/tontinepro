@@ -9,6 +9,7 @@ import {
   MonTourResponse,
   MonBeneficeResponse,
   RapportTourResponse,
+  RapportFinSessionResponse,
   MembreEligibleRetardResponse,
   InscrireEnRetardResult,
   CreerSessionRequest,
@@ -143,6 +144,14 @@ export class SessionService {
 
   getRapportTour(sessionId: string, ordreBeneficiaireId: string) {
     return this.http.get<RapportTourResponse>(`${this.api}/${sessionId}/rapport-tour/${ordreBeneficiaireId}`);
+  }
+
+  getRapportFinSession(sessionId: string) {
+    return this.http.get<RapportFinSessionResponse>(`${this.api}/${sessionId}/rapport-fin-session`);
+  }
+
+  telechargerRapportFinSessionPdf(sessionId: string) {
+    return this.http.get(`${this.api}/${sessionId}/rapport-fin-session/pdf`, { responseType: 'blob' });
   }
 
   membresEligiblesRetard(sessionId: string) {

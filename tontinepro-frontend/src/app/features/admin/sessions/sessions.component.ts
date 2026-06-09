@@ -399,6 +399,10 @@ export class SessionsComponent implements OnInit {
     this.router.navigate(['/rapport-tour', sessionId, ordreBeneficiaireId]);
   }
 
+  voirRapportFinSession(sessionId: string): void {
+    this.router.navigate(['/rapport-fin-session', sessionId]);
+  }
+
   // ── Correction cotisation ──────────────────────────────────────────────────
 
   ouvrirEditionCotisation(cotisationId: string): void {

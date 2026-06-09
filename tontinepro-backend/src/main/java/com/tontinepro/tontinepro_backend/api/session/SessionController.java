@@ -1,12 +1,17 @@
 package com.tontinepro.tontinepro_backend.api.session;
 
 import com.tontinepro.tontinepro_backend.api.cotisation.dto.CotisationResponse;
+import com.tontinepro.tontinepro_backend.api.rapport.builder.RapportFinSessionPdfBuilder;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +27,7 @@ import java.util.UUID;
 public class SessionController {
 
     private final SessionService sessionService;
+    private final RapportFinSessionPdfBuilder rapportFinSessionPdfBuilder;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -166,6 +172,25 @@ public class SessionController {
             @PathVariable UUID id,
             @PathVariable UUID ordreBeneficiaireId) {
         return sessionService.getRapportTour(id, ordreBeneficiaireId);
+    }
+
+    @GetMapping("/{id}/rapport-fin-session")
+    @Operation(summary = "Rapport de fin de session : bilan financier complet + fiche par membre")
+    public RapportFinSessionResponse getRapportFinSession(@PathVariable UUID id) {
+        return sessionService.getRapportFinSession(id);
+    }
+
+    @GetMapping("/{id}/rapport-fin-session/pdf")
+    @Operation(summary = "Rapport de fin de session au format PDF (prêt à partager)")
+    public ResponseEntity<byte[]> getRapportFinSessionPdf(@PathVariable UUID id) {
+        RapportFinSessionResponse rapport = sessionService.getRapportFinSession(id);
+        byte[] pdf = rapportFinSessionPdfBuilder.build(rapport);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("rapport-fin-session-" + rapport.sessionNumero() + ".pdf").build());
+        headers.setContentLength(pdf.length);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     @PostMapping("/{id}/annuler-benefice/{ordreBeneficiaireId}")

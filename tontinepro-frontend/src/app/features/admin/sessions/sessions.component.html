@@ -137,6 +137,13 @@
           </div>
         }
 
+        <!-- Rapport de fin de session (toujours disponible) -->
+        <button (click)="voirRapportFinSession(session.id)"
+                class="w-full py-2 text-sm font-semibold rounded-lg border border-emerald-300
+                       text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+          📑 Rapport de fin de session
+        </button>
+
         <!-- Statut des cotisations -->
         @if (afficherStatut() && statutCotisations()) {
           <div class="border border-blue-200 rounded-xl p-4 bg-blue-50 space-y-3">

@@ -1,6 +1,8 @@
 package com.tontinepro.tontinepro_backend.api.session;
 
+import com.tontinepro.tontinepro_backend.api.rapport.builder.RapportFinSessionPdfBuilder;
 import com.tontinepro.tontinepro_backend.api.rapport.builder.RapportTourPdfBuilder;
+import com.tontinepro.tontinepro_backend.api.session.dto.RapportFinSessionResponse;
 import com.tontinepro.tontinepro_backend.api.session.dto.RapportTourResponse;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
@@ -24,12 +26,15 @@ public class RapportEmailService {
 
     private final MembreRepository membreRepository;
     private final RapportTourPdfBuilder pdfBuilder;
+    private final RapportFinSessionPdfBuilder finSessionPdfBuilder;
     private final JavaMailSender mailSender;
 
     public RapportEmailService(MembreRepository membreRepository, RapportTourPdfBuilder pdfBuilder,
+                               RapportFinSessionPdfBuilder finSessionPdfBuilder,
                                @org.springframework.beans.factory.annotation.Autowired(required = false) JavaMailSender mailSender) {
         this.membreRepository = membreRepository;
         this.pdfBuilder = pdfBuilder;
+        this.finSessionPdfBuilder = finSessionPdfBuilder;
         this.mailSender = mailSender;
     }
 
@@ -76,6 +81,64 @@ public class RapportEmailService {
                 log.debug("Rapport de tour envoyé à {}", email);
             } catch (MessagingException e) {
                 log.error("Échec envoi rapport à {} : {}", email, e.getMessage());
+            }
+        }
+    }
+
+    @Async("notificationExecutor")
+    public void envoyerRapportFinSession(UUID tontineId, RapportFinSessionResponse rapport) {
+        if (mailSender == null) return;
+        List<Membre> membres = membreRepository.findAllByTontineId(tontineId);
+        if (membres.isEmpty()) return;
+
+        byte[] pdf;
+        try {
+            pdf = finSessionPdfBuilder.build(rapport);
+        } catch (Exception e) {
+            log.error("Erreur génération PDF rapport de fin de session : {}", e.getMessage());
+            return;
+        }
+
+        String nomFichier = "rapport-fin-session" + rapport.sessionNumero()
+                + "-" + rapport.tontineNom().replaceAll("\\s+", "_") + ".pdf";
+
+        String sujet = "[TontinePro] Rapport de fin de session — " + rapport.tontineNom()
+                + " — Session n°" + rapport.sessionNumero();
+
+        String corps = """
+                Bonjour,
+
+                La session n°%d de la tontine « %s » est clôturée.
+                Vous trouverez en pièce jointe le bilan financier complet de la session
+                (cotisations, redistributions, épargne, prêts, fonds de solidarité) ainsi
+                que votre fiche individuelle.
+
+                Tours réalisés      : %d / %d
+                Total cotisations   : %,.0f FCFA
+                Total redistribué   : %,.0f FCFA
+                Fonds de solidarité : %,.0f FCFA
+
+                --
+                TontinePro
+                """.formatted(rapport.sessionNumero(), rapport.tontineNom(),
+                rapport.nbToursRealises(), rapport.nbToursTotal(),
+                rapport.totalCotisations(), rapport.totalRedistribue(),
+                rapport.soldeFondsSolidarite());
+
+        for (Membre m : membres) {
+            String email = m.getUser().getEmail();
+            try {
+                MimeMessage msg = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+                helper.setFrom(from);
+                helper.setTo(email);
+                helper.setSubject(sujet);
+                helper.setText(corps, false);
+                helper.addAttachment(nomFichier, new org.springframework.core.io.ByteArrayResource(pdf));
+                mailSender.send(msg);
+                log.debug("Rapport de fin de session envoyé à {}", email);
+            } catch (MessagingException e) {
+                log.error("Échec envoi rapport fin de session à {} : {}", email, e.getMessage());
             }
         }
     }
