@@ -8,6 +8,20 @@ export const authGuard: CanActivateFn = () => {
   return auth.isLoggedIn() ? true : router.createUrlTree(['/auth/login']);
 };
 
+/**
+ * Force le changement du mot de passe temporaire (membres importés) avant
+ * d'accéder à l'application. Tant que le drapeau est levé, on redirige vers
+ * l'écran de changement de mot de passe.
+ */
+export const mustChangePasswordGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.isLoggedIn() && auth.mustChangePassword()) {
+    return router.createUrlTree(['/auth/changer-mot-de-passe']);
+  }
+  return true;
+};
+
 export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);

@@ -8,12 +8,13 @@ public record AuthResponse(
         long expiresIn,
         String email,
         String role,
-        boolean twoFaEnabled
+        boolean twoFaEnabled,
+        boolean mustChangePassword
 ) {
     public static AuthResponse of(String accessToken, String refreshToken,
                                   long expiresIn, String email, String role,
-                                  boolean twoFaEnabled) {
+                                  boolean twoFaEnabled, boolean mustChangePassword) {
         return new AuthResponse(accessToken, refreshToken, "Bearer",
-                expiresIn, email, role, twoFaEnabled);
+                expiresIn, email, role, twoFaEnabled, mustChangePassword);
     }
 }

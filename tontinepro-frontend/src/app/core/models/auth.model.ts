@@ -17,6 +17,7 @@ export interface AuthResponse {
   email: string;
   role: 'SUPER_ADMIN' | 'ADMIN' | 'SECRETAIRE' | 'MEMBRE' | 'INVITE';
   twoFaEnabled: boolean;
+  mustChangePassword?: boolean;
 }
 
 export interface TwoFaSetupResponse {

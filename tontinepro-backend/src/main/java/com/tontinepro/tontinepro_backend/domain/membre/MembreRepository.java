@@ -42,4 +42,14 @@ public interface MembreRepository extends JpaRepository<Membre, UUID> {
     boolean existsByUserId(UUID userId);
 
     boolean existsByMatricule(String matricule);
+
+    /** Génère un matricule « MBR-XXXXXXXX » garanti unique en base. */
+    default String genererMatriculeUnique() {
+        String matricule;
+        do {
+            matricule = "MBR-" + UUID.randomUUID().toString()
+                    .replace("-", "").substring(0, 8).toUpperCase();
+        } while (existsByMatricule(matricule));
+        return matricule;
+    }
 }

@@ -76,7 +76,7 @@ public class LibreServiceTontineService {
         fondsAideRepository.save(FondsAide.builder().tontine(tontine).build());
 
         // Créer le profil Secrétaire
-        String matricule = "MBR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        String matricule = membreRepository.genererMatriculeUnique();
         Membre membre = membreRepository.save(Membre.builder()
                 .user(user)
                 .tontine(tontine)
@@ -115,7 +115,7 @@ public class LibreServiceTontineService {
 
         fondsAideRepository.save(FondsAide.builder().tontine(tontine).build());
 
-        String matricule = "MBR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        String matricule = membreRepository.genererMatriculeUnique();
         Membre membre = membreRepository.save(Membre.builder()
                 .user(user)
                 .tontine(tontine)
@@ -154,7 +154,7 @@ public class LibreServiceTontineService {
                 .build());
         return AuthResponse.of(accessToken, rawRefresh,
                 jwtProperties.getAccessTokenExpirationMs(),
-                user.getEmail(), user.getRole().name(), false);
+                user.getEmail(), user.getRole().name(), false, user.isMustChangePassword());
     }
 
     private static String sha256(String input) {

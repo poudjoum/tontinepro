@@ -45,6 +45,14 @@ public class User {
     @Builder.Default
     private boolean actif = true;
 
+    /**
+     * Vrai lorsqu'un mot de passe temporaire a été attribué (import de membres) :
+     * l'utilisateur est forcé de le changer à sa première connexion.
+     */
+    @Column(name = "must_change_password", nullable = false)
+    @Builder.Default
+    private boolean mustChangePassword = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

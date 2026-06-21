@@ -50,6 +50,14 @@ export class AuthService {
     );
   }
 
+  changerMotDePasse(nouveauMotDePasse: string) {
+    return this.http.post<AuthResponse>(`${this.api}/changer-mot-de-passe`, { nouveauMotDePasse }).pipe(
+      tap(auth => this.saveAuth(auth))
+    );
+  }
+
+  readonly mustChangePassword = computed(() => this._auth()?.mustChangePassword === true);
+
   logout(): void {
     this.http.post(`${this.api}/logout`, {}).subscribe({ error: () => {} });
     this.clearAuth();

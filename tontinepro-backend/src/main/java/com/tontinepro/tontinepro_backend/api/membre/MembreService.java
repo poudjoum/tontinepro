@@ -255,6 +255,6 @@ public class MembreService {
     }
 
     private String generateMatricule() {
-        return "MBR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        return membreRepository.genererMatriculeUnique();
     }
 }

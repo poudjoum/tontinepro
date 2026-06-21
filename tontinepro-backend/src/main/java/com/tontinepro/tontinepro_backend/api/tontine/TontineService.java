@@ -135,7 +135,7 @@ public class TontineService {
             throw new IllegalArgumentException("Vous êtes déjà membre de cette tontine");
         }
 
-        String matricule = "MBR-" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        String matricule = membreRepository.genererMatriculeUnique();
 
         Membre membre = membreRepository.save(Membre.builder()
                 .user(user)

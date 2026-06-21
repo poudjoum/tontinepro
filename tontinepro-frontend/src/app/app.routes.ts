@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard, superAdminGuard } from './core/guards/auth.guard';
+import { authGuard, adminGuard, superAdminGuard, mustChangePasswordGuard } from './core/guards/auth.guard';
 import { notConfiguredGuard } from './core/guards/setup.guard';
 import { ShellComponent } from './layout/shell.component';
 
@@ -72,6 +72,12 @@ export const routes: Routes = [
           import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
       },
       {
+        path: 'changer-mot-de-passe',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/auth/changer-mot-de-passe/changer-mot-de-passe.component').then(m => m.ChangerMotDePasseComponent),
+      },
+      {
         path: 'mot-de-passe-oublie',
         loadComponent: () =>
           import('./features/auth/mot-de-passe-oublie/mot-de-passe-oublie.component').then(m => m.MotDePasseOublieComponent),
@@ -92,7 +98,7 @@ export const routes: Routes = [
   {
     path: '',
     component: ShellComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, mustChangePasswordGuard],
     children: [
       {
         path: 'dashboard',

@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { MembreResponse } from '../models/membre.model';
 import { SuiviMois } from '../models/suivi.model';
+import { MembreImportResponse } from '../models/membre-import.model';
 
 @Injectable({ providedIn: 'root' })
 export class MembreService {
@@ -33,6 +34,19 @@ export class MembreService {
 
   updateFonction(id: string, fonction: string) {
     return this.http.patch<MembreResponse>(`${this.api}/${id}/fonction`, { fonction });
+  }
+
+  telechargerModeleImport(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get(`${this.api}/import/modele`, { params, responseType: 'blob' });
+  }
+
+  importerMembres(tontineId: string, fichier: File) {
+    const formData = new FormData();
+    formData.append('fichier', fichier);
+    const params = new HttpParams().set('tontineId', tontineId);
+    return this.http.post<MembreImportResponse>(`${this.api}/import`, formData, { params });
   }
 
   getSuivi(annee?: number, tontineId?: string) {
