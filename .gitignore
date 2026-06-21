@@ -20,3 +20,7 @@ application-local.yml
 .idea/
 *.iml
 .vscode/settings.json
+
+# Artefacts de build / travail (ne pas committer)
+*.apk
+img/
