@@ -24,3 +24,10 @@ application-local.yml
 # Artefacts de build / travail (ne pas committer)
 *.apk
 img/
+
+# Documents générés par les scripts docs/ (sources : .html, .py, .js, .md trackés)
+docs/TontinePro-*.pdf
+docs/TontinePro-*.pptx
+docs/TontinePro-*.docx
+docs/package.json
+docs/package-lock.json
