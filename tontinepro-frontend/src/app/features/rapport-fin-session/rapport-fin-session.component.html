@@ -1,0 +1,178 @@
+<div class="min-h-screen bg-gray-50 print:bg-white">
+
+  <!-- Header (masqué à l'impression) -->
+  <div class="bg-primary-600 text-white px-4 pt-safe-top pb-5 print:hidden">
+    <a routerLink="/dashboard" class="text-primary-200 text-sm mb-3 block">← Retour</a>
+    <h1 class="text-xl font-bold">Rapport de fin de session</h1>
+    @if (rapport()) {
+      <p class="text-primary-200 text-sm mt-0.5">
+        {{ rapport()!.tontineNom }} · Session n°{{ rapport()!.sessionNumero }}
+      </p>
+    }
+  </div>
+
+  <div class="px-4 py-4 space-y-4 max-w-2xl mx-auto print-report">
+
+    @if (loading()) {
+      <div class="flex justify-center py-12">
+        <svg class="animate-spin w-7 h-7 text-primary-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{{ error() }}</div>
+    }
+
+    @if (rapport(); as r) {
+
+      <!-- Titre impression -->
+      <div class="hidden print:block text-center mb-5 pb-3 border-b-2 border-gray-800">
+        <h1 class="text-2xl font-black tracking-tight text-gray-900">RAPPORT DE FIN DE SESSION</h1>
+        <p class="text-base font-semibold text-gray-700 mt-1">{{ r.tontineNom }}</p>
+        <p class="text-sm text-gray-600 mt-0.5">
+          Session n°{{ r.sessionNumero }} · du {{ formatDate(r.dateDebut) }} au {{ formatDate(r.dateFin) }}
+        </p>
+      </div>
+
+      <!-- Bandeau récap session -->
+      <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 print-card flex items-center justify-between">
+        <div>
+          <p class="text-xs text-blue-500 font-medium uppercase tracking-wide">{{ statutLabel(r.statut) }}</p>
+          <p class="text-sm font-bold text-blue-900 mt-0.5">
+            {{ r.nbToursRealises }}/{{ r.nbToursTotal }} tours réalisés · {{ r.nombreMembres }} membres
+          </p>
+        </div>
+        <div class="text-right text-xs text-blue-600">
+          <p>Du {{ formatDate(r.dateDebut) }}</p>
+          <p>au {{ formatDate(r.dateFin) }}</p>
+        </div>
+      </div>
+
+      <!-- Récapitulatif financier -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-4 space-y-2 print-card">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Récapitulatif financier</h2>
+
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">Σ Cotisations collectées</span>
+          <span class="font-medium text-gray-800">{{ fcfa(r.totalCotisations) }}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">Σ Repas collectés</span>
+          <span class="font-medium text-gray-800">{{ fcfa(r.totalRepas) }}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-500">Σ Fonds d'aide collecté</span>
+          <span class="font-medium text-indigo-700">{{ fcfa(r.totalFondAide) }}</span>
+        </div>
+        <div class="flex justify-between text-sm font-semibold border-t border-gray-100 pt-2">
+          <span class="text-blue-700">Σ Redistribué aux bénéficiaires</span>
+          <span class="text-blue-800">{{ fcfa(r.totalRedistribue) }}</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2 mt-1 border-t border-gray-100">
+          <div class="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+            <p class="text-[11px] text-green-600">Fonds de solidarité</p>
+            <p class="text-sm font-bold text-green-800">{{ fcfa(r.soldeFondsSolidarite) }}</p>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <p class="text-[11px] text-amber-600">Épargne totale</p>
+            <p class="text-sm font-bold text-amber-800">{{ fcfa(r.totalEpargne) }}</p>
+          </div>
+          <div class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+            <p class="text-[11px] text-gray-500">Prêts décaissés</p>
+            <p class="text-sm font-bold text-gray-800">{{ fcfa(r.pretsTotalDecaisse) }}</p>
+          </div>
+          <div class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+            <p class="text-[11px] text-gray-500">Intérêts générés (prêts)</p>
+            <p class="text-sm font-bold text-green-700">{{ fcfa(r.pretsInteretsGeneres) }}</p>
+          </div>
+          <div class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 col-span-2">
+            <p class="text-[11px] text-gray-500">Prêts en cours (montant restant)</p>
+            <p class="text-sm font-bold text-gray-800">{{ fcfa(r.pretsEnCours) }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fiches individuelles -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden print-card">
+        <div class="px-4 pt-4 pb-2">
+          <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Fiches individuelles par membre</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead class="bg-gray-800 text-white">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">Nom & Prénoms</th>
+                <th class="px-2 py-2 text-right font-semibold">Cotisé</th>
+                <th class="px-2 py-2 text-right font-semibold">Fond</th>
+                <th class="px-2 py-2 text-right font-semibold">Repas</th>
+                <th class="px-2 py-2 text-right font-semibold">Reçu</th>
+                <th class="px-2 py-2 text-right font-semibold">Épargne</th>
+                <th class="px-2 py-2 text-right font-semibold">Prêt</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (f of r.fiches; track f.membreId; let i = $index) {
+                <tr [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+                  <td class="px-3 py-2 font-medium text-gray-800">
+                    {{ f.nomPrenom }}
+                    @if (f.aBeneficie) { <span class="text-green-600">✓</span> }
+                  </td>
+                  <td class="px-2 py-2 text-right text-gray-700">{{ f.cotise | number:'1.0-0' }}</td>
+                  <td class="px-2 py-2 text-right text-indigo-600">{{ f.fondAideVerse | number:'1.0-0' }}</td>
+                  <td class="px-2 py-2 text-right text-purple-600">{{ f.repasVerse | number:'1.0-0' }}</td>
+                  <td class="px-2 py-2 text-right"
+                      [class]="f.aBeneficie ? 'text-blue-700 font-semibold' : 'text-gray-300'">
+                    {{ f.aBeneficie ? (f.recu | number:'1.0-0') : '—' }}
+                  </td>
+                  <td class="px-2 py-2 text-right text-amber-700">{{ f.epargne | number:'1.0-0' }}</td>
+                  <td class="px-2 py-2 text-right"
+                      [class]="f.pretEnCours > 0 ? 'text-gray-800 font-semibold' : 'text-gray-300'">
+                    {{ f.pretEnCours > 0 ? (f.pretEnCours | number:'1.0-0') : '—' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot class="bg-gray-800 text-white">
+              <tr>
+                <td class="px-3 py-2 font-bold">TOTAL</td>
+                <td class="px-2 py-2 text-right font-bold">{{ r.totalCotisations | number:'1.0-0' }}</td>
+                <td class="px-2 py-2 text-right font-bold">{{ r.totalFondAide | number:'1.0-0' }}</td>
+                <td class="px-2 py-2 text-right font-bold">{{ r.totalRepas | number:'1.0-0' }}</td>
+                <td class="px-2 py-2 text-right font-bold">{{ r.totalRedistribue | number:'1.0-0' }}</td>
+                <td class="px-2 py-2 text-right font-bold">{{ r.totalEpargne | number:'1.0-0' }}</td>
+                <td class="px-2 py-2 text-right font-bold">{{ r.pretsEnCours | number:'1.0-0' }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pied de page impression -->
+      <div class="hidden print:block text-center mt-6 pt-3 border-t border-gray-300">
+        <p class="text-[10px] text-gray-500 italic">
+          Document confidentiel — généré le {{ formatDate(today) }} par TontinePro
+        </p>
+      </div>
+
+      <!-- Actions (masquées à l'impression) -->
+      <div class="print:hidden pb-8 space-y-2">
+        <button (click)="telechargerPdf()"
+                class="w-full py-3 rounded-xl bg-primary-600 text-white font-semibold text-sm
+                       hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+          📄 Télécharger le PDF
+        </button>
+        <button (click)="imprimer()"
+                class="w-full py-3 rounded-xl bg-gray-800 text-white font-semibold text-sm
+                       hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
+          🖨️ Imprimer / Sauvegarder PDF
+        </button>
+      </div>
+
+    }
+
+  </div>
+</div>

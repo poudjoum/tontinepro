@@ -16,6 +16,7 @@ import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
 import com.tontinepro.tontinepro_backend.domain.user.User;
 import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,9 +97,27 @@ public class MembreService {
     }
 
     @Transactional(readOnly = true)
-    public List<MembreResponse> list(UUID tontineId, Membre.Statut statut) {
-        List<Membre> membres;
+    public List<MembreResponse> list(UUID tontineId, Membre.Statut statut, String requesterEmail) {
+        User requester = userRepository.findByEmail(requesterEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+        boolean superAdmin = requester.getRole() == User.Role.SUPER_ADMIN;
 
+        // Cloisonnement multi-tontine : hors super-admin, on ne peut lister que les
+        // membres d'une tontine où l'on a soi-même un profil membre actif.
+        if (!superAdmin) {
+            if (tontineId == null) {
+                throw new AccessDeniedException("Une tontine doit être précisée");
+            }
+            boolean membreDeLaTontine = membreRepository
+                    .findByUserEmailAndTontineId(requesterEmail, tontineId)
+                    .filter(m -> m.getStatut() == Membre.Statut.ACTIF)
+                    .isPresent();
+            if (!membreDeLaTontine) {
+                throw new AccessDeniedException("Vous n'appartenez pas à cette tontine");
+            }
+        }
+
+        List<Membre> membres;
         if (tontineId != null && statut != null) {
             membres = membreRepository.findAllByTontineIdAndStatut(tontineId, statut);
         } else if (tontineId != null) {
@@ -236,6 +255,6 @@ public class MembreService {
     }
 
     private String generateMatricule() {
-        return "MBR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        return membreRepository.genererMatriculeUnique();
     }
 }

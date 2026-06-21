@@ -5,10 +5,15 @@ import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
 import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
 import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
+import com.tontinepro.tontinepro_backend.domain.aide.FondsAideRepository;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
+import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargne;
+import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargneRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
+import com.tontinepro.tontinepro_backend.domain.pret.Pret;
+import com.tontinepro.tontinepro_backend.domain.pret.PretRepository;
 import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaire;
 import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaireRepository;
 import com.tontinepro.tontinepro_backend.domain.session.SessionTontine;
@@ -38,6 +43,9 @@ public class SessionService {
     private final PeriodiciteService periodiciteService;
     private final NotificationService notificationService;
     private final RapportEmailService rapportEmailService;
+    private final CompteEpargneRepository compteEpargneRepository;
+    private final PretRepository pretRepository;
+    private final FondsAideRepository fondsAideRepository;
 
     @Transactional
     public SessionResponse creerSession(CreerSessionRequest request) {
@@ -849,7 +857,17 @@ public class SessionService {
         }
 
         session.setStatut(SessionTontine.Statut.TERMINEE);
-        return getById(sessionRepository.save(session).getId());
+        SessionResponse response = getById(sessionRepository.save(session).getId());
+
+        // Envoyer le rapport de fin de session par email à tous les membres (async)
+        try {
+            RapportFinSessionResponse rapport = getRapportFinSession(sessionId);
+            rapportEmailService.envoyerRapportFinSession(session.getTontine().getId(), rapport);
+        } catch (Exception e) {
+            // L'envoi d'email ne doit pas bloquer la clôture
+        }
+
+        return response;
     }
 
     /**
@@ -977,6 +995,117 @@ public class SessionService {
                 totalCotis, totalFond, totalRepas, totalSanct,
                 potBrut, obligation, fondAidePaye, dette, cagnotte,
                 contributeurs);
+    }
+
+    /**
+     * Rapport de fin de session : bilan financier complet agrégé sur toute la
+     * durée de la session (cotisations, repas, fonds collectés), montants
+     * redistribués aux bénéficiaires, snapshot épargne / prêts / fonds de
+     * solidarité, et fiche individuelle par membre.
+     */
+    @Transactional(readOnly = true)
+    public RapportFinSessionResponse getRapportFinSession(UUID sessionId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+
+        Tontine tontine = session.getTontine();
+        UUID tontineId = tontine.getId();
+
+        // Cotisations PAYEE sur l'ensemble des mois couverts par la session
+        LocalDate debut = session.getDateDebut();
+        LocalDate fin   = session.getDateFin() != null ? session.getDateFin() : debut;
+        YearMonth ymDebut = YearMonth.from(debut);
+        YearMonth ymFin   = YearMonth.from(fin);
+
+        List<Cotisation> cotisations = new ArrayList<>();
+        for (YearMonth ym = ymDebut; !ym.isAfter(ymFin); ym = ym.plusMonths(1)) {
+            cotisations.addAll(cotisationRepository.findAllByTontineIdAndMoisAndAnneeAndStatut(
+                    tontineId, (short) ym.getMonthValue(), (short) ym.getYear(), Cotisation.Statut.PAYEE));
+        }
+
+        BigDecimal totalCotisations = cotisations.stream()
+                .map(Cotisation::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalRepas = cotisations.stream()
+                .map(c -> safe(c.getMontantRepas())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalFondAide = cotisations.stream()
+                .map(c -> safe(c.getMontantFondAide())).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Agrégats de cotisation par membre
+        Map<UUID, BigDecimal> cotiseParMembre = new HashMap<>();
+        Map<UUID, BigDecimal> fondParMembre   = new HashMap<>();
+        Map<UUID, BigDecimal> repasParMembre  = new HashMap<>();
+        for (Cotisation c : cotisations) {
+            UUID mId = c.getMembre().getId();
+            cotiseParMembre.merge(mId, safe(c.getMontant()), BigDecimal::add);
+            fondParMembre.merge(mId, safe(c.getMontantFondAide()), BigDecimal::add);
+            repasParMembre.merge(mId, safe(c.getMontantRepas()), BigDecimal::add);
+        }
+
+        // Bénéfices : ordre des bénéficiaires de la session
+        List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId);
+        int nbToursTotal    = ordres.size();
+        int nbToursRealises = (int) ordres.stream().filter(OrdreBeneficiaire::isBeneficie).count();
+        BigDecimal totalRedistribue = ordres.stream()
+                .filter(OrdreBeneficiaire::isBeneficie)
+                .map(ob -> safe(ob.getMontantRecu())).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Épargne : snapshot des soldes par membre
+        Map<UUID, BigDecimal> epargneParMembre = new HashMap<>();
+        BigDecimal totalEpargne = BigDecimal.ZERO;
+        for (CompteEpargne ce : compteEpargneRepository.findAllByMembreTontineId(tontineId)) {
+            epargneParMembre.put(ce.getMembre().getId(), safe(ce.getSolde()));
+            totalEpargne = totalEpargne.add(safe(ce.getSolde()));
+        }
+
+        // Prêts : décaissé / intérêts générés / en cours
+        Map<UUID, BigDecimal> pretEnCoursParMembre = new HashMap<>();
+        BigDecimal pretsTotalDecaisse   = BigDecimal.ZERO;
+        BigDecimal pretsInteretsGeneres = BigDecimal.ZERO;
+        BigDecimal pretsEnCours         = BigDecimal.ZERO;
+        for (Pret p : pretRepository.findAllByMembreTontineId(tontineId)) {
+            UUID mId = p.getMembre().getId();
+            switch (p.getStatut()) {
+                case EN_COURS -> {
+                    pretsTotalDecaisse = pretsTotalDecaisse.add(safe(p.getMontantPrincipal()));
+                    pretsEnCours       = pretsEnCours.add(safe(p.getMontantTotal()));
+                    pretEnCoursParMembre.merge(mId, safe(p.getMontantTotal()), BigDecimal::add);
+                }
+                case SOLDE -> {
+                    pretsTotalDecaisse  = pretsTotalDecaisse.add(safe(p.getMontantPrincipal()));
+                    pretsInteretsGeneres = pretsInteretsGeneres.add(
+                            safe(p.getMontantTotal()).subtract(safe(p.getMontantPrincipal())));
+                }
+                default -> { /* DEMANDE / VALIDE / REJETE : non décaissés */ }
+            }
+        }
+
+        BigDecimal soldeFondsSolidarite = fondsAideRepository.findByTontineId(tontineId)
+                .map(f -> safe(f.getSolde())).orElse(BigDecimal.ZERO);
+
+        // Fiches individuelles (membres du calendrier de la session)
+        List<RapportFinSessionResponse.FicheMembre> fiches = ordres.stream().map(ob -> {
+            Membre m = ob.getMembre();
+            UUID mId = m.getId();
+            return new RapportFinSessionResponse.FicheMembre(
+                    mId, m.getMatricule(), m.getPrenom() + " " + m.getNom(),
+                    cotiseParMembre.getOrDefault(mId, BigDecimal.ZERO),
+                    fondParMembre.getOrDefault(mId, BigDecimal.ZERO),
+                    repasParMembre.getOrDefault(mId, BigDecimal.ZERO),
+                    ob.isBeneficie(),
+                    ob.getDateBenefice(),
+                    safe(ob.getMontantRecu()),
+                    epargneParMembre.getOrDefault(mId, BigDecimal.ZERO),
+                    pretEnCoursParMembre.getOrDefault(mId, BigDecimal.ZERO));
+        }).toList();
+
+        return new RapportFinSessionResponse(
+                sessionId, session.getNumero(), tontine.getNom(),
+                debut, session.getDateFin(), session.getStatut().name(),
+                session.getNombreMembres(), nbToursRealises, nbToursTotal,
+                totalCotisations, totalRepas, totalFondAide, totalRedistribue,
+                soldeFondsSolidarite, totalEpargne,
+                pretsTotalDecaisse, pretsInteretsGeneres, pretsEnCours,
+                fiches);
     }
 
     // ─── Inscription en retard ──────────────────────────────────────────────────

@@ -150,6 +150,24 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    /**
+     * Change le mot de passe de l'utilisateur connecté et lève le drapeau
+     * {@code mustChangePassword}. Utilisé lors de la première connexion d'un
+     * membre importé qui dispose d'un mot de passe temporaire.
+     */
+    @Transactional
+    public AuthResponse changerMotDePasse(String email, String nouveauMotDePasse) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        user.setHashedPassword(passwordEncoder.encode(nouveauMotDePasse));
+        user.setMustChangePassword(false);
+        userRepository.save(user);
+
+        refreshTokenRepository.revokeAllByUserId(user.getId());
+        return buildAuthResponse(user);
+    }
+
     /** Connexion directe sans credentials — utilisé par SetupService après création initiale. */
     @Transactional
     public AuthResponse loginDirectly(User user) {
@@ -174,7 +192,8 @@ public class AuthService {
                 jwtProperties.getAccessTokenExpirationMs(),
                 user.getEmail(),
                 user.getRole().name(),
-                user.isTwoFaEnabled()
+                user.isTwoFaEnabled(),
+                user.isMustChangePassword()
         );
     }
 

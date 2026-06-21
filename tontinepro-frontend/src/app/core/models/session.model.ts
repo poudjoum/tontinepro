@@ -157,6 +157,42 @@ export interface RapportTourResponse {
   contributeursSolidaires: ContributeurAideSociale[];
 }
 
+export interface FicheMembreFinSession {
+  membreId: string;
+  matricule: string;
+  nomPrenom: string;
+  cotise: number;
+  fondAideVerse: number;
+  repasVerse: number;
+  aBeneficie: boolean;
+  dateBenefice: string | null;
+  recu: number;
+  epargne: number;
+  pretEnCours: number;
+}
+
+export interface RapportFinSessionResponse {
+  sessionId: string;
+  sessionNumero: number;
+  tontineNom: string;
+  dateDebut: string | null;
+  dateFin: string | null;
+  statut: StatutSession;
+  nombreMembres: number;
+  nbToursRealises: number;
+  nbToursTotal: number;
+  totalCotisations: number;
+  totalRepas: number;
+  totalFondAide: number;
+  totalRedistribue: number;
+  soldeFondsSolidarite: number;
+  totalEpargne: number;
+  pretsTotalDecaisse: number;
+  pretsInteretsGeneres: number;
+  pretsEnCours: number;
+  fiches: FicheMembreFinSession[];
+}
+
 export interface MonTourResponse {
   sessionId: string;
   sessionNumero: number;

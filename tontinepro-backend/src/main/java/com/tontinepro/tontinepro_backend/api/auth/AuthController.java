@@ -69,6 +69,15 @@ public class AuthController {
         return authService.activerCompte(request);
     }
 
+    @PostMapping("/changer-mot-de-passe")
+    @Operation(summary = "Changer son mot de passe temporaire (1ère connexion d'un membre importé)")
+    public AuthResponse changerMotDePasse(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody ChangerMotDePasseRequest request
+    ) {
+        return authService.changerMotDePasse(principal.getUsername(), request.nouveauMotDePasse());
+    }
+
     // ── 2FA ──────────────────────────────────────────────────────────────
 
     @PostMapping("/2fa/activer")

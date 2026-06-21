@@ -17,6 +17,11 @@ export class PostAuthNavService {
   private router = inject(Router);
 
   navigateAfterLogin(): void {
+    // Membre importé avec un mot de passe temporaire : changement obligatoire d'abord
+    if (this.auth.mustChangePassword()) {
+      this.router.navigate(['/auth/changer-mot-de-passe']);
+      return;
+    }
     if (this.auth.isSuperAdmin()) {
       this.router.navigate(['/super-admin']);
       return;

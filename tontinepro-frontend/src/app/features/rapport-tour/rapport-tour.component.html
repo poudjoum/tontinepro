@@ -11,7 +11,7 @@
     }
   </div>
 
-  <div class="px-4 py-4 space-y-4 max-w-2xl mx-auto">
+  <div class="px-4 py-4 space-y-4 max-w-2xl mx-auto print-report">
 
     @if (loading()) {
       <div class="flex justify-center py-12">
@@ -29,20 +29,21 @@
     @if (rapport(); as r) {
 
       <!-- Titre impression -->
-      <div class="hidden print:block text-center mb-4">
-        <h1 class="text-xl font-bold text-gray-900">RAPPORT DE TOUR — {{ r.tontineNom }}</h1>
-        <p class="text-sm text-gray-600">Session n°{{ r.sessionNumero }} · {{ moisLabel(r.mois) }} {{ r.annee }} · {{ formatDate(r.dateTour) }}</p>
+      <div class="hidden print:block text-center mb-5 pb-3 border-b-2 border-gray-800">
+        <h1 class="text-2xl font-black tracking-tight text-gray-900">RAPPORT DE TOUR</h1>
+        <p class="text-base font-semibold text-gray-700 mt-1">{{ r.tontineNom }}</p>
+        <p class="text-sm text-gray-600 mt-0.5">Session n°{{ r.sessionNumero }} · {{ moisLabel(r.mois) }} {{ r.annee }} · {{ formatDate(r.dateTour) }}</p>
       </div>
 
       <!-- Bénéficiaire -->
-      <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+      <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 print-card">
         <p class="text-xs text-blue-500 font-medium uppercase tracking-wide">Bénéficiaire du tour</p>
         <p class="text-base font-bold text-blue-900 mt-0.5">{{ r.beneficiaireNom }}</p>
         <p class="text-xs text-blue-600">{{ r.beneficiaireMatricule }} · {{ formatDate(r.dateTour) }}</p>
       </div>
 
       <!-- Tableau des cotisations -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden print-card">
         <div class="px-4 pt-4 pb-2">
           <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Cotisations des membres</h2>
         </div>
@@ -92,7 +93,7 @@
       </div>
 
       <!-- Bilan bénéficiaire -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-4 space-y-2">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-4 space-y-2 print-card">
         <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Bilan du bénéficiaire</h2>
 
         <div class="flex justify-between text-sm">
@@ -141,7 +142,7 @@
 
       <!-- Contributeurs Aide Sociale -->
       @if (r.contributeursSolidaires && r.contributeursSolidaires.length) {
-        <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 p-4 mt-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 p-4 mt-4 print-card">
           <h3 class="text-sm font-bold text-indigo-800 mb-3">Contributeurs — Aide Sociale</h3>
           <table class="w-full text-xs">
             <thead>
@@ -176,13 +177,24 @@
         </div>
       }
 
+      <!-- Pied de page impression -->
+      <div class="hidden print:block text-center mt-6 pt-3 border-t border-gray-300">
+        <p class="text-[10px] text-gray-500 italic">
+          Document confidentiel — généré le {{ formatDate(today) }} par TontinePro
+        </p>
+      </div>
+
       <!-- Actions (masquées à l'impression) -->
-      <div class="flex gap-3 print:hidden pb-8">
+      <div class="print:hidden pb-8 space-y-2">
         <button (click)="imprimer()"
-                class="flex-1 py-3 rounded-xl bg-gray-800 text-white font-semibold text-sm
+                class="w-full py-3 rounded-xl bg-gray-800 text-white font-semibold text-sm
                        hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
           🖨️ Imprimer / Sauvegarder PDF
         </button>
+        <p class="text-[11px] text-gray-400 text-center leading-snug">
+          Astuce : dans la fenêtre d'impression, choisis « Enregistrer au format PDF », format A4,
+          et décoche « En-têtes et pieds de page » pour un rendu sans URL ni numéro de page.
+        </p>
       </div>
 
     }

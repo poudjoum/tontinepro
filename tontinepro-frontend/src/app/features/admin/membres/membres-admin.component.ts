@@ -6,6 +6,7 @@ import { TontineService } from '../../../core/services/tontine.service';
 import { TontineContextService } from '../../../core/services/tontine-context.service';
 import { MembreResponse } from '../../../core/models/membre.model';
 import { TontineResponse } from '../../../core/models/tontine.model';
+import { MembreImportResponse } from '../../../core/models/membre-import.model';
 import { environment } from '../../../../environments/environment';
 
 type Fonction = 'PRESIDENT' | 'SECRETAIRE' | 'TRESORIER' | 'CENSEUR' | 'MEMBRE_ORDINAIRE';
@@ -37,6 +38,14 @@ export class MembresAdminComponent implements OnInit {
   error      = signal('');
   success    = signal('');
   showForm   = signal(false);
+
+  // Import Excel
+  showImport     = signal(false);
+  importing      = signal(false);
+  importFileName = signal('');
+  importError    = signal('');
+  importResult   = signal<MembreImportResponse | null>(null);
+  private importFile: File | null = null;
 
   tontineId = '';
   recherche = '';
@@ -100,6 +109,52 @@ export class MembresAdminComponent implements OnInit {
       error: e => {
         this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors de l\'inscription');
         this.inscribing.set(false);
+      },
+    });
+  }
+
+  // ── Import Excel ─────────────────────────────────────────────────────────
+
+  telechargerModele(): void {
+    this.mbrSvc.telechargerModeleImport(this.tontineId).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'modele_import_membres.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.importError.set('Impossible de télécharger le modèle.'),
+    });
+  }
+
+  onFichierChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.importFile = file;
+    this.importFileName.set(file?.name ?? '');
+    this.importError.set('');
+    this.importResult.set(null);
+  }
+
+  importer(): void {
+    if (!this.tontineId || !this.importFile) return;
+    this.importing.set(true);
+    this.importError.set('');
+    this.importResult.set(null);
+
+    this.mbrSvc.importerMembres(this.tontineId, this.importFile).subscribe({
+      next: res => {
+        this.importResult.set(res);
+        this.importing.set(false);
+        this.importFile = null;
+        this.importFileName.set('');
+        this.charger();
+      },
+      error: e => {
+        this.importError.set(e.error?.detail ?? e.error?.message ?? 'Erreur lors de l\'import.');
+        this.importing.set(false);
       },
     });
   }

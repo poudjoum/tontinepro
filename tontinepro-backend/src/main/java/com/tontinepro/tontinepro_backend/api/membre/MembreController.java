@@ -44,9 +44,10 @@ public class MembreController {
     @Operation(summary = "Lister les membres (filtrables par tontine et statut)")
     public List<MembreResponse> list(
             @RequestParam(required = false) UUID tontineId,
-            @RequestParam(required = false) Membre.Statut statut
+            @RequestParam(required = false) Membre.Statut statut,
+            @AuthenticationPrincipal UserDetails principal
     ) {
-        return membreService.list(tontineId, statut);
+        return membreService.list(tontineId, statut, principal.getUsername());
     }
 
     @GetMapping("/me")

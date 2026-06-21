@@ -100,7 +100,7 @@ public class DemandeService {
         }
 
         Tontine tontine = demande.getTontine();
-        String matricule = "MBR-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        String matricule = membreRepository.genererMatriculeUnique();
 
         Membre membre = membreRepository.save(Membre.builder()
                 .user(user)
