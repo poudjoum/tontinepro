@@ -51,6 +51,11 @@ export interface MembreCotisationStatut {
   matricule: string;
   statutCotisation: 'PAYEE' | 'EN_ATTENTE' | 'EN_RETARD' | 'ABSENTE';
   cotisationId: string | null;
+  /** Montants déjà enregistrés (null si la cotisation n'existe pas encore). */
+  montantTontine: number | null;
+  montantFondAide: number | null;
+  montantRepas: number | null;
+  referencePaiement: string | null;
 }
 
 export interface SessionCotisationsStatutResponse {

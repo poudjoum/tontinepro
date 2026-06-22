@@ -116,12 +116,6 @@
                            disabled:opacity-50">
               @if (saving()) { … } @else { ➕ Inscrire en retard }
             </button>
-            <button (click)="ouvrirSaisieSeance(session)" [disabled]="saving()"
-                    class="col-span-2 py-2 text-sm font-medium rounded-lg border border-primary-400
-                           text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors
-                           disabled:opacity-50">
-              @if (saving()) { … } @else { ✏️ Saisie de séance }
-            </button>
             <button (click)="cloturerSession(session)" [disabled]="saving()"
                     class="col-span-2 py-2 text-sm font-medium rounded-lg border border-gray-300
                            text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors
@@ -268,7 +262,8 @@
 
         <!-- ════ SAISIE DE SÉANCE ════ -->
         @if (afficherSaisie() && statutCotisations()) {
-          <div class="border border-primary-200 rounded-xl bg-primary-50 space-y-3 overflow-hidden">
+          <div id="panneau-saisie-seance"
+               class="border border-primary-200 rounded-xl bg-primary-50 space-y-3 overflow-hidden">
             <div class="px-4 pt-4 flex items-center justify-between">
               <div>
                 <h3 class="text-sm font-bold text-primary-900">Saisie de séance</h3>
@@ -643,6 +638,15 @@
               @if (!ob.beneficie && session.statut === 'EN_COURS' &&
                    (datePassee(ob.dateBenefice) || prochainBeneficiaire(session)?.id === ob.id)) {
                 <div [class]="'pt-1 border-t ' + (datePassee(ob.dateBenefice) ? 'border-red-200' : 'border-amber-200')">
+                  <!-- Saisie de séance liée à la prochaine échéance, jusqu'à validation du bénéfice -->
+                  @if (prochainBeneficiaire(session)?.id === ob.id) {
+                    <button (click)="ouvrirSaisieSeance(session)" [disabled]="saving()"
+                            class="w-full mb-2 text-xs py-2 rounded-lg font-semibold border border-primary-400
+                                   text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors
+                                   disabled:opacity-50">
+                      @if (saving()) { … } @else { ✏️ Saisie de séance }
+                    </button>
+                  }
                   <p class="text-[10px] text-gray-500 mb-1">
                     Montant calculé automatiquement : Σ cotisations + Σ repas − fond annuel
                   </p>

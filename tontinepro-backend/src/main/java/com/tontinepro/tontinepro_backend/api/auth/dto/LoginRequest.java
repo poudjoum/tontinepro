@@ -1,11 +1,11 @@
 package com.tontinepro.tontinepro_backend.api.auth.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record LoginRequest(
 
-        @NotBlank @Email
+        /** Identifiant de connexion : email OU numéro de téléphone. */
+        @NotBlank
         String email,
 
         @NotBlank

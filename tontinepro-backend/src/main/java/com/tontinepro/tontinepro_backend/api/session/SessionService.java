@@ -739,12 +739,18 @@ public class SessionService {
             Cotisation cot = cotParMembre.get(m.getId());
             String statut;
             UUID cotId = null;
+            BigDecimal montantTontine = null, montantFondAide = null, montantRepas = null;
+            String referencePaiement = null;
             if (cot == null) {
                 statut = "ABSENTE";
                 nbAbsents++;
             } else {
                 statut = cot.getStatut().name();
                 cotId = cot.getId();
+                montantTontine    = cot.getMontant();
+                montantFondAide   = cot.getMontantFondAide();
+                montantRepas      = cot.getMontantRepas();
+                referencePaiement = cot.getReferencePaiement();
                 switch (cot.getStatut()) {
                     case PAYEE -> nbPayes++;
                     case EN_RETARD -> nbEnRetard++;
@@ -752,7 +758,8 @@ public class SessionService {
                 }
             }
             membres.add(new SessionCotisationsStatutResponse.MembreCotisationStatut(
-                    m.getId(), m.getNom(), m.getPrenom(), m.getMatricule(), statut, cotId));
+                    m.getId(), m.getNom(), m.getPrenom(), m.getMatricule(), statut, cotId,
+                    montantTontine, montantFondAide, montantRepas, referencePaiement));
         }
 
         int total = ordres.size();
@@ -788,6 +795,8 @@ public class SessionService {
             throw new IllegalStateException("La session n'est pas en cours");
         }
 
+        boolean autoriserCorrection = Boolean.TRUE.equals(request.autoriserCorrection());
+
         int enregistres = 0;
         int dejaPayes   = 0;
         BigDecimal totalTontine  = BigDecimal.ZERO;
@@ -799,7 +808,9 @@ public class SessionService {
                     .orElse(null);
             if (cot == null) continue;
 
-            if (cot.getStatut() == Cotisation.Statut.PAYEE) {
+            // En mode normal, on ne réécrit pas une cotisation déjà PAYEE.
+            // En mode correction (reprise de tontine), on l'écrase.
+            if (cot.getStatut() == Cotisation.Statut.PAYEE && !autoriserCorrection) {
                 dejaPayes++;
                 continue;
             }

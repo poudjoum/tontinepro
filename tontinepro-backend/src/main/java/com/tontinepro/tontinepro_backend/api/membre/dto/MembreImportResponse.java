@@ -20,5 +20,19 @@ public record MembreImportResponse(
         List<MembreCree> nouveaux,
         List<String> avertissements
 ) {
-    public record MembreCree(String nom, String prenom, String email, String matricule) {}
+    /**
+     * @param email                 email réel, ou null si le membre n'en a pas
+     * @param telephone             numéro de téléphone (identifiant de connexion si pas d'email)
+     * @param motDePasseTemporaire  renseigné uniquement pour les membres SANS email
+     *                              (le mot de passe ne pouvant pas être envoyé par mail,
+     *                              l'admin doit le communiquer lui-même) ; null sinon
+     */
+    public record MembreCree(
+            String nom,
+            String prenom,
+            String email,
+            String telephone,
+            String matricule,
+            String motDePasseTemporaire
+    ) {}
 }

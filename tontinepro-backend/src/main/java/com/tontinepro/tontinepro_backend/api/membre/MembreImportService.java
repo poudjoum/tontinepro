@@ -67,22 +67,33 @@ public class MembreImportService {
         for (LigneMembre l : lignes) {
             String contexte = "Ligne " + l.numero();
 
-            if (isBlank(l.nom()) || isBlank(l.prenom()) || isBlank(l.email())) {
-                avertissements.add(contexte + " : nom, prénom et email sont obligatoires — ignorée");
+            String telephone = isBlank(l.telephone()) ? null : l.telephone().trim();
+            boolean aEmail = !isBlank(l.email());
+
+            // Nom + prénom obligatoires, et AU MOINS un identifiant (email OU téléphone).
+            if (isBlank(l.nom()) || isBlank(l.prenom())) {
+                avertissements.add(contexte + " : nom et prénom sont obligatoires — ignorée");
                 ignores++;
                 continue;
             }
-            if (!EMAIL.matcher(l.email().trim()).matches()) {
+            if (!aEmail && telephone == null) {
+                avertissements.add(contexte + " : un email ou un téléphone est obligatoire — ignorée");
+                ignores++;
+                continue;
+            }
+            if (aEmail && !EMAIL.matcher(l.email().trim()).matches()) {
                 avertissements.add(contexte + " : email invalide (" + l.email() + ") — ignorée");
                 ignores++;
                 continue;
             }
 
-            String email = l.email().trim().toLowerCase();
-            String telephone = isBlank(l.telephone()) ? null : l.telephone().trim();
+            // Email réel (si fourni) ou email technique dérivé du téléphone (jamais affiché).
+            String emailReel  = aEmail ? l.email().trim().toLowerCase() : null;
+            String emailLogin = aEmail ? emailReel : emailSynthetique(telephone);
+            String identifiant = aEmail ? emailReel : telephone;
 
-            // Recherche d'un compte existant : email d'abord, puis téléphone
-            Optional<User> existant = userRepository.findByEmail(email);
+            // Recherche d'un compte existant : email d'abord (si fourni), puis téléphone
+            Optional<User> existant = aEmail ? userRepository.findByEmail(emailReel) : Optional.empty();
             if (existant.isEmpty() && telephone != null) {
                 existant = userRepository.findByTelephone(telephone);
             }
@@ -90,20 +101,20 @@ public class MembreImportService {
             if (existant.isPresent()) {
                 User user = existant.get();
                 if (membreRepository.existsByUserIdAndTontineId(user.getId(), tontineId)) {
-                    avertissements.add(contexte + " : " + email + " est déjà membre de cette tontine — ignorée");
+                    avertissements.add(contexte + " : " + identifiant + " est déjà membre de cette tontine — ignorée");
                     ignores++;
                     continue;
                 }
                 creerProfilMembre(user, tontine, l);
                 rattaches++;
-                avertissements.add(contexte + " : compte existant rattaché (" + email + ") — aucun mot de passe envoyé");
+                avertissements.add(contexte + " : compte existant rattaché (" + identifiant + ") — aucun mot de passe envoyé");
                 continue;
             }
 
             // Nouveau compte avec mot de passe temporaire
             String motDePasseTemporaire = genererMotDePasse();
             User user = userRepository.save(User.builder()
-                    .email(email)
+                    .email(emailLogin)
                     .telephone(telephone)
                     .hashedPassword(passwordEncoder.encode(motDePasseTemporaire))
                     .role(User.Role.MEMBRE)
@@ -111,15 +122,20 @@ public class MembreImportService {
                     .build());
 
             Membre membre = creerProfilMembre(user, tontine, l);
-            // L'envoi est différé après le commit : si la transaction échoue plus loin,
-            // aucun identifiant n'est envoyé pour un compte qui sera annulé par le rollback.
-            String prenom = l.prenom(), nom = l.nom(), nomTontine = tontine.getNom();
-            mailsAEnvoyer.add(() ->
-                    envoyerMailBienvenue(email, prenom, nom, nomTontine, motDePasseTemporaire));
+
+            if (aEmail) {
+                // L'envoi est différé après le commit : si la transaction échoue plus loin,
+                // aucun identifiant n'est envoyé pour un compte qui sera annulé par le rollback.
+                String prenom = l.prenom(), nom = l.nom(), nomTontine = tontine.getNom();
+                mailsAEnvoyer.add(() ->
+                        envoyerMailBienvenue(emailReel, prenom, nom, nomTontine, motDePasseTemporaire));
+            }
 
             crees++;
+            // Sans email : on renvoie le mot de passe temporaire à l'admin (pas d'envoi possible).
             nouveaux.add(new MembreImportResponse.MembreCree(
-                    l.nom(), l.prenom(), email, membre.getMatricule()));
+                    l.nom(), l.prenom(), emailReel, telephone, membre.getMatricule(),
+                    aEmail ? null : motDePasseTemporaire));
         }
 
         envoyerApresCommit(mailsAEnvoyer);
@@ -290,6 +306,16 @@ public class MembreImportService {
         String sansAccents = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "");
         return sansAccents.toLowerCase().replaceAll("[^a-z]", "").trim();
+    }
+
+    /**
+     * Email technique pour un membre sans adresse mail, dérivé de son téléphone.
+     * Jamais affiché à l'utilisateur : il se connecte avec son numéro de téléphone.
+     * Le téléphone étant unique, l'email dérivé l'est aussi.
+     */
+    private String emailSynthetique(String telephone) {
+        String digits = telephone.replaceAll("[^0-9]", "");
+        return "tel-" + digits + "@membre.tontinepro.local";
     }
 
     private String genererMotDePasse() {

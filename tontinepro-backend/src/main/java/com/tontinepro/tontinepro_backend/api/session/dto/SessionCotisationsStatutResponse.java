@@ -28,6 +28,11 @@ public record SessionCotisationsStatutResponse(
             String prenom,
             String matricule,
             String statutCotisation,
-            UUID cotisationId
+            UUID cotisationId,
+            /** Montants déjà enregistrés (null si la cotisation n'existe pas encore). */
+            java.math.BigDecimal montantTontine,
+            java.math.BigDecimal montantFondAide,
+            java.math.BigDecimal montantRepas,
+            String referencePaiement
     ) {}
 }

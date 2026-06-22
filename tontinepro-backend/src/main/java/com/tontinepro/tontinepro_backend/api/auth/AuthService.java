@@ -18,6 +18,7 @@ import com.tontinepro.tontinepro_backend.infrastructure.security.JwtProperties;
 import com.tontinepro.tontinepro_backend.infrastructure.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -73,11 +74,14 @@ public class AuthService {
 
     @Transactional
     public LoginResult login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
+        // L'identifiant peut être un email OU un numéro de téléphone (membre sans email).
+        User user = resoudreIdentifiant(request.email())
+                .orElseThrow(() -> new BadCredentialsException("Identifiant ou mot de passe incorrect"));
 
-        User user = userRepository.findByEmail(request.email()).orElseThrow();
+        // On authentifie toujours via l'email (sujet du JWT et username Spring Security).
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(user.getEmail(), request.password())
+        );
 
         if (user.isTwoFaEnabled()) {
             String ticket = twoFaService.genererTicket(user.getId());
@@ -179,6 +183,25 @@ public class AuthService {
     public void logout(String userEmail) {
         userRepository.findByEmail(userEmail)
                 .ifPresent(user -> refreshTokenRepository.revokeAllByUserId(user.getId()));
+    }
+
+    private static final java.util.regex.Pattern EMAIL =
+            java.util.regex.Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+
+    /**
+     * Résout un identifiant de connexion qui peut être un email ou un téléphone.
+     * Email → recherche insensible à la casse ; sinon → recherche par téléphone.
+     */
+    private java.util.Optional<User> resoudreIdentifiant(String identifiant) {
+        if (identifiant == null || identifiant.isBlank()) return java.util.Optional.empty();
+        String valeur = identifiant.trim();
+        if (EMAIL.matcher(valeur).matches()) {
+            // Recherche exacte d'abord (comportement historique), puis repli insensible
+            // à la casse pour les emails saisis avec une casse différente.
+            return userRepository.findByEmail(valeur)
+                    .or(() -> userRepository.findByEmail(valeur.toLowerCase()));
+        }
+        return userRepository.findByTelephone(valeur);
     }
 
     private AuthResponse buildAuthResponse(User user) {

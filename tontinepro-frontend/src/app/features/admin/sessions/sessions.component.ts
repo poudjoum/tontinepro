@@ -338,17 +338,25 @@ export class SessionsComponent implements OnInit {
         this.saisieData = {};
         const defCot    = s.montantCotisationDefaut ?? 0;
         const defFond   = s.montantFondAideDefaut   ?? 0;
-        s.membres.forEach(m => {
-          if (m.cotisationId && m.statutCotisation !== 'PAYEE') {
+        // Toutes les lignes sont éditables, y compris les cotisations déjà PAYEE
+        // (correction). Pré-remplissage avec les montants existants si présents,
+        // sinon les valeurs par défaut de la tontine pour une première saisie.
+        (s.membres ?? []).forEach(m => {
+          if (m.cotisationId) {
+            const dejaPaye = m.statutCotisation === 'PAYEE';
             this.saisieData[m.cotisationId] = {
-              montantTontine: defCot,
-              montantFondAide: defFond,
-              ref: ''
+              montantTontine:  m.montantTontine  ?? (dejaPaye ? 0 : defCot),
+              montantFondAide: m.montantFondAide ?? (dejaPaye ? 0 : defFond),
+              ref:             m.referencePaiement ?? '',
             };
           }
         });
         this.afficherSaisie.set(true);
         this.saving.set(false);
+        // Le bouton d'ouverture est en bas (calendrier) ; on amène le panneau à l'écran.
+        setTimeout(() =>
+          document.getElementById('panneau-saisie-seance')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
       },
       error: e => { this.error.set(e.error?.detail ?? 'Erreur chargement statut'); this.saving.set(false); },
     });
@@ -358,8 +366,9 @@ export class SessionsComponent implements OnInit {
     const statut = this.statutCotisations();
     if (!statut) return;
 
+    // Toutes les lignes (y compris PAYEE) sont (re)saisies — correction autorisée.
     const paiements = statut.membres
-      .filter(m => m.cotisationId && m.statutCotisation !== 'PAYEE')
+      .filter(m => m.cotisationId)
       .map(m => {
         const d = this.saisieData[m.cotisationId!];
         return {
@@ -376,7 +385,7 @@ export class SessionsComponent implements OnInit {
     }
 
     this.saving.set(true); this.error.set('');
-    this.sessionSvc.saisirPaiementsSeance(session.id, paiements).subscribe({
+    this.sessionSvc.saisirPaiementsSeance(session.id, paiements, true).subscribe({
       next: r => {
         this.saisieResultat.set(r);
         this.success.set(`${r.totalEnregistres} paiement(s) enregistré(s).`);
