@@ -1,19 +1,20 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
-import { MembreService } from './membre.service';
 
 /**
  * Centralize post-authentication routing.
  *
- * - Gestionnaire (ADMIN/SECRETAIRE) → /dashboard
- * - MEMBRE with a member profile    → /dashboard
- * - MEMBRE without a member profile → /tontines  (new user or waiting approval)
+ * - mot de passe temporaire      → /auth/changer-mot-de-passe
+ * - SUPER_ADMIN                  → /super-admin
+ * - tout autre compte            → /mes-tontines (écran de choix de la tontine)
+ *
+ * L'écran /mes-tontines liste les tontines du compte (une ou plusieurs) et gère
+ * le cas « aucune tontine » (nouveau compte / en attente d'approbation).
  */
 @Injectable({ providedIn: 'root' })
 export class PostAuthNavService {
   private auth   = inject(AuthService);
-  private mbrSvc = inject(MembreService);
   private router = inject(Router);
 
   navigateAfterLogin(): void {
@@ -26,15 +27,8 @@ export class PostAuthNavService {
       this.router.navigate(['/super-admin']);
       return;
     }
-    if (this.auth.isGestionnaire()) {
-      this.router.navigate(['/dashboard']);
-      return;
-    }
 
-    // MEMBRE role — check if they have a profile
-    this.mbrSvc.getMonProfil().subscribe({
-      next:  () => this.router.navigate(['/dashboard']),
-      error: () => this.router.navigate(['/tontines']),
-    });
+    // Gestionnaire ou membre : on présente d'abord la liste des tontines.
+    this.router.navigate(['/mes-tontines']);
   }
 }
