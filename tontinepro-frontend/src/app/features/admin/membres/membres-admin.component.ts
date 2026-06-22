@@ -159,6 +159,26 @@ export class MembresAdminComponent implements OnInit {
     });
   }
 
+  /** Membres créés sans email : leurs identifiants (téléphone + mot de passe) sont à
+   *  communiquer manuellement par l'admin (aucun mail envoyé). */
+  membresSansEmail(): { nom: string; prenom: string; telephone: string | null; motDePasseTemporaire: string | null }[] {
+    return (this.importResult()?.nouveaux ?? []).filter(m => m.motDePasseTemporaire);
+  }
+
+  /** Copie tous les identifiants des membres sans email dans le presse-papier. */
+  copierIdentifiants(): void {
+    const texte = this.membresSansEmail()
+      .map(m => `${m.prenom} ${m.nom} — Téléphone : ${m.telephone} — Mot de passe : ${m.motDePasseTemporaire}`)
+      .join('\n');
+    if (texte) {
+      navigator.clipboard?.writeText(texte);
+      this.identifiantsCopies.set(true);
+      setTimeout(() => this.identifiantsCopies.set(false), 2500);
+    }
+  }
+
+  identifiantsCopies = signal(false);
+
   changerFonction(id: string, event: Event): void {
     const val = (event.target as HTMLSelectElement).value as Fonction;
     this.saving.set(id);

@@ -16,8 +16,9 @@ export class LoginComponent {
   private router  = inject(Router);
   private postNav = inject(PostAuthNavService);
 
+  // Identifiant = email OU numéro de téléphone (membre sans email).
   form = this.fb.nonNullable.group({
-    email:    ['', [Validators.required, Validators.email]],
+    email:    ['', [Validators.required]],
     password: ['', Validators.required],
   });
 

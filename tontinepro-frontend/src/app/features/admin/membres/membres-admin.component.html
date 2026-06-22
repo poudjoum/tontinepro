@@ -39,6 +39,7 @@
 
       <ol class="text-xs text-gray-600 list-decimal list-inside space-y-1">
         <li>Téléchargez le modèle et remplissez-le (Nom, Prénom, Email, Téléphone, Position).</li>
+        <li>L'email est facultatif : sans email, le membre se connectera avec son <strong>téléphone</strong> (obligatoire dans ce cas).</li>
         <li>Sélectionnez le fichier rempli, puis lancez l'import.</li>
       </ol>
 
@@ -85,6 +86,34 @@
               <p class="text-[11px] text-gray-500">ignorés</p>
             </div>
           </div>
+          <!-- Membres sans email : identifiants à transmettre manuellement -->
+          @if (membresSansEmail().length) {
+            <div class="bg-amber-50 border border-amber-300 rounded-lg p-3 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs font-semibold text-amber-900">
+                  ⚠ {{ membresSansEmail().length }} membre(s) sans email — à communiquer vous-même
+                </p>
+                <button (click)="copierIdentifiants()"
+                        class="text-[11px] font-medium px-2 py-1 rounded bg-amber-600 text-white">
+                  {{ identifiantsCopies() ? '✓ Copié' : 'Copier' }}
+                </button>
+              </div>
+              <p class="text-[11px] text-amber-700">
+                Aucun mail n'a pu être envoyé. Transmettez ces identifiants à chaque membre :
+                il se connecte avec son <strong>téléphone</strong> et ce mot de passe (à changer à la 1ʳᵉ connexion).
+              </p>
+              <ul class="space-y-1">
+                @for (m of membresSansEmail(); track m.telephone) {
+                  <li class="bg-white rounded px-2 py-1.5 text-xs">
+                    <span class="font-medium text-gray-800">{{ m.prenom }} {{ m.nom }}</span>
+                    <span class="text-gray-500"> · 📞 {{ m.telephone }} · 🔑 </span>
+                    <span class="font-mono font-semibold text-gray-900">{{ m.motDePasseTemporaire }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
           @if (r.avertissements.length) {
             <details class="text-xs text-gray-600">
               <summary class="cursor-pointer font-medium">Détails ({{ r.avertissements.length }})</summary>
