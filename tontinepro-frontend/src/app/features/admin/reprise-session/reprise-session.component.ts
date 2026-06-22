@@ -208,11 +208,14 @@ export class RepriseSessionComponent implements OnInit {
             const defFond = s.montantFondAideDefaut   ?? 0;
             s.membres.forEach(m => {
               if (m.cotisationId) {
+                // Pré-remplissage : montants déjà saisis si la cotisation existe,
+                // sinon valeurs par défaut de la tontine pour une nouvelle saisie.
+                const dejaSaisie = m.statutCotisation === 'PAYEE';
                 this.saisie[m.cotisationId] = {
-                  montantTontine:  m.statutCotisation === 'PAYEE' ? 0 : defCot,
-                  montantFondAide: m.statutCotisation === 'PAYEE' ? 0 : defFond,
-                  montantRepas: 0,
-                  ref: '',
+                  montantTontine:  m.montantTontine  ?? (dejaSaisie ? 0 : defCot),
+                  montantFondAide: m.montantFondAide ?? (dejaSaisie ? 0 : defFond),
+                  montantRepas:    m.montantRepas    ?? 0,
+                  ref:             m.referencePaiement ?? '',
                 };
               }
             });
@@ -231,8 +234,10 @@ export class RepriseSessionComponent implements OnInit {
     const s = this.statut();
     if (!sess || !s) return;
 
+    // Reprise : on (re)saisit toutes les lignes, y compris les cotisations déjà
+    // PAYEE (correction des tours passés).
     const paiements = s.membres
-      .filter(m => m.cotisationId && m.statutCotisation !== 'PAYEE')
+      .filter(m => m.cotisationId)
       .map(m => {
         const d = this.saisie[m.cotisationId!];
         return {
@@ -245,15 +250,14 @@ export class RepriseSessionComponent implements OnInit {
       });
 
     if (paiements.length === 0) {
-      // Rien à enregistrer (tout déjà payé) — on autorise directement la validation
       this.cotisationsEnregistrees.set(true);
-      this.success.set('Toutes les cotisations de ce mois sont déjà enregistrées.');
+      this.success.set('Aucun membre à saisir pour ce mois.');
       return;
     }
 
     this.saving.set(true);
     this.error.set('');
-    this.sessionSvc.saisirPaiementsSeance(sess.id, paiements).subscribe({
+    this.sessionSvc.saisirPaiementsSeance(sess.id, paiements, true).subscribe({
       next: r => {
         this.success.set(`${r.totalEnregistres} cotisation(s) enregistrée(s) pour ${this.moisCourant()}/${this.anneeCourante()}.`);
         this.cotisationsEnregistrees.set(true);

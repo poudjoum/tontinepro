@@ -8,7 +8,13 @@ import java.util.List;
 import java.util.UUID;
 
 public record SaisirPaiementsSeanceRequest(
-        @NotNull List<PaiementMembre> paiements
+        @NotNull List<PaiementMembre> paiements,
+        /**
+         * Si vrai, les cotisations déjà PAYEE sont écrasées (correction).
+         * Utilisé par la reprise de tontine pour re-saisir des tours passés.
+         * Par défaut (null/false) les cotisations PAYEE sont ignorées.
+         */
+        Boolean autoriserCorrection
 ) {
     public record PaiementMembre(
             @NotNull UUID cotisationId,

@@ -108,14 +108,14 @@ export class SessionService {
     montantTontine?: number;
     montantFondAide?: number;
     montantRepas?: number;
-  }>) {
+  }>, autoriserCorrection = false) {
     return this.http.post<{
       totalDemandes: number;
       totalEnregistres: number;
       totalDejaPayes: number;
       montantTontineCollecte: number;
       montantFondAideCollecte: number;
-    }>(`${this.api}/${sessionId}/saisir-paiements-seance`, { paiements });
+    }>(`${this.api}/${sessionId}/saisir-paiements-seance`, { paiements, autoriserCorrection });
   }
 
   cloturerSession(sessionId: string, forcer = false) {
