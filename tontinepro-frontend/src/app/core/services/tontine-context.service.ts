@@ -27,6 +27,9 @@ export class TontineContextService {
   tontineCourante    = computed(() =>
     this.tontines().find(t => t.id === this.tontineCouranteId()) ?? null);
 
+  /** Vrai tant que le chargement de la liste des tontines est en cours. */
+  chargement = signal(false);
+
   /** Email du compte pour lequel les tontines ont été chargées (détecte les changements de compte). */
   private loadedForEmail: string | null = null;
 
@@ -37,6 +40,7 @@ export class TontineContextService {
     if (this.loadedForEmail === email && email !== null) return;
 
     this.loadedForEmail = email;
+    this.chargement.set(true);
     this.tontineSvc.getAll().subscribe({
       next: list => {
         this.tontines.set(list);
@@ -44,8 +48,9 @@ export class TontineContextService {
         const valide = stored && list.some(t => t.id === stored) ? stored : (list[0]?.id ?? null);
         this.tontineCouranteId.set(valide);
         if (valide) localStorage.setItem(storageKey(email), valide);
+        this.chargement.set(false);
       },
-      error: () => { this.loadedForEmail = null; },
+      error: () => { this.loadedForEmail = null; this.chargement.set(false); },
     });
   }
 

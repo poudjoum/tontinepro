@@ -46,11 +46,23 @@ public class DashboardService {
     private final UserRepository          userRepository;
     private final TontineRepository       tontineRepository;
 
+    /**
+     * Résout le profil membre du compte dans la tontine demandée.
+     * Si {@code tontineId} est fourni, on cible précisément cette tontine ;
+     * sinon on retombe sur le premier profil actif (compat. mono-tontine).
+     */
+    private Optional<Membre> resoudreMembre(String email, UUID tontineId) {
+        if (tontineId != null) {
+            return membreRepository.findByUserEmailAndTontineId(email, tontineId);
+        }
+        return membreRepository.findByUserEmail(email);
+    }
+
     // ── Tableau de bord Membre ────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public MembreDashboardResponse getMembreDashboard(String email) {
-        Membre membre = membreRepository.findByUserEmail(email)
+    public MembreDashboardResponse getMembreDashboard(String email, UUID tontineId) {
+        Membre membre = resoudreMembre(email, tontineId)
                 .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre pour ce compte"));
 
         // Épargne
@@ -104,8 +116,8 @@ public class DashboardService {
     // ── Tableau de bord Admin ─────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public AdminDashboardResponse getAdminDashboard(String email) {
-        UUID tontineId = membreRepository.findByUserEmail(email)
+    public AdminDashboardResponse getAdminDashboard(String email, UUID tontineIdDemande) {
+        UUID tontineId = resoudreMembre(email, tontineIdDemande)
                 .map(m -> m.getTontine().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre pour ce compte"));
 

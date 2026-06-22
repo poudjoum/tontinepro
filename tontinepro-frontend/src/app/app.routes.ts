@@ -86,6 +86,14 @@ export const routes: Routes = [
     ],
   },
 
+  // Accueil après connexion : choix de la tontine à consulter (sans shell)
+  {
+    path: 'mes-tontines',
+    canActivate: [authGuard, mustChangePasswordGuard],
+    loadComponent: () =>
+      import('./features/mes-tontines/mes-tontines.component').then(m => m.MesTontinesComponent),
+  },
+
   // Super Admin — interface plateforme (sans shell tontine)
   {
     path: 'super-admin',
