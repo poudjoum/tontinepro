@@ -242,6 +242,18 @@ public class SessionService {
             return getById(sessionId);
         }
 
+        // Tontine « à pot » (CLASSIQUE) : on ne peut clôturer un tour (valider le bénéfice)
+        // qu'à partir de sa date d'échéance. Avant l'échéance, la saisie des cotisations
+        // reste possible mais pas la clôture (sinon le rapport serait produit trop tôt).
+        if (tontine.getMode() == Tontine.ModeTontine.CLASSIQUE
+                && ob.getDateBenefice() != null
+                && ob.getDateBenefice().isAfter(LocalDate.now())) {
+            throw new IllegalStateException(
+                    "La séance ne peut être clôturée qu'à partir du "
+                    + ob.getDateBenefice().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    + ". La saisie des montants reçus reste possible avant cette date.");
+        }
+
         // Calcul automatique : Σcotisations(PAYEE) + Σrepas(PAYEE) - fondAideAnnuelMembre
         // Le montant reçu est calculé sur les cotisations du MOIS DU TOUR (dateBenefice),
         // pas sur le mois de début de session (sinon tous les tours d'une session

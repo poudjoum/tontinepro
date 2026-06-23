@@ -326,11 +326,20 @@ export class SessionsComponent implements OnInit {
   // ── Saisie de séance ────────────────────────────────────────────────────────
 
   ouvrirSaisieSeance(session: SessionResponse): void {
-    // Charger le statut d'abord, puis initialiser la saisie avec les montants par défaut
+    // La saisie de séance porte sur le MOIS DU PROCHAIN BÉNÉFICIAIRE (le tour à venir),
+    // pas sur le mois de début de session. On génère d'abord les cotisations de ce mois
+    // (idempotent) afin que les lignes existent et soient éditables, puis on charge le
+    // statut de ce même mois.
     this.saving.set(true);
     this.error.set('');
     this.saisieResultat.set(null);
-    this.sessionSvc.cotisationsStatut(session.id).subscribe({
+
+    const prochain  = this.prochainBeneficiaire(session);
+    const dateTour  = prochain?.dateBenefice ? new Date(prochain.dateBenefice) : null;
+    const mois      = dateTour ? dateTour.getMonth() + 1 : undefined;
+    const annee     = dateTour ? dateTour.getFullYear()  : undefined;
+
+    const charger = () => this.sessionSvc.cotisationsStatut(session.id, mois, annee).subscribe({
       next: s => {
         this.statutCotisations.set(s);
         this.afficherStatut.set(false);
@@ -359,6 +368,12 @@ export class SessionsComponent implements OnInit {
             ?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
       },
       error: e => { this.error.set(e.error?.detail ?? 'Erreur chargement statut'); this.saving.set(false); },
+    });
+
+    // Génération idempotente des cotisations du mois du tour, puis chargement du statut.
+    this.sessionSvc.genererCotisations(session.id, mois, annee).subscribe({
+      next: () => charger(),
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur génération'); this.saving.set(false); },
     });
   }
 
@@ -395,6 +410,12 @@ export class SessionsComponent implements OnInit {
       },
       error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur saisie'); this.saving.set(false); },
     });
+  }
+
+  /** Libellé « mois année » (ex. « mai 2026 ») à partir des champs mois/année du statut. */
+  moisAnneeLabel(mois: number, annee: number): string {
+    return new Date(annee, mois - 1, 1)
+      .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
   }
 
   fcfaSeance(n: number | null | undefined): string {
@@ -529,6 +550,14 @@ export class SessionsComponent implements OnInit {
   datePassee(dateStr: string | null): boolean {
     if (!dateStr) return false;
     return new Date(dateStr).setHours(23, 59, 59, 999) < Date.now();
+  }
+
+  /** Échéance atteinte = on est le jour de l'échéance ou après (granularité jour).
+   *  Conditionne la clôture du tour (validation du bénéfice) : tant que l'échéance
+   *  n'est pas atteinte, la saisie reste possible mais pas la validation. */
+  echeanceAtteinte(dateStr: string | null): boolean {
+    if (!dateStr) return true; // pas de date → pas de blocage
+    return new Date(dateStr).setHours(0, 0, 0, 0) <= Date.now();
   }
 
   joursRestants(dateStr: string | null): string {
