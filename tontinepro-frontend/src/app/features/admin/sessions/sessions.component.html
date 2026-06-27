@@ -285,10 +285,11 @@
             </div>
 
             <!-- En-têtes colonnes -->
-            <div class="px-4 grid grid-cols-[1fr_85px_85px_70px] gap-2 text-[10px] font-semibold text-primary-800 uppercase tracking-wide">
+            <div class="px-4 grid grid-cols-[1fr_64px_64px_64px_52px] gap-1.5 text-[10px] font-semibold text-primary-800 uppercase tracking-wide">
               <span>Membre</span>
-              <span class="text-center">Tontine (FCFA)</span>
-              <span class="text-center">Fond mois</span>
+              <span class="text-center">Tontine</span>
+              <span class="text-center">Fond</span>
+              <span class="text-center">Repas</span>
               <span class="text-center">Réf.</span>
             </div>
 
@@ -297,7 +298,7 @@
                 @if (m.cotisationId) {
                   <!-- Toutes les lignes sont éditables, y compris les cotisations déjà
                        PAYEE (correction). On pré-remplit avec les montants existants. -->
-                  <div class="grid grid-cols-[1fr_85px_85px_70px] gap-2 items-center">
+                  <div class="grid grid-cols-[1fr_64px_64px_64px_52px] gap-1.5 items-center">
                     <div class="min-w-0">
                       <p class="text-xs font-medium text-gray-800 truncate">
                         {{ m.prenom }} {{ m.nom }}
@@ -306,7 +307,7 @@
                         }
                       </p>
                       <p class="text-[10px] text-gray-400">
-                        Total : {{ ((saisieData[m.cotisationId!]?.montantTontine || 0) + (saisieData[m.cotisationId!]?.montantFondAide || 0)) | number:'1.0-0' }} FCFA
+                        Total : {{ ((saisieData[m.cotisationId!]?.montantTontine || 0) + (saisieData[m.cotisationId!]?.montantFondAide || 0) + (saisieData[m.cotisationId!]?.montantRepas || 0)) | number:'1.0-0' }} FCFA
                       </p>
                     </div>
                     <input type="number" min="0"
@@ -314,6 +315,9 @@
                            class="text-xs border border-primary-300 rounded px-1.5 py-2 w-full text-center font-semibold" />
                     <input type="number" min="0"
                            [(ngModel)]="saisieData[m.cotisationId!].montantFondAide"
+                           class="text-xs border border-gray-300 rounded px-1.5 py-2 w-full text-center" />
+                    <input type="number" min="0"
+                           [(ngModel)]="saisieData[m.cotisationId!].montantRepas"
                            class="text-xs border border-gray-300 rounded px-1.5 py-2 w-full text-center" />
                     <input type="text" placeholder="Réf"
                            [(ngModel)]="saisieData[m.cotisationId!].ref"
