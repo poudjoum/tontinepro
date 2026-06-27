@@ -146,11 +146,12 @@ public class SessionService {
                     ? ob.getDateBenefice()
                     : (i < datesCalculees.size() ? datesCalculees.get(i) : null);
 
-            // Si la date calculée est null (mode DATE_MANUELLE), utiliser dateDebut + position
-            if (dateEffective == null && i < datesCalculees.size() && datesCalculees.get(i) == null) {
-                // Extrapoler depuis le dernier membre qui a une date, ou dateDebut
-                LocalDate base = session.getDateDebut();
-                dateEffective = base; // fallback minimal
+            // Mode DATE_MANUELLE sans date saisie : la périodicité ne sait pas calculer
+            // la date du tour. On répartit alors par mois (dateDebut + position) pour que
+            // chaque tour vise un mois DISTINCT, au lieu de s'écraser sur le mois de début
+            // (ce qui faisait pointer saisie/validation/rapport sur le 1er mois).
+            if (dateEffective == null) {
+                dateEffective = session.getDateDebut().plusMonths(i);
             }
 
             beneficiaires.add(new OrdreBeneficiaireResponse(
@@ -168,6 +169,36 @@ public class SessionService {
         }
 
         return SessionResponse.from(session, beneficiaires);
+    }
+
+    /**
+     * Résout la date (donc le mois) effective d'un tour, de façon cohérente avec
+     * {@link #getById} :
+     *   1. date de bénéfice explicite si elle existe (l'admin garde la main) ;
+     *   2. sinon la date calculée par la règle de périodicité pour cette position ;
+     *   3. sinon (DATE_MANUELLE sans date saisie) on répartit par mois :
+     *      dateDebut + position, afin que chaque tour vise un mois DISTINCT et non
+     *      systématiquement le mois de début de session — sinon saisie, validation et
+     *      rapport s'écrasent tous sur le 1er mois.
+     */
+    private LocalDate resoudreDateTour(OrdreBeneficiaire ob) {
+        if (ob.getDateBenefice() != null) {
+            return ob.getDateBenefice();
+        }
+        SessionTontine session = ob.getSession();
+        List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(session.getId());
+        List<LocalDate> datesCalculees = periodiciteService.calculerDatesBenefice(
+                session.getTontine(), session.getDateDebut(), ordres.size());
+        int index = 0;
+        for (int i = 0; i < ordres.size(); i++) {
+            if (ordres.get(i).getId().equals(ob.getId())) {
+                index = i;
+                break;
+            }
+        }
+        LocalDate calculee = index < datesCalculees.size() ? datesCalculees.get(index) : null;
+        return calculee != null ? calculee : session.getDateDebut().plusMonths(index);
     }
 
     @Transactional
@@ -258,8 +289,7 @@ public class SessionService {
         // Le montant reçu est calculé sur les cotisations du MOIS DU TOUR (dateBenefice),
         // pas sur le mois de début de session (sinon tous les tours d'une session
         // multi-mois seraient calculés sur le premier mois).
-        LocalDate dateTour = ob.getDateBenefice() != null
-                ? ob.getDateBenefice() : ob.getSession().getDateDebut();
+        LocalDate dateTour = resoudreDateTour(ob);
         short mois  = (short) dateTour.getMonthValue();
         short annee = (short) dateTour.getYear();
 
@@ -929,8 +959,7 @@ public class SessionService {
 
         Tontine tontine = session.getTontine();
 
-        java.time.LocalDate dateTour = ob.getDateBenefice() != null
-                ? ob.getDateBenefice() : session.getDateDebut();
+        java.time.LocalDate dateTour = resoudreDateTour(ob);
         short mois  = (short) dateTour.getMonthValue();
         short annee = (short) dateTour.getYear();
 
@@ -1164,7 +1193,7 @@ public class SessionService {
                     }
                     // Déjà dans la session (recalibrer) : éligible si une cotisation rétroactive manque
                     return toursCompletes.stream().anyMatch(ob -> {
-                        LocalDate dt = ob.getDateBenefice() != null ? ob.getDateBenefice() : LocalDate.now();
+                        LocalDate dt = resoudreDateTour(ob);
                         return !cotisationRepository.existsByMembreIdAndMoisAndAnnee(
                                 m.getId(), (short) dt.getMonthValue(), (short) dt.getYear());
                     });
@@ -1182,7 +1211,7 @@ public class SessionService {
         BigDecimal repasUnitaire   = BigDecimal.ZERO;
 
         for (OrdreBeneficiaire ob : toursCompletes) {
-            LocalDate dateTour = ob.getDateBenefice() != null ? ob.getDateBenefice() : LocalDate.now();
+            LocalDate dateTour = resoudreDateTour(ob);
             short mois  = (short) dateTour.getMonthValue();
             short annee = (short) dateTour.getYear();
 
@@ -1246,7 +1275,7 @@ public class SessionService {
         BigDecimal totalRattrapage = BigDecimal.ZERO;
 
         for (OrdreBeneficiaire obPassé : toursCompletes) {
-            LocalDate dateTour = obPassé.getDateBenefice() != null ? obPassé.getDateBenefice() : LocalDate.now();
+            LocalDate dateTour = resoudreDateTour(obPassé);
             short mois  = (short) dateTour.getMonthValue();
             short annee = (short) dateTour.getYear();
 
