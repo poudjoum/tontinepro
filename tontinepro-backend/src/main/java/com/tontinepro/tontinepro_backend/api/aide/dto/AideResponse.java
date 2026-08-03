@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.aide.dto;
 
 import com.tontinepro.tontinepro_backend.domain.aide.Aide;
+import com.tontinepro.tontinepro_backend.domain.aide.RubriqueAide;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -14,6 +15,11 @@ public record AideResponse(
         String rubriqueLibelle,
         BigDecimal montantDemande,
         BigDecimal montantAccorde,
+        // Snapshot d'activation (aides issues du barème)
+        RubriqueAide.ModeCalcul modeCalcul,
+        Integer nbMembresBase,
+        BigDecimal partParMembre,
+        boolean prefinance,
         String motif,
         Aide.Statut statut,
         String justificatifUrl,
@@ -36,6 +42,10 @@ public record AideResponse(
                 a.getRubrique() != null ? a.getRubrique().getLibelle() : null,
                 a.getMontantDemande(),
                 a.getMontantAccorde(),
+                a.getModeCalcul(),
+                a.getNbMembresBase(),
+                a.getPartParMembre(),
+                a.isPrefinance(),
                 a.getMotif(),
                 a.getStatut(),
                 a.getJustificatifUrl(),

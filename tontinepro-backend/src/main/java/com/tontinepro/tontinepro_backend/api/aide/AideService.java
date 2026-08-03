@@ -3,6 +3,7 @@ package com.tontinepro.tontinepro_backend.api.aide;
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
+import com.tontinepro.tontinepro_backend.api.aide.dto.SimulationAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ValiderAideRequest;
 import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.domain.aide.*;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -137,6 +139,9 @@ public class AideService {
         Aide aide = aideRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Demande d'aide introuvable : " + id));
 
+        if (aide.getRubrique() != null) {
+            throw new IllegalArgumentException("Aide issue du barème : utilisez l'activation (activer)");
+        }
         if (aide.getStatut() != Aide.Statut.SOUMISE) {
             throw new IllegalArgumentException("Seules les demandes à l'état SOUMISE peuvent être validées");
         }
@@ -194,6 +199,11 @@ public class AideService {
         Aide aide = aideRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Demande d'aide introuvable : " + id));
 
+        if (aide.getRubrique() != null) {
+            throw new IllegalArgumentException(
+                    "Aide issue du barème : utilisez le versement dédié (verser)");
+        }
+
         if (aide.getStatut() != Aide.Statut.VALIDEE) {
             throw new IllegalArgumentException("Seules les demandes à l'état VALIDEE peuvent être marquées payées");
         }
@@ -236,6 +246,146 @@ public class AideService {
                 Notification.Type.AIDE_PAYEE,
                 "Aide versée",
                 "Votre aide de %s FCFA a été versée.".formatted(aide.getMontantAccorde()),
+                aide.getId(), "AIDE");
+
+        return response;
+    }
+
+    /**
+     * Active une aide issue du barème (état SOUMISE) : fige le calcul, génère une
+     * contribution par membre actif (bénéficiaire inclus), et si préfinancée, décaisse
+     * immédiatement le total (le solde peut passer négatif = avance de trésorerie).
+     */
+    @Transactional
+    public AideResponse activerAide(UUID id, boolean prefinance, String adminEmail) {
+        Aide aide = aideRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Demande d'aide introuvable : " + id));
+
+        if (aide.getRubrique() == null) {
+            throw new IllegalArgumentException("Cette demande n'est pas issue du barème");
+        }
+        if (aide.getStatut() != Aide.Statut.SOUMISE) {
+            throw new IllegalArgumentException("Seules les demandes à l'état SOUMISE peuvent être activées");
+        }
+
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        RubriqueAide rubrique = aide.getRubrique();
+        if (prefinance && !rubrique.isPrefinancable()) {
+            throw new IllegalArgumentException("Cette rubrique n'est pas préfinançable par la trésorerie");
+        }
+
+        Tontine tontine = aide.getMembre().getTontine();
+        List<Membre> membresActifs = membreRepository.findAllByTontineIdAndStatut(
+                tontine.getId(), Membre.Statut.ACTIF);
+        if (membresActifs.isEmpty()) {
+            throw new IllegalStateException("Aucun membre actif pour répartir l'aide");
+        }
+        int n = membresActifs.size();
+        SimulationAideResponse sim = RubriqueAideService.calculer(rubrique, n);
+        BigDecimal total = sim.total();
+        BigDecimal part  = sim.partParMembre();
+
+        // Snapshot
+        aide.setModeCalcul(rubrique.getModeCalcul());
+        aide.setMontantReference(rubrique.getMontantReference());
+        aide.setNbMembresBase(n);
+        aide.setPartParMembre(part);
+        aide.setMontantAccorde(total);
+        aide.setPrefinance(prefinance);
+        aide.setValidePar(admin);
+        aide.setDateValidation(OffsetDateTime.now());
+
+        FondsAide fonds = fondsAideRepository.findByTontineId(tontine.getId())
+                .orElseThrow(() -> new IllegalStateException("Fonds d'aide introuvable pour la tontine"));
+
+        // Une contribution par membre ; le reliquat d'arrondi tombe sur le dernier
+        List<ContributionFondsAide> contributions = new ArrayList<>(n);
+        BigDecimal cumul = BigDecimal.ZERO;
+        for (int i = 0; i < n; i++) {
+            BigDecimal montantPart = (i < n - 1) ? part : total.subtract(cumul);
+            cumul = cumul.add(part);
+            contributions.add(ContributionFondsAide.builder()
+                    .fondsAide(fonds)
+                    .membre(membresActifs.get(i))
+                    .montant(montantPart)
+                    .aide(aide)
+                    .build());
+        }
+        contributionFondsAideRepository.saveAll(contributions);
+
+        if (prefinance) {
+            fonds.setSolde(fonds.getSolde().subtract(total));
+            fondsAideRepository.save(fonds);
+            mouvementFondsAideRepository.save(MouvementFondsAide.builder()
+                    .fondsAide(fonds)
+                    .typeMouvement(MouvementFondsAide.TypeMouvement.DECAISSEMENT)
+                    .montant(total)
+                    .soldeApres(fonds.getSolde())
+                    .aide(aide)
+                    .description("Préfinancement aide %s — %s"
+                            .formatted(rubrique.getLibelle(), aide.getMembre().getMatricule()))
+                    .build());
+            aide.setStatut(Aide.Statut.PAYEE);
+        } else {
+            aide.setStatut(Aide.Statut.VALIDEE);
+        }
+
+        AideResponse response = AideResponse.from(aideRepository.save(aide));
+
+        notificationService.notifier(aide.getMembre().getUser(),
+                prefinance ? Notification.Type.AIDE_PAYEE : Notification.Type.AIDE_VALIDEE,
+                prefinance ? "Aide versée" : "Aide approuvée",
+                (prefinance
+                        ? "Votre aide « %s » de %s FCFA a été versée (préfinancée par la trésorerie)."
+                        : "Votre aide « %s » a été approuvée. Montant : %s FCFA, en cours de collecte.")
+                        .formatted(rubrique.getLibelle(), total),
+                aide.getId(), "AIDE");
+
+        return response;
+    }
+
+    /**
+     * Verse au bénéficiaire une aide du barème approuvée mais non préfinancée
+     * (état VALIDEE) : décaisse le total du fonds sans régénérer de contributions.
+     */
+    @Transactional
+    public AideResponse verserAide(UUID id) {
+        Aide aide = aideRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Demande d'aide introuvable : " + id));
+
+        if (aide.getRubrique() == null) {
+            throw new IllegalArgumentException("Aide non issue du barème : utilisez « marquer payée »");
+        }
+        if (aide.getStatut() != Aide.Statut.VALIDEE) {
+            throw new IllegalArgumentException("Seule une aide approuvée (non préfinancée) peut être versée");
+        }
+
+        Tontine tontine = aide.getMembre().getTontine();
+        FondsAide fonds = fondsAideRepository.findByTontineId(tontine.getId())
+                .orElseThrow(() -> new IllegalStateException("Fonds d'aide introuvable pour la tontine"));
+
+        BigDecimal total = aide.getMontantAccorde();
+        fonds.setSolde(fonds.getSolde().subtract(total));
+        fondsAideRepository.save(fonds);
+        mouvementFondsAideRepository.save(MouvementFondsAide.builder()
+                .fondsAide(fonds)
+                .typeMouvement(MouvementFondsAide.TypeMouvement.DECAISSEMENT)
+                .montant(total)
+                .soldeApres(fonds.getSolde())
+                .aide(aide)
+                .description("Versement aide %s — %s"
+                        .formatted(aide.getRubrique().getLibelle(), aide.getMembre().getMatricule()))
+                .build());
+        aide.setStatut(Aide.Statut.PAYEE);
+
+        AideResponse response = AideResponse.from(aideRepository.save(aide));
+
+        notificationService.notifier(aide.getMembre().getUser(),
+                Notification.Type.AIDE_PAYEE, "Aide versée",
+                "Votre aide « %s » de %s FCFA a été versée."
+                        .formatted(aide.getRubrique().getLibelle(), total),
                 aide.getId(), "AIDE");
 
         return response;

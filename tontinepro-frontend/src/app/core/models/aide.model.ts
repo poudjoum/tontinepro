@@ -67,6 +67,10 @@ export interface AideResponse {
   rubriqueLibelle: string | null;
   montantDemande: number;
   montantAccorde: number | null;
+  modeCalcul: ModeCalculAide | null;
+  nbMembresBase: number | null;
+  partParMembre: number | null;
+  prefinance: boolean;
   motif: string;
   statut: StatutAide;
   justificatifUrl: string | null;

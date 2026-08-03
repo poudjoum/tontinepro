@@ -44,4 +44,13 @@ export class AideService {
   marquerPayee(id: string) {
     return this.http.patch<AideResponse>(`${this.api}/demandes/${id}/payer`, {});
   }
+
+  activer(id: string, prefinance: boolean) {
+    const params = new HttpParams().set('prefinance', String(prefinance));
+    return this.http.post<AideResponse>(`${this.api}/demandes/${id}/activer`, {}, { params });
+  }
+
+  verser(id: string) {
+    return this.http.post<AideResponse>(`${this.api}/demandes/${id}/verser`, {});
+  }
 }

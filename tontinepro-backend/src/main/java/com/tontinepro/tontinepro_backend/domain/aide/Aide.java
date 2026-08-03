@@ -42,6 +42,29 @@ public class Aide {
     @Column(name = "montant_accorde", precision = 15, scale = 2)
     private BigDecimal montantAccorde;
 
+    // ── Snapshot d'activation (aides issues du barème) ────────────────────────
+    /** Mode de calcul figé à l'activation. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode_calcul", length = 20)
+    private RubriqueAide.ModeCalcul modeCalcul;
+
+    /** Montant de référence de la rubrique figé à l'activation. */
+    @Column(name = "montant_reference", precision = 15, scale = 2)
+    private BigDecimal montantReference;
+
+    /** Nombre de membres actifs (N) au moment de l'activation. */
+    @Column(name = "nb_membres_base")
+    private Integer nbMembresBase;
+
+    /** Part due par chaque membre. */
+    @Column(name = "part_par_membre", precision = 15, scale = 2)
+    private BigDecimal partParMembre;
+
+    /** Vrai si l'aide a été avancée par la trésorerie avant collecte. */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean prefinance = false;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String motif;
 

@@ -85,8 +85,26 @@ public class AideController {
 
     @PatchMapping("/demandes/{id}/payer")
     @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Marquer une aide comme payÃ©e")
+    @Operation(summary = "Marquer une aide (libre) comme payée")
     public AideResponse marquerPayee(@PathVariable UUID id) {
         return aideService.marquerPayee(id);
+    }
+
+    @PostMapping("/demandes/{id}/activer")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Activer une aide du barème : génère les contributions (+ préfinancement optionnel)")
+    public AideResponse activer(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails principal,
+            @RequestParam(required = false, defaultValue = "false") boolean prefinance
+    ) {
+        return aideService.activerAide(id, prefinance, principal.getUsername());
+    }
+
+    @PostMapping("/demandes/{id}/verser")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Verser au bénéficiaire une aide du barème approuvée non préfinancée")
+    public AideResponse verser(@PathVariable UUID id) {
+        return aideService.verserAide(id);
     }
 }

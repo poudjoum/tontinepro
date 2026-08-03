@@ -52,6 +52,10 @@ export class AidesComponent implements OnInit {
   montantAccorde = signal(0);
   motifRejet     = signal('');
 
+  // Admin — activation d'une aide du barème
+  activationId = signal<string | null>(null);
+  prefinancer  = signal(false);
+
   readonly TYPES_AIDE = TYPES_AIDE;
   readonly TYPE_AIDE_LABELS = TYPE_AIDE_LABELS;
 
@@ -136,7 +140,34 @@ export class AidesComponent implements OnInit {
     this.submitting.set(true);
     this.svc.marquerPayee(id).subscribe({
       next: u => { this.aides.update(l => l.map(a => a.id === id ? u : a)); this.submitting.set(false); },
-      error: e => { this.error.set(e.message ?? 'Erreur'); this.submitting.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
+    });
+  }
+
+  ouvrirActivation(id: string): void {
+    this.activationId.set(id);
+    this.prefinancer.set(false);
+  }
+
+  confirmerActivation(): void {
+    const id = this.activationId();
+    if (!id || this.submitting()) return;
+    this.submitting.set(true);
+    this.svc.activer(id, this.prefinancer()).subscribe({
+      next: u => {
+        this.aides.update(l => l.map(a => a.id === id ? u : a));
+        this.activationId.set(null);
+        this.submitting.set(false);
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
+    });
+  }
+
+  verser(id: string): void {
+    this.submitting.set(true);
+    this.svc.verser(id).subscribe({
+      next: u => { this.aides.update(l => l.map(a => a.id === id ? u : a)); this.submitting.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
     });
   }
 

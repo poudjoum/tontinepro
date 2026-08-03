@@ -199,13 +199,26 @@
             </p>
           }
 
+          <!-- Détail barème (aide issue d'une rubrique) -->
+          @if (a.rubriqueId && a.partParMembre != null) {
+            <p class="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+              {{ fcfa(a.partParMembre) }} × {{ a.nbMembresBase }} membre(s)
+              @if (a.prefinance) { · <span class="text-indigo-600 font-medium">préfinancée</span> }
+            </p>
+          }
+
           <!-- Actions SOUMISE -->
-          @if (a.statut === 'SOUMISE' && actionId() !== a.id) {
+          @if (a.statut === 'SOUMISE' && actionId() !== a.id && activationId() !== a.id) {
             <div class="flex gap-2 border-t pt-3">
-              <button (click)="ouvrirAction(a.id, 'valider')"
-                      class="btn-primary text-sm py-2 flex-1">
-                ✓ Valider
-              </button>
+              @if (a.rubriqueId) {
+                <button (click)="ouvrirActivation(a.id)" class="btn-primary text-sm py-2 flex-1">
+                  ⚡ Activer l'aide
+                </button>
+              } @else {
+                <button (click)="ouvrirAction(a.id, 'valider')" class="btn-primary text-sm py-2 flex-1">
+                  ✓ Valider
+                </button>
+              }
               <button (click)="ouvrirAction(a.id, 'rejeter')"
                       class="btn-secondary text-sm py-2 px-3 text-xs text-red-600 border-red-200">
                 ✗ Rejeter
@@ -213,7 +226,34 @@
             </div>
           }
 
-          <!-- Formulaire validation inline -->
+          <!-- Activation inline (aide du barème) -->
+          @if (activationId() === a.id) {
+            <div class="border-t pt-3 space-y-2">
+              <p class="text-sm text-gray-600">
+                Total à répartir : <span class="font-semibold text-gray-900">{{ fcfa(a.montantDemande) }}</span>
+                sur tous les membres actifs.
+              </p>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" [checked]="prefinancer()"
+                       (change)="prefinancer.set($any($event.target).checked)" class="rounded" />
+                Préfinancer par la trésorerie (verser tout de suite)
+              </label>
+              <p class="text-[11px] text-gray-400">
+                {{ prefinancer()
+                    ? 'Le total est versé immédiatement au bénéficiaire ; le solde du fonds peut passer négatif.'
+                    : 'Les contributions sont générées ; le versement se fera après collecte.' }}
+              </p>
+              <div class="flex gap-2">
+                <button (click)="confirmerActivation()" [disabled]="submitting()"
+                        class="btn-primary text-sm py-2 flex-1">
+                  {{ submitting() ? 'Traitement…' : (prefinancer() ? '⚡ Activer et verser' : '⚡ Activer') }}
+                </button>
+                <button (click)="activationId.set(null)" class="btn-secondary text-sm py-2 px-4">Annuler</button>
+              </div>
+            </div>
+          }
+
+          <!-- Formulaire validation inline (aide libre) -->
           @if (actionId() === a.id && actionType() === 'valider') {
             <div class="border-t pt-3 space-y-2">
               <label class="block text-sm font-medium text-gray-700">Montant accordé (FCFA) *</label>
@@ -248,13 +288,20 @@
             </div>
           }
 
-          <!-- Action VALIDEE → Payer -->
+          <!-- Action VALIDEE → versement -->
           @if (a.statut === 'VALIDEE') {
             <div class="border-t pt-3">
-              <button (click)="marquerPayee(a.id)" [disabled]="submitting()"
-                      class="btn-primary text-sm py-2 w-full">
-                💳 Marquer comme versée
-              </button>
+              @if (a.rubriqueId) {
+                <button (click)="verser(a.id)" [disabled]="submitting()"
+                        class="btn-primary text-sm py-2 w-full">
+                  💳 Verser au bénéficiaire
+                </button>
+              } @else {
+                <button (click)="marquerPayee(a.id)" [disabled]="submitting()"
+                        class="btn-primary text-sm py-2 w-full">
+                  💳 Marquer comme versée
+                </button>
+              }
             </div>
           }
         </div>
