@@ -133,6 +133,7 @@
       <li><a href="#cotisations">Mes cotisations</a></li>
       <li><a href="#epargne">Mon épargne</a></li>
       <li><a href="#prets">Prêts et remboursements</a></li>
+      <li><a href="#aides">Aides — Fond de solidarité</a></li>
       <li><a href="#suivi">Suivi mensuel</a></li>
       <li><a href="#profil">Mon profil et sécurité</a></li>
       <li><a href="#admin">Administration (Secrétaire / Président)</a></li>
@@ -411,11 +412,89 @@
     </div>
   </div>
 
-  <!-- 7. Suivi -->
+  <!-- 7. Aides -->
+  <div class="section" id="aides">
+    <div class="section-header">
+      <div class="section-icon icon-green">🤝</div>
+      <h2>7. Aides — Fond de solidarité</h2>
+    </div>
+    <p>Les <strong>aides mutuelles</strong> permettent au groupe de soutenir un membre lors d'un événement
+      prévu par le règlement intérieur (décès d'un parent, maladie, mariage, naissance…). Chaque aide est
+      financée par une <strong>part demandée à chaque membre actif</strong> ; l'ensemble des parts constitue
+      la <strong>cagnotte</strong> versée au bénéficiaire.</p>
+
+    <div class="two-col">
+      <div class="text">
+        <h3>Demander une aide (membre)</h3>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Ouvrir « Mes Aides »</div><div class="step-desc">Menu 🤝 Aides → « + Nouvelle demande »</div></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Choisir la rubrique</div><div class="step-desc">La liste vient du barème du règlement intérieur — aucun montant à saisir</div></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Vérifier le calcul</div><div class="step-desc">La part par membre et le total reçu s'affichent automatiquement</div></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Motiver et soumettre</div><div class="step-desc">La demande passe « en attente » de validation par le bureau</div></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header"><span class="sc-title">Demande d'aide</span></div>
+            <div class="sc-body">
+              <div class="sc-card">
+                <div class="sc-card-title">Type d'aide</div>
+                <div class="sc-card-sub">Aide maladie</div>
+              </div>
+              <div class="sc-card" style="background:#eef2ff;border-color:#c7d2fe;">
+                <div class="sc-row"><div class="sc-card-sub">Part par membre</div><div class="sc-card-title">2 000 FCFA</div></div>
+                <div class="sc-row"><div class="sc-card-sub">Membres actifs</div><div class="sc-card-title">10</div></div>
+                <div class="sc-row" style="margin-top:4px;"><div class="sc-card-title" style="color:#4f46e5;">Total reçu</div><div style="font-size:16px;font-weight:800;color:#4f46e5;">20 000 FCFA</div></div>
+              </div>
+              <div class="sc-card-sub" style="margin-top:8px;">Aide préfinançable par la trésorerie.</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Le montant est calculé automatiquement</div>
+      </div>
+    </div>
+
+    <h3>Le barème des aides (bureau)</h3>
+    <p>Dans <strong>Administration → 📋 Barème des aides</strong>, le bureau définit les rubriques du règlement
+      intérieur. Pour chaque rubrique :</p>
+    <ul>
+      <li><strong>Mode de calcul</strong> — <em>par personne</em> (le montant est demandé à chaque membre, le total = montant × membres) ou <em>forfaitaire</em> (une enveloppe totale répartie entre tous les membres).</li>
+      <li><strong>Préfinançable</strong> — l'aide peut être avancée par la trésorerie avant la collecte.</li>
+      <li><strong>Limite d'éligibilité</strong> — nombre de fois qu'un membre peut en bénéficier, sur une portée <em>à vie</em>, <em>par session</em> ou <em>par année</em> (ex. aide maladie : une fois par session).</li>
+      <li><strong>Variantes</strong> — sous-choix optionnels (ex. « Père, Mère » pour une aide décès parent, limitée à une fois par parent).</li>
+    </ul>
+
+    <h3>Saisie par le bureau et accord du membre</h3>
+    <p>Le Secrétaire peut aussi <strong>saisir une aide au nom d'un membre</strong> (Administration → Aides →
+      « Saisir pour un membre »). L'aide reste « à confirmer » : le membre concerné doit
+      <strong>marquer son accord</strong> depuis « Mes Aides » avant qu'elle ne soit activée.</p>
+
+    <h3>Activation et préfinancement (bureau)</h3>
+    <p>Une fois la demande validée, le bureau <strong>active l'aide</strong> : le système génère la
+      <strong>part due par chaque membre actif</strong>. Si l'option <strong>préfinancement</strong> est cochée,
+      la trésorerie verse immédiatement le total au bénéficiaire (le solde du fonds peut passer temporairement
+      négatif, puis se reconstitue au fil des paiements). Sinon, le versement se fait une fois la cagnotte
+      collectée.</p>
+
+    <h3>Collecte des parts (bureau)</h3>
+    <p>L'écran <strong>Administration → 🧮 Collecte des aides</strong> présente une <strong>matrice
+      membres × aides en cours</strong> : chaque colonne correspond à une aide (avec son objectif = montant
+      total), chaque cellule à la part d'un membre. Un clic sur un montant dû l'<strong>encaisse</strong> et
+      crédite le fonds ; le bas de colonne indique la progression « collecté / objectif ».</p>
+
+    <div class="tip">
+      <div class="tip-title">💡 Suivi d'une aide</div>
+      <p>Depuis la fiche d'une aide activée, le bouton <strong>« Voir le suivi de la collecte »</strong> affiche
+        le détail par membre (payé / à payer), le total collecté et l'impact sur la trésorerie.</p>
+    </div>
+  </div>
+
+  <!-- 8. Suivi -->
   <div class="section" id="suivi">
     <div class="section-header">
       <div class="section-icon icon-teal">📊</div>
-      <h2>7. Suivi mensuel</h2>
+      <h2>8. Suivi mensuel</h2>
     </div>
     <p>La page <strong>Suivi mensuel</strong> te donne une vue synthétique mois par mois de toute ton activité :</p>
     <ul>
@@ -432,11 +511,11 @@
     </div>
   </div>
 
-  <!-- 8. Profil -->
+  <!-- 9. Profil -->
   <div class="section" id="profil">
     <div class="section-header">
       <div class="section-icon icon-purple">👤</div>
-      <h2>8. Mon profil et sécurité</h2>
+      <h2>9. Mon profil et sécurité</h2>
     </div>
     <div class="two-col">
       <div class="text">
@@ -481,11 +560,11 @@
     </div>
   </div>
 
-  <!-- 9. Admin -->
+  <!-- 10. Admin -->
   <div class="section" id="admin">
     <div class="section-header">
       <div class="section-icon icon-orange">⚙️</div>
-      <h2>9. Administration (Secrétaire / Président)</h2>
+      <h2>10. Administration (Secrétaire / Président)</h2>
     </div>
 
     <div class="two-col">
@@ -500,6 +579,9 @@
           <li>⚠️ <strong>Sanctions</strong> — Amendes, marquer comme payées</li>
           <li>🔄 <strong>Sessions</strong> — Créer sessions, échéancier, valider bénéfices</li>
           <li>📨 <strong>Demandes</strong> — Approuver les adhésions</li>
+          <li>📋 <strong>Barème des aides</strong> — Rubriques, montants et règles du règlement intérieur</li>
+          <li>🧮 <strong>Collecte des aides</strong> — Matrice membres × aides, encaissement des parts</li>
+          <li>🤝 <strong>Fonds d'aide</strong> — Fonds collectés mois par mois</li>
           <li>📊 <strong>Rapports</strong> — Export PDF/Excel</li>
           <li>📤 <strong>Rattrapage</strong> — Import historique Excel</li>
         </ul>
@@ -622,11 +704,11 @@
     </div>
   </div>
 
-  <!-- 10. Import historique -->
+  <!-- 11. Import historique -->
   <div class="section" id="historique">
     <div class="section-header">
       <div class="section-icon icon-teal">📤</div>
-      <h2>10. Rattrapage historique — Import Excel</h2>
+      <h2>11. Rattrapage historique — Import Excel</h2>
     </div>
 
     <p>Cette fonctionnalité permet au secrétaire de <strong>mettre à jour l'application lorsque la tontine est déjà en cours</strong> (exemple : tontine à son tour 6/12 au moment de l'adoption de TontinePro).</p>
