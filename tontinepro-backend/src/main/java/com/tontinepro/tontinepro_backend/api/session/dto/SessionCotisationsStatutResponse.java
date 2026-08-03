@@ -33,6 +33,16 @@ public record SessionCotisationsStatutResponse(
             java.math.BigDecimal montantTontine,
             java.math.BigDecimal montantFondAide,
             java.math.BigDecimal montantRepas,
-            String referencePaiement
+            String referencePaiement,
+            /** Parts d'aide encore dues par ce membre (contributions liées à une aide, à payer). */
+            List<PartAide> partsAide
+    ) {}
+
+    /** Part d'aide en attente de paiement, collectable pendant la séance. */
+    public record PartAide(
+            UUID contributionId,
+            UUID aideId,
+            String libelle,
+            java.math.BigDecimal montant
     ) {}
 }

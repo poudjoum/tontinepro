@@ -5,6 +5,9 @@ import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
 import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
 import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
+import com.tontinepro.tontinepro_backend.api.aide.FondsAideService;
+import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAide;
+import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAideRepository;
 import com.tontinepro.tontinepro_backend.domain.aide.FondsAideRepository;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
@@ -46,6 +49,8 @@ public class SessionService {
     private final CompteEpargneRepository compteEpargneRepository;
     private final PretRepository pretRepository;
     private final FondsAideRepository fondsAideRepository;
+    private final ContributionFondsAideRepository contributionFondsAideRepository;
+    private final FondsAideService fondsAideService;
 
     @Transactional
     public SessionResponse creerSession(CreerSessionRequest request) {
@@ -773,6 +778,16 @@ public class SessionService {
                 .findAllByTontineIdAndMoisAndAnnee(session.getTontine().getId(), mois, annee)
                 .stream().collect(Collectors.toMap(c -> c.getMembre().getId(), c -> c, (a, b) -> a));
 
+        // Parts d'aide encore dues (contributions liées à une aide, statut A_PAYER) par membre
+        Map<UUID, List<ContributionFondsAide>> partsParMembre = fondsAideRepository
+                .findByTontineId(session.getTontine().getId())
+                .map(f -> contributionFondsAideRepository
+                        .findAllByFondsAideIdAndStatut(f.getId(), ContributionFondsAide.Statut.A_PAYER)
+                        .stream()
+                        .filter(c -> c.getAide() != null)
+                        .collect(Collectors.groupingBy(c -> c.getMembre().getId())))
+                .orElse(Map.of());
+
         List<SessionCotisationsStatutResponse.MembreCotisationStatut> membres = new ArrayList<>();
         int nbPayes = 0, nbEnAttente = 0, nbEnRetard = 0, nbAbsents = 0;
 
@@ -799,9 +814,20 @@ public class SessionService {
                     default -> nbEnAttente++;
                 }
             }
+            List<SessionCotisationsStatutResponse.PartAide> partsAide = partsParMembre
+                    .getOrDefault(m.getId(), List.of()).stream()
+                    .map(c -> new SessionCotisationsStatutResponse.PartAide(
+                            c.getId(),
+                            c.getAide().getId(),
+                            c.getAide().getRubrique() != null
+                                    ? c.getAide().getRubrique().getLibelle()
+                                    : c.getAide().getTypeAide().name(),
+                            c.getMontant()))
+                    .toList();
+
             membres.add(new SessionCotisationsStatutResponse.MembreCotisationStatut(
                     m.getId(), m.getNom(), m.getPrenom(), m.getMatricule(), statut, cotId,
-                    montantTontine, montantFondAide, montantRepas, referencePaiement));
+                    montantTontine, montantFondAide, montantRepas, referencePaiement, partsAide));
         }
 
         int total = ordres.size();
@@ -841,11 +867,24 @@ public class SessionService {
 
         int enregistres = 0;
         int dejaPayes   = 0;
-        BigDecimal totalTontine  = BigDecimal.ZERO;
-        BigDecimal totalFondAide = BigDecimal.ZERO;
-        BigDecimal totalRepas    = BigDecimal.ZERO;
+        int nbPartsAide = 0;
+        BigDecimal totalTontine   = BigDecimal.ZERO;
+        BigDecimal totalFondAide  = BigDecimal.ZERO;
+        BigDecimal totalRepas     = BigDecimal.ZERO;
+        BigDecimal totalPartsAide = BigDecimal.ZERO;
 
         for (SaisirPaiementsSeanceRequest.PaiementMembre pm : request.paiements()) {
+            // Encaissement des parts d'aide sélectionnées (indépendant de la cotisation)
+            if (pm.partsAidePayees() != null) {
+                for (UUID contributionId : pm.partsAidePayees()) {
+                    ContributionFondsAide c = contributionFondsAideRepository.findById(contributionId).orElse(null);
+                    if (c == null || c.getStatut() != ContributionFondsAide.Statut.A_PAYER) continue;
+                    fondsAideService.enregistrerPaiement(contributionId);
+                    nbPartsAide++;
+                    totalPartsAide = totalPartsAide.add(safe(c.getMontant()));
+                }
+            }
+
             Cotisation cot = cotisationRepository.findById(pm.cotisationId())
                     .orElse(null);
             if (cot == null) continue;
@@ -883,7 +922,8 @@ public class SessionService {
 
         return new SaisieSeanceResult(
                 request.paiements().size(), enregistres, dejaPayes,
-                totalTontine, totalFondAide, totalRepas);
+                totalTontine, totalFondAide, totalRepas,
+                nbPartsAide, totalPartsAide);
     }
 
     /**

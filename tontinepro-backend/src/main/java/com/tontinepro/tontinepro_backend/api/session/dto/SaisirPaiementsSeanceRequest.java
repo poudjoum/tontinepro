@@ -23,6 +23,8 @@ public record SaisirPaiementsSeanceRequest(
             BigDecimal montantFondAide,
             BigDecimal montantRepas,
             OffsetDateTime datePaiement,
-            com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation.MoyenPaiement moyenPaiement
+            com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation.MoyenPaiement moyenPaiement,
+            /** Contributions d'aide (parts) à encaisser pour ce membre pendant la séance. */
+            List<UUID> partsAidePayees
     ) {}
 }

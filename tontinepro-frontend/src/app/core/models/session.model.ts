@@ -44,6 +44,13 @@ export interface ReordonnerBeneficiairesRequest {
   ordreMembreIds: string[];
 }
 
+export interface PartAideDue {
+  contributionId: string;
+  aideId: string;
+  libelle: string;
+  montant: number;
+}
+
 export interface MembreCotisationStatut {
   membreId: string;
   nom: string;
@@ -56,6 +63,8 @@ export interface MembreCotisationStatut {
   montantFondAide: number | null;
   montantRepas: number | null;
   referencePaiement: string | null;
+  /** Parts d'aide encore dues par ce membre, collectables pendant la séance. */
+  partsAide: PartAideDue[];
 }
 
 export interface SessionCotisationsStatutResponse {
