@@ -167,10 +167,8 @@ public class RapportTourPdfBuilder {
                     new Color(232, 234, 246));
         }
 
-        if (r.fondAideObligation().compareTo(BigDecimal.ZERO) > 0) {
-            lignesBilan(t, "Obligation fond d'aide annuelle", fcfa(r.fondAideObligation()), fLabel, fValeur, GRIS_CLAIR);
-            lignesBilan(t, "Fond d'aide déjà versé cette année", fcfa(r.fondAidePayeAnnee()), fLabel, fValeur, GRIS_CLAIR);
-            lignesBilan(t, "Déduction (dette fond d'aide)", "- " + fcfa(r.detteFondAide()), fLabel,
+        if (r.fondBeneficiaire().compareTo(BigDecimal.ZERO) > 0) {
+            lignesBilan(t, "Fond d'aide du bénéficiaire (déduit)", "- " + fcfa(r.fondBeneficiaire()), fLabel,
                     FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, ROUGE),
                     new Color(253, 235, 236));
         }

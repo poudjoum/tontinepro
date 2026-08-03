@@ -155,9 +155,7 @@ export interface RapportTourResponse {
   totalRepas: number;
   totalSanctions: number;
   potBrut: number;
-  fondAideObligation: number;
-  fondAidePayeAnnee: number;
-  detteFondAide: number;
+  fondBeneficiaire: number;
   cagnotteBeneficiaire: number;
   contributeursSolidaires: ContributeurAideSociale[];
 }

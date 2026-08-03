@@ -34,10 +34,8 @@ public record RapportTourResponse(
 
         // Bilan bénéficiaire
         BigDecimal potBrut,              // Σcotisations + Σrepas
-        BigDecimal fondAideObligation,   // obligation annuelle
-        BigDecimal fondAidePayeAnnee,    // déjà payé par le bénéficiaire cette année
-        BigDecimal detteFondAide,        // obligation - payé (min 0)
-        BigDecimal cagnotteBeneficiaire, // potBrut - detteFondAide
+        BigDecimal fondBeneficiaire,     // fond d'aide versé par le bénéficiaire ce tour (déduit du pot)
+        BigDecimal cagnotteBeneficiaire, // potBrut - fondBeneficiaire
 
         // Contributeurs Aide Sociale (section bas de rapport)
         List<ContributeurAideSociale> contributeursSolidaires

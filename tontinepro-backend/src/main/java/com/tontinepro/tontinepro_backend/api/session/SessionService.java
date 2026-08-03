@@ -1001,14 +1001,12 @@ public class SessionService {
 
         // Bilan bénéficiaire
         BigDecimal potBrut = totalCotis.add(totalRepas);
-        BigDecimal obligation = tontine.getMontantFondAideAnnuelMembre() != null
-                ? tontine.getMontantFondAideAnnuelMembre() : BigDecimal.ZERO;
-        BigDecimal fondAidePaye = cotisationRepository
-                .findAllByMembreIdAndAnneeAndStatut(ob.getMembre().getId(), annee, Cotisation.Statut.PAYEE)
-                .stream().map(c -> safe(c.getMontantFondAide())).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal dette = obligation.subtract(fondAidePaye);
-        if (dette.compareTo(BigDecimal.ZERO) < 0) dette = BigDecimal.ZERO;
-        BigDecimal cagnotte = potBrut.subtract(dette);
+        // Fond d'aide versé par le bénéficiaire pour ce tour (sa ligne du tableau) : déduit du pot
+        BigDecimal fondBeneficiaire = lignes.stream()
+                .filter(l -> l.membreId().equals(ob.getMembre().getId()))
+                .map(RapportTourResponse.LigneRapport::fond)
+                .findFirst().orElse(BigDecimal.ZERO);
+        BigDecimal cagnotte = potBrut.subtract(fondBeneficiaire);
         if (cagnotte.compareTo(BigDecimal.ZERO) < 0) cagnotte = BigDecimal.ZERO;
 
         // ── Contributeurs Aide Sociale ─────────────────────────────────────────────
@@ -1045,7 +1043,7 @@ public class SessionService {
                 ob.getMembre().getMatricule(),
                 lignes,
                 totalCotis, totalFond, totalRepas, totalSanct,
-                potBrut, obligation, fondAidePaye, dette, cagnotte,
+                potBrut, fondBeneficiaire, cagnotte,
                 contributeurs);
     }
 
