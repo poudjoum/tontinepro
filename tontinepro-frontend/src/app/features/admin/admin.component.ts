@@ -136,5 +136,12 @@ export class AdminComponent {
       icon: '🎲',
       color: 'bg-fuchsia-50',
     },
+    {
+      title: 'Fonds d\'aide',
+      desc: 'Fonds collectés mois par mois (session en cours)',
+      route: '/admin/fonds-aide',
+      icon: '🤝',
+      color: 'bg-indigo-50',
+    },
   ];
 }

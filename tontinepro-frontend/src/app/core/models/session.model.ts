@@ -196,6 +196,30 @@ export interface RapportFinSessionResponse {
   fiches: FicheMembreFinSession[];
 }
 
+export interface MoisColonneFondsAide {
+  mois: number;
+  annee: number;
+  total: number;
+}
+
+export interface LigneMembreFondsAide {
+  membreId: string;
+  matricule: string;
+  nomPrenom: string;
+  typeParticipation: 'TONTINE' | 'AIDE_SOCIALE';
+  cellules: number[];   // aligné sur `mois`
+  total: number;
+}
+
+export interface FondsAideMensuelResponse {
+  sessionId: string;
+  sessionNumero: number;
+  tontineNom: string;
+  mois: MoisColonneFondsAide[];
+  membres: LigneMembreFondsAide[];
+  totalGeneral: number;
+}
+
 export interface MonTourResponse {
   sessionId: string;
   sessionNumero: number;

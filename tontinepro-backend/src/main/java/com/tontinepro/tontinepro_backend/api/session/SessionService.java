@@ -1158,6 +1158,82 @@ public class SessionService {
                 fiches);
     }
 
+    /**
+     * Reconstitue les fonds d'aide collectés mois par mois depuis le début de la session.
+     * Matrice membres actifs (lignes) × mois (colonnes) : chaque cellule = Σ montantFondAide
+     * des cotisations PAYEE du membre pour ce mois, avec totaux par ligne, colonne et général.
+     */
+    @Transactional(readOnly = true)
+    public FondsAideMensuelResponse getFondsAideMensuel(UUID sessionId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+        Tontine tontine = session.getTontine();
+        UUID tontineId = tontine.getId();
+
+        LocalDate debut = session.getDateDebut();
+        LocalDate fin   = session.getDateFin() != null ? session.getDateFin() : LocalDate.now();
+        if (fin.isBefore(debut)) fin = debut;
+        YearMonth ymDebut = YearMonth.from(debut);
+        YearMonth ymFin   = YearMonth.from(fin);
+
+        // Colonnes : les mois couverts par la session
+        List<YearMonth> moisList = new ArrayList<>();
+        for (YearMonth ym = ymDebut; !ym.isAfter(ymFin); ym = ym.plusMonths(1)) {
+            moisList.add(ym);
+        }
+
+        // Fond d'aide payé par (membre, mois) sur les cotisations PAYEE
+        Map<UUID, Map<YearMonth, BigDecimal>> fondParMembreMois = new HashMap<>();
+        for (YearMonth ym : moisList) {
+            List<Cotisation> cotis = cotisationRepository.findAllByTontineIdAndMoisAndAnneeAndStatut(
+                    tontineId, (short) ym.getMonthValue(), (short) ym.getYear(), Cotisation.Statut.PAYEE);
+            for (Cotisation c : cotis) {
+                BigDecimal fond = safe(c.getMontantFondAide());
+                if (fond.signum() == 0) continue;
+                fondParMembreMois
+                        .computeIfAbsent(c.getMembre().getId(), k -> new HashMap<>())
+                        .merge(ym, fond, BigDecimal::add);
+            }
+        }
+
+        // Lignes : tous les membres actifs (contributeurs TONTINE + AIDE_SOCIALE)
+        List<Membre> membres = membreRepository.findAllByTontineIdAndStatut(tontineId, Membre.Statut.ACTIF);
+
+        BigDecimal[] totauxMois = new BigDecimal[moisList.size()];
+        Arrays.fill(totauxMois, BigDecimal.ZERO);
+        BigDecimal totalGeneral = BigDecimal.ZERO;
+
+        List<FondsAideMensuelResponse.LigneMembre> lignes = new ArrayList<>();
+        for (Membre m : membres) {
+            Map<YearMonth, BigDecimal> parMois = fondParMembreMois.getOrDefault(m.getId(), Map.of());
+            List<BigDecimal> cellules = new ArrayList<>(moisList.size());
+            BigDecimal totalLigne = BigDecimal.ZERO;
+            for (int i = 0; i < moisList.size(); i++) {
+                BigDecimal v = parMois.getOrDefault(moisList.get(i), BigDecimal.ZERO);
+                cellules.add(v);
+                totalLigne = totalLigne.add(v);
+                totauxMois[i] = totauxMois[i].add(v);
+            }
+            totalGeneral = totalGeneral.add(totalLigne);
+            lignes.add(new FondsAideMensuelResponse.LigneMembre(
+                    m.getId(), m.getMatricule(), m.getPrenom() + " " + m.getNom(),
+                    m.getTypeParticipation().name(), cellules, totalLigne));
+        }
+        lignes.sort(Comparator.comparing(FondsAideMensuelResponse.LigneMembre::nomPrenom,
+                String.CASE_INSENSITIVE_ORDER));
+
+        List<FondsAideMensuelResponse.MoisColonne> colonnes = new ArrayList<>();
+        for (int i = 0; i < moisList.size(); i++) {
+            YearMonth ym = moisList.get(i);
+            colonnes.add(new FondsAideMensuelResponse.MoisColonne(
+                    ym.getMonthValue(), ym.getYear(), totauxMois[i]));
+        }
+
+        return new FondsAideMensuelResponse(
+                sessionId, session.getNumero(), tontine.getNom(),
+                colonnes, lignes, totalGeneral);
+    }
+
     // ─── Inscription en retard ──────────────────────────────────────────────────
 
     /**

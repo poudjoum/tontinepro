@@ -10,6 +10,7 @@ import {
   MonBeneficeResponse,
   RapportTourResponse,
   RapportFinSessionResponse,
+  FondsAideMensuelResponse,
   MembreEligibleRetardResponse,
   InscrireEnRetardResult,
   CreerSessionRequest,
@@ -148,6 +149,10 @@ export class SessionService {
 
   getRapportFinSession(sessionId: string) {
     return this.http.get<RapportFinSessionResponse>(`${this.api}/${sessionId}/rapport-fin-session`);
+  }
+
+  getFondsAideMensuel(sessionId: string) {
+    return this.http.get<FondsAideMensuelResponse>(`${this.api}/${sessionId}/fonds-aide-mensuel`);
   }
 
   telechargerRapportFinSessionPdf(sessionId: string) {

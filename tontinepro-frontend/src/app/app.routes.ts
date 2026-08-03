@@ -249,6 +249,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/admin/tontine-lot/tontine-lot.component').then(m => m.TontineLotComponent),
           },
+          {
+            path: 'fonds-aide',
+            loadComponent: () =>
+              import('./features/admin/fonds-aide/fonds-aide.component').then(m => m.FondsAideComponent),
+          },
         ],
       },
     ],

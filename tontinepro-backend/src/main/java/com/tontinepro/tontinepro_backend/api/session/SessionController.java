@@ -180,6 +180,13 @@ public class SessionController {
         return sessionService.getRapportFinSession(id);
     }
 
+    @GetMapping("/{id}/fonds-aide-mensuel")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Fonds d'aide collectés mois par mois depuis le début de la session (matrice membres × mois)")
+    public FondsAideMensuelResponse getFondsAideMensuel(@PathVariable UUID id) {
+        return sessionService.getFondsAideMensuel(id);
+    }
+
     @GetMapping("/{id}/rapport-fin-session/pdf")
     @Operation(summary = "Rapport de fin de session au format PDF (prêt à partager)")
     public ResponseEntity<byte[]> getRapportFinSessionPdf(@PathVariable UUID id) {
