@@ -254,6 +254,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/admin/fonds-aide/fonds-aide.component').then(m => m.FondsAideComponent),
           },
+          {
+            path: 'bareme-aide',
+            loadComponent: () =>
+              import('./features/admin/bareme-aide/bareme-aide.component').then(m => m.BaremeAideComponent),
+          },
         ],
       },
     ],

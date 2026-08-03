@@ -143,5 +143,12 @@ export class AdminComponent {
       icon: '🤝',
       color: 'bg-indigo-50',
     },
+    {
+      title: 'Barème des aides',
+      desc: 'Rubriques et montants du règlement intérieur',
+      route: '/admin/bareme-aide',
+      icon: '📋',
+      color: 'bg-rose-50',
+    },
   ];
 }
