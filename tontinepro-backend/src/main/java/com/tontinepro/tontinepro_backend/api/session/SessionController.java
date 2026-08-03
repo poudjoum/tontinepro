@@ -28,6 +28,7 @@ public class SessionController {
 
     private final SessionService sessionService;
     private final RapportFinSessionPdfBuilder rapportFinSessionPdfBuilder;
+    private final com.tontinepro.tontinepro_backend.api.rapport.builder.FondsAideMensuelPdfBuilder fondsAideMensuelPdfBuilder;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -185,6 +186,20 @@ public class SessionController {
     @Operation(summary = "Fonds d'aide collectés mois par mois depuis le début de la session (matrice membres × mois)")
     public FondsAideMensuelResponse getFondsAideMensuel(@PathVariable UUID id) {
         return sessionService.getFondsAideMensuel(id);
+    }
+
+    @GetMapping("/{id}/fonds-aide-mensuel/pdf")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Fonds d'aide collectés mois par mois au format PDF (paysage)")
+    public ResponseEntity<byte[]> getFondsAideMensuelPdf(@PathVariable UUID id) {
+        FondsAideMensuelResponse data = sessionService.getFondsAideMensuel(id);
+        byte[] pdf = fondsAideMensuelPdfBuilder.build(data);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("fonds-aide-session-" + data.sessionNumero() + ".pdf").build());
+        headers.setContentLength(pdf.length);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     @GetMapping("/{id}/rapport-fin-session/pdf")

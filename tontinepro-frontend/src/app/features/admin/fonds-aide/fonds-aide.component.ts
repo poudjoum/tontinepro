@@ -68,23 +68,24 @@ export class FondsAideComponent implements OnInit {
     return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n) + ' FCFA';
   }
 
-  /** Impression en paysage (matrice large) sans impacter les autres rapports en portrait. */
-  imprimer(): void {
-    const STYLE_ID = 'print-landscape-fonds-aide';
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.media = 'print';
-    style.textContent = '@page { size: A4 landscape; margin: 10mm; }';
-    document.head.appendChild(style);
+  telechargement = signal(false);
 
-    const cleanup = () => {
-      document.getElementById(STYLE_ID)?.remove();
-      window.removeEventListener('afterprint', cleanup);
-    };
-    window.addEventListener('afterprint', cleanup);
-    // Filet de sécurité si l'événement afterprint n'est pas émis (certains navigateurs).
-    setTimeout(cleanup, 1000);
-
-    window.print();
+  /** Génère et télécharge le PDF paysage produit côté serveur (iText). */
+  telechargerPdf(): void {
+    const d = this.data();
+    if (!d) return;
+    this.telechargement.set(true);
+    this.sessionSvc.telechargerFondsAideMensuelPdf(d.sessionId).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fonds-aide-session-${d.sessionNumero}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.telechargement.set(false);
+      },
+      error: () => { this.error.set('Erreur téléchargement PDF'); this.telechargement.set(false); },
+    });
   }
 }

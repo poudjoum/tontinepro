@@ -117,10 +117,11 @@
       <!-- Actions (masquées à l'impression) -->
       @if (nbMois() > 0 && d.membres.length > 0) {
         <div class="print:hidden pb-8">
-          <button (click)="imprimer()"
+          <button (click)="telechargerPdf()" [disabled]="telechargement()"
                   class="w-full py-3 rounded-xl bg-gray-800 text-white font-semibold text-sm
-                         hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
-            🖨️ Imprimer / Sauvegarder PDF
+                         hover:bg-gray-700 transition-colors flex items-center justify-center gap-2
+                         disabled:opacity-60">
+            @if (telechargement()) { Génération du PDF… } @else { 📄 Télécharger le PDF (paysage) }
           </button>
         </div>
       }

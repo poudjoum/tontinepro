@@ -155,6 +155,10 @@ export class SessionService {
     return this.http.get<FondsAideMensuelResponse>(`${this.api}/${sessionId}/fonds-aide-mensuel`);
   }
 
+  telechargerFondsAideMensuelPdf(sessionId: string) {
+    return this.http.get(`${this.api}/${sessionId}/fonds-aide-mensuel/pdf`, { responseType: 'blob' });
+  }
+
   telechargerRapportFinSessionPdf(sessionId: string) {
     return this.http.get(`${this.api}/${sessionId}/rapport-fin-session/pdf`, { responseType: 'blob' });
   }
