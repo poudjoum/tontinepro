@@ -33,6 +33,20 @@ export class AideService {
     });
   }
 
+  saisirPourMembre(membreId: string, rubriqueId: string, motif: string, justificatifUrl?: string) {
+    return this.http.post<AideResponse>(`${this.api}/saisir`, {
+      membreId, rubriqueId, motif, justificatifUrl,
+    });
+  }
+
+  accepter(id: string) {
+    return this.http.patch<AideResponse>(`${this.api}/demandes/${id}/accepter`, {});
+  }
+
+  refuser(id: string) {
+    return this.http.patch<AideResponse>(`${this.api}/demandes/${id}/refuser`, {});
+  }
+
   valider(id: string, montantAccorde: number) {
     return this.http.patch<AideResponse>(`${this.api}/demandes/${id}/valider`, { montantAccorde });
   }

@@ -50,7 +50,7 @@ public class Notification {
 
     public enum Type {
         // Aide
-        AIDE_SOUMISE, AIDE_VALIDEE, AIDE_REJETEE, AIDE_PAYEE,
+        AIDE_PROPOSEE, AIDE_SOUMISE, AIDE_VALIDEE, AIDE_REJETEE, AIDE_PAYEE,
         // Prêt
         PRET_DEMANDE, PRET_APPROUVE, PRET_REJETE, PRET_REMBOURSE, PRET_SOLDE,
         // Cotisation

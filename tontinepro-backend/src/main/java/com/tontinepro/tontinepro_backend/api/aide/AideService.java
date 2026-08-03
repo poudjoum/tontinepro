@@ -4,6 +4,7 @@ import com.tontinepro.tontinepro_backend.api.aide.dto.AideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideSuiviResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
+import com.tontinepro.tontinepro_backend.api.aide.dto.SaisirAidePourMembreRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SimulationAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ValiderAideRequest;
 import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
@@ -93,6 +94,100 @@ public class AideService {
                 response.id(), "AIDE");
 
         return response;
+    }
+
+    /**
+     * Saisie d'une aide par le bureau (secrétaire/admin) au nom d'un membre.
+     * L'aide est créée à l'état PROPOSEE et attend l'accord du membre bénéficiaire.
+     */
+    @Transactional
+    public AideResponse saisirPourMembre(String secretaireEmail, SaisirAidePourMembreRequest request) {
+        RubriqueAide rubrique = rubriqueAideRepository.findById(request.rubriqueId())
+                .orElseThrow(() -> new IllegalArgumentException("Rubrique d'aide introuvable"));
+        if (!rubrique.isActif()) {
+            throw new IllegalArgumentException("Cette rubrique d'aide n'est pas active");
+        }
+
+        Membre membre = membreRepository.findById(request.membreId())
+                .orElseThrow(() -> new IllegalArgumentException("Membre introuvable"));
+        if (!membre.getTontine().getId().equals(rubrique.getTontine().getId())) {
+            throw new IllegalArgumentException("Le membre n'appartient pas à la tontine de cette rubrique");
+        }
+        if (membre.getStatut() != Membre.Statut.ACTIF) {
+            throw new IllegalArgumentException("Seuls les membres actifs peuvent bénéficier d'une aide");
+        }
+
+        BigDecimal montant = rubriqueAideService.simuler(rubrique.getId()).total();
+
+        Aide aide = Aide.builder()
+                .membre(membre)
+                .rubrique(rubrique)
+                .typeAide(rubrique.getTypeAide())
+                .montantDemande(montant)
+                .motif(request.motif())
+                .justificatifUrl(request.justificatifUrl())
+                .statut(Aide.Statut.PROPOSEE)
+                .build();
+
+        AideResponse response = AideResponse.from(aideRepository.save(aide));
+
+        notificationService.notifier(membre.getUser(),
+                Notification.Type.AIDE_PROPOSEE,
+                "Une aide vous est proposée",
+                "Le bureau a saisi une aide « %s » (%s FCFA) à votre nom. Marquez votre accord pour la valider."
+                        .formatted(rubrique.getLibelle(), montant),
+                aide.getId(), "AIDE");
+
+        return response;
+    }
+
+    /** Le membre bénéficiaire accepte une aide PROPOSEE → passe à SOUMISE (prête à activer). */
+    @Transactional
+    public AideResponse accepterProposition(UUID id, String membreEmail) {
+        Aide aide = chargerPropositionDuMembre(id, membreEmail);
+        aide.setStatut(Aide.Statut.SOUMISE);
+        AideResponse response = AideResponse.from(aideRepository.save(aide));
+
+        notificationService.notifierAdmins(
+                Notification.Type.AIDE_SOUMISE,
+                "Proposition d'aide acceptée",
+                "%s %s a accepté l'aide « %s ». Elle peut être activée."
+                        .formatted(aide.getMembre().getNom(), aide.getMembre().getPrenom(),
+                                aide.getRubrique() != null ? aide.getRubrique().getLibelle() : ""),
+                aide.getId(), "AIDE");
+
+        return response;
+    }
+
+    /** Le membre bénéficiaire refuse une aide PROPOSEE → passe à REFUSEE. */
+    @Transactional
+    public AideResponse refuserProposition(UUID id, String membreEmail) {
+        Aide aide = chargerPropositionDuMembre(id, membreEmail);
+        aide.setStatut(Aide.Statut.REFUSEE);
+        AideResponse response = AideResponse.from(aideRepository.save(aide));
+
+        notificationService.notifierAdmins(
+                Notification.Type.AIDE_SOUMISE,
+                "Proposition d'aide refusée",
+                "%s %s a refusé l'aide « %s »."
+                        .formatted(aide.getMembre().getNom(), aide.getMembre().getPrenom(),
+                                aide.getRubrique() != null ? aide.getRubrique().getLibelle() : ""),
+                aide.getId(), "AIDE");
+
+        return response;
+    }
+
+    private Aide chargerPropositionDuMembre(UUID id, String membreEmail) {
+        Aide aide = aideRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Demande d'aide introuvable : " + id));
+        if (aide.getStatut() != Aide.Statut.PROPOSEE) {
+            throw new IllegalArgumentException("Seule une aide proposée peut être acceptée ou refusée");
+        }
+        if (aide.getMembre().getUser() == null
+                || !membreEmail.equals(aide.getMembre().getUser().getEmail())) {
+            throw new IllegalArgumentException("Cette proposition ne vous concerne pas");
+        }
+        return aide;
     }
 
     @Transactional(readOnly = true)

@@ -1,6 +1,6 @@
 export type TypeAide = 'DECES' | 'MALADIE' | 'ACCIDENT' | 'MARIAGE'
                      | 'NAISSANCE' | 'SCOLARITE' | 'CALAMITE' | 'AUTRE';
-export type StatutAide = 'SOUMISE' | 'VALIDEE' | 'REJETEE' | 'PAYEE';
+export type StatutAide = 'PROPOSEE' | 'SOUMISE' | 'VALIDEE' | 'REJETEE' | 'PAYEE' | 'REFUSEE';
 
 export const TYPE_AIDE_LABELS: Record<TypeAide, string> = {
   DECES:     'Décès',

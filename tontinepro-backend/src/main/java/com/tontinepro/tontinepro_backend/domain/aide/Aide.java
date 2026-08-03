@@ -95,7 +95,12 @@ public class Aide {
     private OffsetDateTime updatedAt;
 
     public enum Statut {
-        SOUMISE, VALIDEE, REJETEE, PAYEE
+        PROPOSEE,   // saisie par le bureau, en attente de l'accord du membre
+        SOUMISE,    // demandée / acceptée, en attente d'activation par le bureau
+        VALIDEE,    // activée (contributions générées), en attente de versement
+        REJETEE,    // rejetée par le bureau
+        PAYEE,      // versée au bénéficiaire
+        REFUSEE     // proposition refusée par le membre
     }
 
     public enum TypeAide {

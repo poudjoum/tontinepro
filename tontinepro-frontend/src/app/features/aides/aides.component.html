@@ -143,17 +143,97 @@
               Motif rejet : {{ a.motifRejet }}
             </p>
           }
+
+          <!-- Proposition du bureau à confirmer -->
+          @if (a.statut === 'PROPOSEE') {
+            <div class="border-t pt-3 space-y-2">
+              <p class="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                Le bureau a saisi cette aide à votre nom. Confirmez-vous en bénéficier ?
+              </p>
+              <div class="flex gap-2">
+                <button (click)="accepter(a.id)" [disabled]="submitting()"
+                        class="btn-primary text-sm py-2 flex-1">✓ J'accepte</button>
+                <button (click)="refuser(a.id)" [disabled]="submitting()"
+                        class="btn-secondary text-sm py-2 px-4 text-red-600 border-red-200">Refuser</button>
+              </div>
+            </div>
+          }
         </div>
       }
     }
 
     <!-- ━━━━ VUE ADMIN ━━━━ -->
     @if (auth.isAdmin()) {
-      <h1 class="text-xl font-bold text-gray-900">Aides Mutuelles</h1>
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold text-gray-900">Aides Mutuelles</h1>
+        <button (click)="showSaisie.set(!showSaisie())"
+                class="text-sm font-semibold text-primary-600 border border-primary-200
+                       px-4 py-2 rounded-xl min-h-[44px] active:bg-primary-50">
+          {{ showSaisie() ? '✕ Fermer' : '+ Saisir pour un membre' }}
+        </button>
+      </div>
+
+      <!-- Saisie d'une aide pour un membre -->
+      @if (showSaisie()) {
+        <div class="card space-y-4">
+          <h2 class="font-semibold text-gray-900">Saisir une aide pour un membre</h2>
+          <p class="text-xs text-gray-500">
+            L'aide restera « à confirmer » tant que le membre n'aura pas marqué son accord.
+          </p>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Membre bénéficiaire *</label>
+            <select [value]="saisieMembreId()" (change)="saisieMembreId.set($any($event.target).value)"
+                    class="input-field">
+              <option value="">— Choisir un membre —</option>
+              @for (m of membres(); track m.id) {
+                <option [value]="m.id">{{ m.nom }} {{ m.prenom }} ({{ m.matricule }})</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Type d'aide *</label>
+            <select [value]="saisieRubriqueId()" (change)="selectionnerRubriqueSaisie($any($event.target).value)"
+                    class="input-field">
+              <option value="">— Choisir une aide —</option>
+              @for (r of rubriques(); track r.id) {
+                <option [value]="r.id">{{ r.libelle }}</option>
+              }
+            </select>
+          </div>
+
+          @if (saisieSimulation(); as s) {
+            <div class="bg-primary-50 border border-primary-100 rounded-xl p-3 space-y-1 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Part par membre</span>
+                <span class="font-semibold text-gray-900">{{ fcfa(s.partParMembre) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Total ({{ s.nbMembresActifs }} membres)</span>
+                <span class="font-black text-primary-700">{{ fcfa(s.total) }}</span>
+              </div>
+            </div>
+          }
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Motif *</label>
+            <textarea rows="2" [value]="saisieMotif()"
+                      (input)="saisieMotif.set($any($event.target).value)"
+                      placeholder="Raison de l'aide…" class="input-field resize-none"></textarea>
+          </div>
+
+          <button (click)="saisirPourMembre()"
+                  [disabled]="!saisieMembreId() || !saisieRubriqueId() || !saisieMotif().trim() || submitting()"
+                  class="btn-primary">
+            {{ submitting() ? 'Envoi…' : 'Proposer l\'aide au membre' }}
+          </button>
+        </div>
+      }
 
       <!-- Filtres -->
       <div class="flex gap-2 overflow-x-auto pb-1">
-        @for (f of [['', 'Toutes'], ['SOUMISE', 'En attente'], ['VALIDEE', 'Approuvées'], ['PAYEE', 'Versées'], ['REJETEE', 'Rejetées']]; track f[0]) {
+        @for (f of [['', 'Toutes'], ['PROPOSEE', 'À confirmer'], ['SOUMISE', 'En attente'], ['VALIDEE', 'Approuvées'], ['PAYEE', 'Versées'], ['REJETEE', 'Rejetées']]; track f[0]) {
           <button (click)="filtrer($any(f[0]))"
                   [class]="filtre() === f[0]
                     ? 'px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold whitespace-nowrap'

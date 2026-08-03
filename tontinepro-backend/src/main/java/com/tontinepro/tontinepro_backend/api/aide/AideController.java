@@ -4,6 +4,7 @@ import com.tontinepro.tontinepro_backend.api.aide.dto.AideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideSuiviResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
+import com.tontinepro.tontinepro_backend.api.aide.dto.SaisirAidePourMembreRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ValiderAideRequest;
 import com.tontinepro.tontinepro_backend.domain.aide.Aide;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +43,31 @@ public class AideController {
     public List<AideResponse> getMesDemandes(@AuthenticationPrincipal UserDetails principal,
                                              @RequestParam(required = false) UUID tontineId) {
         return aideService.getMesDemandes(principal.getUsername(), tontineId);
+    }
+
+    @PostMapping("/saisir")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Saisir une aide au nom d'un membre (état PROPOSEE, en attente de son accord)")
+    public AideResponse saisirPourMembre(
+            @AuthenticationPrincipal UserDetails principal,
+            @Valid @RequestBody SaisirAidePourMembreRequest request
+    ) {
+        return aideService.saisirPourMembre(principal.getUsername(), request);
+    }
+
+    @PatchMapping("/demandes/{id}/accepter")
+    @Operation(summary = "Le membre bénéficiaire accepte une aide proposée par le bureau")
+    public AideResponse accepter(@PathVariable UUID id,
+                                 @AuthenticationPrincipal UserDetails principal) {
+        return aideService.accepterProposition(id, principal.getUsername());
+    }
+
+    @PatchMapping("/demandes/{id}/refuser")
+    @Operation(summary = "Le membre bénéficiaire refuse une aide proposée par le bureau")
+    public AideResponse refuser(@PathVariable UUID id,
+                                @AuthenticationPrincipal UserDetails principal) {
+        return aideService.refuserProposition(id, principal.getUsername());
     }
 
     @GetMapping("/demandes")

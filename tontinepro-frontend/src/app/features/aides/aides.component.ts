@@ -3,17 +3,21 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AideService } from '../../core/services/aide.service';
 import { RubriqueAideService } from '../../core/services/rubrique-aide.service';
+import { MembreService } from '../../core/services/membre.service';
 import { TontineContextService } from '../../core/services/tontine-context.service';
 import {
   AideResponse, TYPE_AIDE_LABELS, TYPES_AIDE, StatutAide,
   RubriqueAideResponse, SimulationAideResponse,
 } from '../../core/models/aide.model';
+import { MembreResponse } from '../../core/models/membre.model';
 
 const STATUT_BADGE: Record<string, string> = {
-  SOUMISE: 'badge-warning', VALIDEE: 'badge-info', REJETEE: 'badge-danger', PAYEE: 'badge-success',
+  PROPOSEE: 'badge-warning', SOUMISE: 'badge-warning', VALIDEE: 'badge-info',
+  REJETEE: 'badge-danger', PAYEE: 'badge-success', REFUSEE: 'badge-danger',
 };
 const STATUT_LABEL: Record<string, string> = {
-  SOUMISE: 'En attente', VALIDEE: 'Approuvée', REJETEE: 'Rejetée', PAYEE: 'Versée',
+  PROPOSEE: 'À confirmer', SOUMISE: 'En attente', VALIDEE: 'Approuvée',
+  REJETEE: 'Rejetée', PAYEE: 'Versée', REFUSEE: 'Refusée',
 };
 
 @Component({
@@ -25,6 +29,7 @@ export class AidesComponent implements OnInit {
   auth = inject(AuthService);
   private svc = inject(AideService);
   private rubriqueSvc = inject(RubriqueAideService);
+  private membreSvc = inject(MembreService);
   private ctx = inject(TontineContextService);
 
   constructor() {
@@ -58,6 +63,14 @@ export class AidesComponent implements OnInit {
   activationId = signal<string | null>(null);
   prefinancer  = signal(false);
 
+  // Admin — saisie d'une aide pour un membre
+  showSaisie      = signal(false);
+  membres         = signal<MembreResponse[]>([]);
+  saisieMembreId  = signal<string>('');
+  saisieRubriqueId = signal<string>('');
+  saisieMotif     = signal('');
+  saisieSimulation = signal<SimulationAideResponse | null>(null);
+
   readonly TYPES_AIDE = TYPES_AIDE;
   readonly TYPE_AIDE_LABELS = TYPE_AIDE_LABELS;
 
@@ -73,13 +86,65 @@ export class AidesComponent implements OnInit {
       next:  data => { this.aides.set(data); this.loading.set(false); },
       error: e    => { this.error.set(e.message ?? 'Erreur'); this.loading.set(false); },
     });
-    // Barème des rubriques actives (pour la demande membre)
-    if (!this.auth.isAdmin() && tontineId) {
+    // Barème des rubriques actives (demande membre ET saisie admin)
+    if (tontineId) {
       this.rubriqueSvc.lister(tontineId, true).subscribe({
         next: list => this.rubriques.set(list),
         error: () => this.rubriques.set([]),
       });
     }
+    // Liste des membres actifs (pour la saisie admin)
+    if (this.auth.isAdmin() && tontineId) {
+      this.membreSvc.getAll(tontineId, 'ACTIF').subscribe({
+        next: list => this.membres.set(list),
+        error: () => this.membres.set([]),
+      });
+    }
+  }
+
+  // ── Membre : consentement à une proposition ────────────────────────────────
+  accepter(id: string): void {
+    this.submitting.set(true);
+    this.svc.accepter(id).subscribe({
+      next: u => { this.aides.update(l => l.map(a => a.id === id ? u : a)); this.submitting.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
+    });
+  }
+
+  refuser(id: string): void {
+    this.submitting.set(true);
+    this.svc.refuser(id).subscribe({
+      next: u => { this.aides.update(l => l.map(a => a.id === id ? u : a)); this.submitting.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
+    });
+  }
+
+  // ── Admin : saisie d'une aide pour un membre ───────────────────────────────
+  selectionnerRubriqueSaisie(id: string): void {
+    this.saisieRubriqueId.set(id);
+    this.saisieSimulation.set(null);
+    if (!id) return;
+    this.rubriqueSvc.simuler(id).subscribe({
+      next: s => this.saisieSimulation.set(s),
+      error: () => this.error.set('Calcul du montant impossible.'),
+    });
+  }
+
+  saisirPourMembre(): void {
+    if (!this.saisieMembreId() || !this.saisieRubriqueId() || !this.saisieMotif().trim() || this.submitting()) return;
+    this.submitting.set(true);
+    this.svc.saisirPourMembre(this.saisieMembreId(), this.saisieRubriqueId(), this.saisieMotif()).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.showSaisie.set(false);
+        this.saisieMembreId.set('');
+        this.saisieRubriqueId.set('');
+        this.saisieMotif.set('');
+        this.saisieSimulation.set(null);
+        this.charger();
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
+    });
   }
 
   filtrer(f: StatutAide | ''): void { this.filtre.set(f); this.charger(); }
