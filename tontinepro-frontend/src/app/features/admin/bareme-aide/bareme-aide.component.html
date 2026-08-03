@@ -69,6 +69,33 @@
                 class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"></textarea>
     </div>
 
+    <!-- Éligibilité -->
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Limite par membre</label>
+        <input [(ngModel)]="form.limiteParBeneficiaire" type="number" min="1" placeholder="illimité"
+               class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Portée de la limite</label>
+        <select [(ngModel)]="form.porteeLimite"
+                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white">
+          @for (p of portees; track p) {
+            <option [value]="p">{{ porteeLabels[p] }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">Variantes (optionnel)</label>
+      <input [(ngModel)]="form.variantes" type="text" placeholder="Ex : Père,Mère"
+             class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+      <p class="text-[11px] text-gray-400 mt-1">
+        Séparées par des virgules. Si renseigné, le membre choisit une variante et la limite s'applique par variante.
+      </p>
+    </div>
+
     <div class="flex items-center gap-4">
       <label class="flex items-center gap-2 text-sm text-gray-700">
         <input type="checkbox" [(ngModel)]="form.prefinancable" class="rounded" />
@@ -126,6 +153,12 @@
                 <span class="font-medium text-gray-700">{{ fcfa(r.montantReference) }}</span>
                 {{ r.modeCalcul === 'PAR_PERSONNE' ? '/ membre' : 'au total' }}
               </p>
+              @if (r.limiteParBeneficiaire) {
+                <p class="text-[11px] text-gray-500 mt-0.5">
+                  Limite {{ r.limiteParBeneficiaire }}× · {{ porteeLabels[r.porteeLimite] }}
+                  @if (r.variantes) { · variantes : {{ r.variantes }} }
+                </p>
+              }
               @if (r.prefinancable) {
                 <p class="text-[11px] text-indigo-600 mt-0.5">Préfinançable par la trésorerie</p>
               }

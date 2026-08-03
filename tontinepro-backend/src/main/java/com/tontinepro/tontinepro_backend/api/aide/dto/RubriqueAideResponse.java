@@ -18,6 +18,9 @@ public record RubriqueAideResponse(
         boolean prefinancable,
         boolean actif,
         String description,
+        Integer limiteParBeneficiaire,
+        RubriqueAide.PorteeLimite porteeLimite,
+        String variantes,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
@@ -32,6 +35,9 @@ public record RubriqueAideResponse(
                 r.isPrefinancable(),
                 r.isActif(),
                 r.getDescription(),
+                r.getLimiteParBeneficiaire(),
+                r.getPorteeLimite(),
+                r.getVariantes(),
                 r.getCreatedAt(),
                 r.getUpdatedAt()
         );

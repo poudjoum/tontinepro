@@ -1,6 +1,5 @@
 import { Component, OnInit, signal, inject, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { RubriqueAideService } from '../../../core/services/rubrique-aide.service';
 import { TontineContextService } from '../../../core/services/tontine-context.service';
@@ -9,6 +8,8 @@ import {
   RubriqueAideRequest,
   ModeCalculAide,
   MODE_CALCUL_AIDE_LABELS,
+  PorteeLimiteAide,
+  PORTEE_LIMITE_LABELS,
   TypeAide,
   TYPES_AIDE,
   TYPE_AIDE_LABELS,
@@ -16,7 +17,7 @@ import {
 
 @Component({
   selector: 'app-bareme-aide',
-  imports: [FormsModule, DecimalPipe, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './bareme-aide.component.html',
 })
 export class BaremeAideComponent implements OnInit {
@@ -42,6 +43,8 @@ export class BaremeAideComponent implements OnInit {
   readonly typeLabels = TYPE_AIDE_LABELS;
   readonly modes: ModeCalculAide[] = ['PAR_PERSONNE', 'FORFAITAIRE'];
   readonly modeLabels = MODE_CALCUL_AIDE_LABELS;
+  readonly portees: PorteeLimiteAide[] = ['VIE', 'SESSION', 'ANNEE'];
+  readonly porteeLabels = PORTEE_LIMITE_LABELS;
 
   constructor() {
     effect(() => {
@@ -64,6 +67,9 @@ export class BaremeAideComponent implements OnInit {
       prefinancable: true,
       actif: true,
       description: '',
+      limiteParBeneficiaire: null,
+      porteeLimite: 'VIE',
+      variantes: '',
     };
   }
 
@@ -92,6 +98,9 @@ export class BaremeAideComponent implements OnInit {
       prefinancable: r.prefinancable,
       actif: r.actif,
       description: r.description ?? '',
+      limiteParBeneficiaire: r.limiteParBeneficiaire,
+      porteeLimite: r.porteeLimite,
+      variantes: r.variantes ?? '',
     };
     this.success.set('');
     this.error.set('');

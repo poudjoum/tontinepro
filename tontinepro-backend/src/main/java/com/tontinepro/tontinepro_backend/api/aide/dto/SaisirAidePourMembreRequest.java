@@ -17,6 +17,9 @@ public record SaisirAidePourMembreRequest(
         @NotNull(message = "La rubrique d'aide est obligatoire")
         UUID rubriqueId,
 
+        /** Variante choisie si la rubrique en propose (ex. « Père »/« Mère »). */
+        String variante,
+
         @NotBlank(message = "Le motif est obligatoire")
         String motif,
 

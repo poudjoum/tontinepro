@@ -13,6 +13,7 @@ public record AideResponse(
         Aide.TypeAide typeAide,
         UUID rubriqueId,
         String rubriqueLibelle,
+        String variante,
         BigDecimal montantDemande,
         BigDecimal montantAccorde,
         // Snapshot d'activation (aides issues du barème)
@@ -40,6 +41,7 @@ public record AideResponse(
                 a.getTypeAide(),
                 a.getRubrique() != null ? a.getRubrique().getId() : null,
                 a.getRubrique() != null ? a.getRubrique().getLibelle() : null,
+                a.getVariante(),
                 a.getMontantDemande(),
                 a.getMontantAccorde(),
                 a.getModeCalcul(),

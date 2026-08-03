@@ -12,6 +12,8 @@ import com.tontinepro.tontinepro_backend.domain.aide.*;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.notification.Notification;
+import com.tontinepro.tontinepro_backend.domain.session.SessionTontine;
+import com.tontinepro.tontinepro_backend.domain.session.SessionTontineRepository;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.user.User;
 import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
@@ -39,6 +41,7 @@ public class AideService {
     private final ContributionFondsAideRepository contributionFondsAideRepository;
     private final RubriqueAideRepository rubriqueAideRepository;
     private final RubriqueAideService rubriqueAideService;
+    private final SessionTontineRepository sessionTontineRepository;
     private final NotificationService notificationService;
 
     @Transactional
@@ -46,6 +49,7 @@ public class AideService {
         Aide.TypeAide typeAide;
         BigDecimal montant;
         RubriqueAide rubrique = null;
+        String variante = null;
         Membre membre;
 
         if (request.rubriqueId() != null) {
@@ -57,6 +61,8 @@ public class AideService {
             }
             membre = membreRepository.findByUserEmailAndTontineId(email, rubrique.getTontine().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Vous n'êtes pas membre de cette tontine"));
+            variante = resoudreVariante(rubrique, request.variante());
+            verifierEligibilite(membre, rubrique, variante, null);
             typeAide = rubrique.getTypeAide();
             montant  = rubriqueAideService.simuler(rubrique.getId()).total();
         } else {
@@ -77,6 +83,7 @@ public class AideService {
         Aide aide = Aide.builder()
                 .membre(membre)
                 .rubrique(rubrique)
+                .variante(variante)
                 .typeAide(typeAide)
                 .montantDemande(montant)
                 .motif(request.motif())
@@ -117,11 +124,15 @@ public class AideService {
             throw new IllegalArgumentException("Seuls les membres actifs peuvent bénéficier d'une aide");
         }
 
+        String variante = resoudreVariante(rubrique, request.variante());
+        verifierEligibilite(membre, rubrique, variante, null);
+
         BigDecimal montant = rubriqueAideService.simuler(rubrique.getId()).total();
 
         Aide aide = Aide.builder()
                 .membre(membre)
                 .rubrique(rubrique)
+                .variante(variante)
                 .typeAide(rubrique.getTypeAide())
                 .montantDemande(montant)
                 .motif(request.motif())
@@ -411,6 +422,65 @@ public class AideService {
         return v != null ? v : BigDecimal.ZERO;
     }
 
+    /** Valide/normalise la variante : requise si la rubrique en propose, sinon null. */
+    private String resoudreVariante(RubriqueAide rubrique, String variante) {
+        List<String> options = RubriqueAideService.parseVariantes(rubrique.getVariantes());
+        if (options.isEmpty()) return null;
+        String choisie = variante != null ? variante.trim() : "";
+        if (choisie.isEmpty()) {
+            throw new IllegalArgumentException("Cette aide requiert un choix : " + String.join(", ", options));
+        }
+        return options.stream()
+                .filter(o -> o.equalsIgnoreCase(choisie))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Choix invalide « " + choisie + " » (attendu : " + String.join(", ", options) + ")"));
+    }
+
+    /** Bloque si le membre a atteint le plafond d'éligibilité de la rubrique (dans la portée). */
+    private void verifierEligibilite(Membre membre, RubriqueAide rubrique, String variante, UUID excludeAideId) {
+        Integer limite = rubrique.getLimiteParBeneficiaire();
+        if (limite == null) return; // illimité
+
+        OffsetDateTime debutFenetre = switch (rubrique.getPorteeLimite()) {
+            case VIE -> null;
+            case ANNEE -> OffsetDateTime.of(LocalDate.now().getYear(), 1, 1, 0, 0, 0, 0, java.time.ZoneOffset.UTC);
+            case SESSION -> sessionTontineRepository
+                    .findFirstByTontineIdAndStatutOrderByNumeroDesc(
+                            membre.getTontine().getId(), SessionTontine.Statut.EN_COURS)
+                    .map(s -> s.getDateDebut().atStartOfDay().atOffset(java.time.ZoneOffset.UTC))
+                    .orElse(null);
+        };
+
+        long count = aideRepository.findAllByMembreIdAndRubriqueId(membre.getId(), rubrique.getId()).stream()
+                .filter(a -> excludeAideId == null || !a.getId().equals(excludeAideId))
+                .filter(a -> estActif(a.getStatut()))
+                .filter(a -> variante == null || variante.equalsIgnoreCase(a.getVariante()))
+                .filter(a -> debutFenetre == null
+                        || (a.getCreatedAt() != null && !a.getCreatedAt().isBefore(debutFenetre)))
+                .count();
+
+        if (count >= limite) {
+            throw new IllegalArgumentException(
+                    "Plafond atteint pour « " + rubrique.getLibelle() + " »"
+                            + (variante != null ? " (" + variante + ")" : "")
+                            + " : " + libellePortee(rubrique.getPorteeLimite()) + ".");
+        }
+    }
+
+    private static boolean estActif(Aide.Statut s) {
+        return s == Aide.Statut.PROPOSEE || s == Aide.Statut.SOUMISE
+                || s == Aide.Statut.VALIDEE || s == Aide.Statut.PAYEE;
+    }
+
+    private static String libellePortee(RubriqueAide.PorteeLimite p) {
+        return switch (p) {
+            case VIE -> "une seule fois autorisée";
+            case SESSION -> "une fois par session";
+            case ANNEE -> "une fois par année";
+        };
+    }
+
     /**
      * Active une aide issue du barème (état SOUMISE) : fige le calcul, génère une
      * contribution par membre actif (bénéficiaire inclus), et si préfinancée, décaisse
@@ -435,6 +505,9 @@ public class AideService {
         if (prefinance && !rubrique.isPrefinancable()) {
             throw new IllegalArgumentException("Cette rubrique n'est pas préfinançable par la trésorerie");
         }
+
+        // Re-contrôle du plafond au moment de l'activation (hors l'aide en cours)
+        verifierEligibilite(aide.getMembre(), rubrique, aide.getVariante(), aide.getId());
 
         Tontine tontine = aide.getMembre().getTontine();
         List<Membre> membresActifs = membreRepository.findAllByTontineIdAndStatut(

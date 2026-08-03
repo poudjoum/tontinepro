@@ -49,6 +49,7 @@ export class AidesComponent implements OnInit {
   motif      = signal('');
   rubriques  = signal<RubriqueAideResponse[]>([]);
   rubriqueId = signal<string>('');
+  variante   = signal<string>('');
   simulation = signal<SimulationAideResponse | null>(null);
   simLoading = signal(false);
 
@@ -69,7 +70,15 @@ export class AidesComponent implements OnInit {
   saisieMembreId  = signal<string>('');
   saisieRubriqueId = signal<string>('');
   saisieMotif     = signal('');
+  saisieVariante  = signal<string>('');
   saisieSimulation = signal<SimulationAideResponse | null>(null);
+
+  /** Variantes (Père/Mère…) de la rubrique sélectionnée, ou tableau vide. */
+  variantesDe(rubriqueId: string): string[] {
+    const r = this.rubriques().find(x => x.id === rubriqueId);
+    if (!r?.variantes) return [];
+    return r.variantes.split(',').map(s => s.trim()).filter(s => !!s);
+  }
 
   readonly TYPES_AIDE = TYPES_AIDE;
   readonly TYPE_AIDE_LABELS = TYPE_AIDE_LABELS;
@@ -122,6 +131,7 @@ export class AidesComponent implements OnInit {
   // ── Admin : saisie d'une aide pour un membre ───────────────────────────────
   selectionnerRubriqueSaisie(id: string): void {
     this.saisieRubriqueId.set(id);
+    this.saisieVariante.set('');
     this.saisieSimulation.set(null);
     if (!id) return;
     this.rubriqueSvc.simuler(id).subscribe({
@@ -132,14 +142,18 @@ export class AidesComponent implements OnInit {
 
   saisirPourMembre(): void {
     if (!this.saisieMembreId() || !this.saisieRubriqueId() || !this.saisieMotif().trim() || this.submitting()) return;
+    const variantes = this.variantesDe(this.saisieRubriqueId());
+    if (variantes.length && !this.saisieVariante()) { this.error.set('Veuillez choisir une variante.'); return; }
     this.submitting.set(true);
-    this.svc.saisirPourMembre(this.saisieMembreId(), this.saisieRubriqueId(), this.saisieMotif()).subscribe({
+    this.svc.saisirPourMembre(this.saisieMembreId(), this.saisieRubriqueId(), this.saisieMotif(),
+                              this.saisieVariante() || undefined).subscribe({
       next: () => {
         this.submitting.set(false);
         this.showSaisie.set(false);
         this.saisieMembreId.set('');
         this.saisieRubriqueId.set('');
         this.saisieMotif.set('');
+        this.saisieVariante.set('');
         this.saisieSimulation.set(null);
         this.charger();
       },
@@ -151,6 +165,7 @@ export class AidesComponent implements OnInit {
 
   selectionnerRubrique(id: string): void {
     this.rubriqueId.set(id);
+    this.variante.set('');
     this.simulation.set(null);
     if (!id) return;
     this.simLoading.set(true);
@@ -162,12 +177,15 @@ export class AidesComponent implements OnInit {
 
   soumettreRubrique(): void {
     if (!this.rubriqueId() || !this.motif().trim() || this.submitting()) return;
+    const variantes = this.variantesDe(this.rubriqueId());
+    if (variantes.length && !this.variante()) { this.error.set('Veuillez choisir une variante.'); return; }
     this.submitting.set(true);
-    this.svc.soumettreDepuisRubrique(this.rubriqueId(), this.motif()).subscribe({
+    this.svc.soumettreDepuisRubrique(this.rubriqueId(), this.motif(), this.variante() || undefined).subscribe({
       next: () => {
         this.submitting.set(false);
         this.showForm.set(false);
         this.rubriqueId.set('');
+        this.variante.set('');
         this.simulation.set(null);
         this.motif.set('');
         this.charger();

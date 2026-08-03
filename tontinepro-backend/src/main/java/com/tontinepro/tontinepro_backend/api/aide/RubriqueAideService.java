@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,6 +50,10 @@ public class RubriqueAideService {
                 .prefinancable(request.prefinancable() == null || request.prefinancable())
                 .actif(request.actif() == null || request.actif())
                 .description(request.description())
+                .limiteParBeneficiaire(request.limiteParBeneficiaire())
+                .porteeLimite(request.porteeLimite() != null
+                        ? request.porteeLimite() : RubriqueAide.PorteeLimite.VIE)
+                .variantes(normaliserVariantes(request.variantes()))
                 .build();
 
         return RubriqueAideResponse.from(rubriqueRepository.save(rubrique));
@@ -66,6 +71,9 @@ public class RubriqueAideService {
         if (request.prefinancable() != null) rubrique.setPrefinancable(request.prefinancable());
         if (request.actif() != null)         rubrique.setActif(request.actif());
         rubrique.setDescription(request.description());
+        rubrique.setLimiteParBeneficiaire(request.limiteParBeneficiaire());
+        if (request.porteeLimite() != null)  rubrique.setPorteeLimite(request.porteeLimite());
+        rubrique.setVariantes(normaliserVariantes(request.variantes()));
 
         return RubriqueAideResponse.from(rubriqueRepository.save(rubrique));
     }
@@ -106,5 +114,20 @@ public class RubriqueAideService {
         return new SimulationAideResponse(
                 r.getId(), r.getLibelle(), r.getTypeAide(), r.getModeCalcul(),
                 ref, n, part, total, r.isPrefinancable());
+    }
+
+    /** Nettoie une liste de variantes saisie (« Père, Mère » → « Père,Mère »), null si vide. */
+    static String normaliserVariantes(String raw) {
+        List<String> items = parseVariantes(raw);
+        return items.isEmpty() ? null : String.join(",", items);
+    }
+
+    /** Découpe une chaîne de variantes en liste propre (vide si null/blanc). */
+    public static List<String> parseVariantes(String raw) {
+        if (raw == null || raw.isBlank()) return List.of();
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 }

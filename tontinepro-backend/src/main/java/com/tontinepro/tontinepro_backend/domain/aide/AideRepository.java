@@ -9,6 +9,8 @@ public interface AideRepository extends JpaRepository<Aide, UUID> {
 
     List<Aide> findAllByMembreId(UUID membreId);
 
+    List<Aide> findAllByMembreIdAndRubriqueId(UUID membreId, UUID rubriqueId);
+
     List<Aide> findAllByStatut(Aide.Statut statut);
 
     List<Aide> findAllByMembreTontineId(UUID tontineId);

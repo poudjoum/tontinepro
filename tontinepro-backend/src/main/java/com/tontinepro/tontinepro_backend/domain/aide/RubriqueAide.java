@@ -60,6 +60,20 @@ public class RubriqueAide {
     @Builder.Default
     private boolean actif = true;
 
+    /** Nb max de fois qu'un membre peut en bénéficier (null = illimité). */
+    @Column(name = "limite_par_beneficiaire")
+    private Integer limiteParBeneficiaire;
+
+    /** Fenêtre d'application de la limite. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "portee_limite", nullable = false, length = 20)
+    @Builder.Default
+    private PorteeLimite porteeLimite = PorteeLimite.VIE;
+
+    /** Sous-choix optionnels séparés par des virgules (ex. « Père,Mère ») ; la limite s'applique par variante. */
+    @Column(columnDefinition = "TEXT")
+    private String variantes;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -74,5 +88,11 @@ public class RubriqueAide {
     public enum ModeCalcul {
         PAR_PERSONNE,   // montantReference = part par membre
         FORFAITAIRE     // montantReference = enveloppe totale à répartir
+    }
+
+    public enum PorteeLimite {
+        VIE,        // une fois pour toute la vie du membre
+        SESSION,    // une fois par session en cours
+        ANNEE       // une fois par année civile
     }
 }

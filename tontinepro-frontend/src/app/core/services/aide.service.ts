@@ -27,15 +27,15 @@ export class AideService {
     });
   }
 
-  soumettreDepuisRubrique(rubriqueId: string, motif: string, justificatifUrl?: string) {
+  soumettreDepuisRubrique(rubriqueId: string, motif: string, variante?: string, justificatifUrl?: string) {
     return this.http.post<AideResponse>(`${this.api}/demandes`, {
-      rubriqueId, motif, justificatifUrl,
+      rubriqueId, motif, variante, justificatifUrl,
     });
   }
 
-  saisirPourMembre(membreId: string, rubriqueId: string, motif: string, justificatifUrl?: string) {
+  saisirPourMembre(membreId: string, rubriqueId: string, motif: string, variante?: string, justificatifUrl?: string) {
     return this.http.post<AideResponse>(`${this.api}/saisir`, {
-      membreId, rubriqueId, motif, justificatifUrl,
+      membreId, rubriqueId, motif, variante, justificatifUrl,
     });
   }
 

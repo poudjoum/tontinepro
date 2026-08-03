@@ -12,6 +12,8 @@ public interface SessionTontineRepository extends JpaRepository<SessionTontine, 
 
     Optional<SessionTontine> findTopByTontineIdOrderByNumeroDesc(UUID tontineId);
 
+    Optional<SessionTontine> findFirstByTontineIdAndStatutOrderByNumeroDesc(UUID tontineId, SessionTontine.Statut statut);
+
     boolean existsByTontineIdAndNumero(UUID tontineId, int numero);
 
     List<SessionTontine> findAllByStatut(SessionTontine.Statut statut);

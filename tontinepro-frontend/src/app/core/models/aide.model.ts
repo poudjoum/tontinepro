@@ -24,6 +24,14 @@ export const MODE_CALCUL_AIDE_LABELS: Record<ModeCalculAide, string> = {
   FORFAITAIRE:  'Forfaitaire (enveloppe à répartir)',
 };
 
+export type PorteeLimiteAide = 'VIE' | 'SESSION' | 'ANNEE';
+
+export const PORTEE_LIMITE_LABELS: Record<PorteeLimiteAide, string> = {
+  VIE:     'À vie (une seule fois)',
+  SESSION: 'Par session',
+  ANNEE:   'Par année',
+};
+
 export interface RubriqueAideResponse {
   id: string;
   tontineId: string;
@@ -34,6 +42,9 @@ export interface RubriqueAideResponse {
   prefinancable: boolean;
   actif: boolean;
   description: string | null;
+  limiteParBeneficiaire: number | null;
+  porteeLimite: PorteeLimiteAide;
+  variantes: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -46,6 +57,9 @@ export interface RubriqueAideRequest {
   prefinancable?: boolean;
   actif?: boolean;
   description?: string | null;
+  limiteParBeneficiaire?: number | null;
+  porteeLimite?: PorteeLimiteAide;
+  variantes?: string | null;
 }
 
 export interface SimulationAideResponse {
@@ -94,6 +108,7 @@ export interface AideResponse {
   typeAide: TypeAide;
   rubriqueId: string | null;
   rubriqueLibelle: string | null;
+  variante: string | null;
   montantDemande: number;
   montantAccorde: number | null;
   modeCalcul: ModeCalculAide | null;

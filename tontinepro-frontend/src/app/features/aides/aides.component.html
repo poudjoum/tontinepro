@@ -47,6 +47,19 @@
               </select>
             </div>
 
+            @if (variantesDe(rubriqueId()).length) {
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Précision *</label>
+                <select [value]="variante()" (change)="variante.set($any($event.target).value)"
+                        class="input-field">
+                  <option value="">— Choisir —</option>
+                  @for (v of variantesDe(rubriqueId()); track v) {
+                    <option [value]="v">{{ v }}</option>
+                  }
+                </select>
+              </div>
+            }
+
             @if (simLoading()) {
               <p class="text-sm text-gray-400">Calcul du montant…</p>
             }
@@ -92,7 +105,8 @@
             </div>
 
             <button (click)="soumettreRubrique()"
-                    [disabled]="!rubriqueId() || !motif().trim() || submitting()"
+                    [disabled]="!rubriqueId() || !motif().trim() || submitting()
+                                || (variantesDe(rubriqueId()).length > 0 && !variante())"
                     class="btn-primary">
               {{ submitting() ? 'Envoi…' : 'Soumettre la demande' }}
             </button>
@@ -117,7 +131,7 @@
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <p class="font-semibold text-gray-900">{{ a.rubriqueLibelle ?? TYPE_AIDE_LABELS[a.typeAide] }}</p>
+                <p class="font-semibold text-gray-900">{{ a.rubriqueLibelle ?? TYPE_AIDE_LABELS[a.typeAide] }}{{ a.variante ? ' — ' + a.variante : '' }}</p>
                 <span [class]="statutBadge(a.statut)">{{ statutLabel(a.statut) }}</span>
               </div>
               <p class="text-sm text-gray-500 mt-0.5 line-clamp-2">{{ a.motif }}</p>
@@ -203,6 +217,19 @@
             </select>
           </div>
 
+          @if (variantesDe(saisieRubriqueId()).length) {
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Précision *</label>
+              <select [value]="saisieVariante()" (change)="saisieVariante.set($any($event.target).value)"
+                      class="input-field">
+                <option value="">— Choisir —</option>
+                @for (v of variantesDe(saisieRubriqueId()); track v) {
+                  <option [value]="v">{{ v }}</option>
+                }
+              </select>
+            </div>
+          }
+
           @if (saisieSimulation(); as s) {
             <div class="bg-primary-50 border border-primary-100 rounded-xl p-3 space-y-1 text-sm">
               <div class="flex justify-between">
@@ -224,7 +251,8 @@
           </div>
 
           <button (click)="saisirPourMembre()"
-                  [disabled]="!saisieMembreId() || !saisieRubriqueId() || !saisieMotif().trim() || submitting()"
+                  [disabled]="!saisieMembreId() || !saisieRubriqueId() || !saisieMotif().trim() || submitting()
+                              || (variantesDe(saisieRubriqueId()).length > 0 && !saisieVariante())"
                   class="btn-primary">
             {{ submitting() ? 'Envoi…' : 'Proposer l\'aide au membre' }}
           </button>
@@ -257,7 +285,7 @@
                 <span class="badge-gray text-xs">{{ a.membreMatricule }}</span>
               </div>
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-xs text-gray-500 font-medium">{{ a.rubriqueLibelle ?? TYPE_AIDE_LABELS[a.typeAide] }}</span>
+                <span class="text-xs text-gray-500 font-medium">{{ a.rubriqueLibelle ?? TYPE_AIDE_LABELS[a.typeAide] }}{{ a.variante ? ' — ' + a.variante : '' }}</span>
                 <span [class]="statutBadge(a.statut)">{{ statutLabel(a.statut) }}</span>
               </div>
               <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ a.motif }}</p>

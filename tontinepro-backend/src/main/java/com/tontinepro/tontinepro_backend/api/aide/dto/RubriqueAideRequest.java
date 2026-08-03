@@ -29,5 +29,10 @@ public record RubriqueAideRequest(
 
         Boolean prefinancable,
         Boolean actif,
-        String description
+        String description,
+
+        // Éligibilité (null = illimité) et variantes optionnelles (« Père,Mère »)
+        Integer limiteParBeneficiaire,
+        RubriqueAide.PorteeLimite porteeLimite,
+        String variantes
 ) {}

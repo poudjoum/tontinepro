@@ -20,6 +20,9 @@ public record DemandeAideRequest(
 
         BigDecimal montantDemande,
 
+        /** Variante choisie si la rubrique en propose (ex. « Père »/« Mère »). */
+        String variante,
+
         @NotBlank(message = "Le motif est obligatoire")
         String motif,
 

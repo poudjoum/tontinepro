@@ -36,6 +36,10 @@ public class Aide {
     @JoinColumn(name = "rubrique_id")
     private RubriqueAide rubrique;
 
+    /** Variante choisie quand la rubrique en propose (ex. « Père »/« Mère »). */
+    @Column(length = 60)
+    private String variante;
+
     @Column(name = "montant_demande", nullable = false, precision = 15, scale = 2)
     private BigDecimal montantDemande;
 
