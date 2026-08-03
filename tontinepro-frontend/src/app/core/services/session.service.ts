@@ -109,7 +109,6 @@ export class SessionService {
     montantTontine?: number;
     montantFondAide?: number;
     montantRepas?: number;
-    partsAidePayees?: string[];
   }>, autoriserCorrection = false) {
     return this.http.post<{
       totalDemandes: number;
@@ -117,9 +116,6 @@ export class SessionService {
       totalDejaPayes: number;
       montantTontineCollecte: number;
       montantFondAideCollecte: number;
-      montantRepasCollecte: number;
-      nbPartsAideCollectees: number;
-      montantPartsAideCollecte: number;
     }>(`${this.api}/${sessionId}/saisir-paiements-seance`, { paiements, autoriserCorrection });
   }
 

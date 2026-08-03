@@ -67,7 +67,7 @@ export class SessionsComponent implements OnInit {
 
   // Saisie de séance
   afficherSaisie = signal(false);
-  saisieData: Record<string, { montantTontine: number; montantFondAide: number; montantRepas: number; ref: string; partsAidePayees: string[] }> = {};
+  saisieData: Record<string, { montantTontine: number; montantFondAide: number; montantRepas: number; ref: string }> = {};
   saisieResultat = signal<{ totalEnregistres: number; montantTontineCollecte: number; montantFondAideCollecte: number } | null>(null);
 
 
@@ -358,8 +358,6 @@ export class SessionsComponent implements OnInit {
               montantFondAide: m.montantFondAide ?? (dejaPaye ? 0 : defFond),
               montantRepas:    m.montantRepas    ?? 0,
               ref:             m.referencePaiement ?? '',
-              // Parts d'aide dues : pré-cochées (collecte de toutes par défaut)
-              partsAidePayees: (m.partsAide ?? []).map(p => p.contributionId),
             };
           }
         });
@@ -396,7 +394,6 @@ export class SessionsComponent implements OnInit {
           montantFondAide:   d?.montantFondAide != null ? d.montantFondAide : undefined,
           montantRepas:      d?.montantRepas != null ? d.montantRepas : undefined,
           referencePaiement: d?.ref || undefined,
-          partsAidePayees:   d?.partsAidePayees ?? [],
         };
       });
 
@@ -408,29 +405,13 @@ export class SessionsComponent implements OnInit {
     this.sessionSvc.saisirPaiementsSeance(session.id, paiements, true).subscribe({
       next: r => {
         this.saisieResultat.set(r);
-        const partsMsg = r.nbPartsAideCollectees > 0
-          ? ` · ${r.nbPartsAideCollectees} part(s) d'aide encaissée(s)` : '';
-        this.success.set(`${r.totalEnregistres} paiement(s) enregistré(s)${partsMsg}.`);
+        this.success.set(`${r.totalEnregistres} paiement(s) enregistré(s).`);
         this.saving.set(false);
         this.afficherSaisie.set(false);
         this.chargerStatut(session);
       },
       error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur saisie'); this.saving.set(false); },
     });
-  }
-
-  /** La part d'aide est-elle cochée (à encaisser) pour cette cotisation ? */
-  partSelectionnee(cotisationId: string, contributionId: string): boolean {
-    return this.saisieData[cotisationId]?.partsAidePayees?.includes(contributionId) ?? false;
-  }
-
-  /** Coche/décoche une part d'aide à encaisser pendant la séance. */
-  togglePart(cotisationId: string, contributionId: string, coche: boolean): void {
-    const d = this.saisieData[cotisationId];
-    if (!d) return;
-    const set = new Set(d.partsAidePayees);
-    if (coche) set.add(contributionId); else set.delete(contributionId);
-    d.partsAidePayees = [...set];
   }
 
   /** Libellé « mois année » (ex. « mai 2026 ») à partir des champs mois/année du statut. */
