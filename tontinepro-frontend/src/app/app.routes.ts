@@ -134,6 +134,11 @@ export const routes: Routes = [
           import('./features/aides/aides.component').then(m => m.AidesComponent),
       },
       {
+        path: 'aides/:id/suivi',
+        loadComponent: () =>
+          import('./features/aides/suivi/aide-suivi.component').then(m => m.AideSuiviComponent),
+      },
+      {
         path: 'notifications',
         loadComponent: () =>
           import('./features/notifications/notifications.component').then(m => m.NotificationsComponent),

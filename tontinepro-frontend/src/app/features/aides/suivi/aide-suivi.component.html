@@ -1,0 +1,124 @@
+<div class="min-h-screen bg-gray-50">
+
+  <div class="bg-primary-600 text-white px-4 pt-safe-top pb-5">
+    <a routerLink="/aides" class="text-primary-200 text-sm mb-3 block">← Aides</a>
+    <h1 class="text-xl font-bold">Suivi de l'aide</h1>
+    @if (suivi(); as s) {
+      <p class="text-primary-200 text-sm mt-0.5">
+        {{ s.rubriqueLibelle }} · {{ s.beneficiaireNom }}
+      </p>
+    }
+  </div>
+
+  <div class="px-4 py-4 space-y-4 max-w-2xl mx-auto">
+
+    @if (loading()) {
+      <div class="flex justify-center py-12">
+        <svg class="animate-spin w-7 h-7 text-primary-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{{ error() }}</div>
+    }
+
+    @if (suivi(); as s) {
+
+      <!-- Bénéficiaire + statut -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-base font-bold text-gray-900">{{ s.beneficiaireNom }}</p>
+            <p class="text-xs text-gray-500">{{ s.beneficiaireMatricule }}</p>
+          </div>
+          <div class="text-right">
+            <span class="text-xs font-semibold px-2 py-1 rounded-full"
+                  [class]="s.statut === 'PAYEE' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'">
+              {{ statutLabel(s.statut) }}
+            </span>
+            @if (s.prefinance) {
+              <p class="text-[11px] text-indigo-600 mt-1">préfinancée</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Chiffres clés -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">
+          <p class="text-xs text-gray-400">Total de l'aide</p>
+          <p class="text-lg font-black text-gray-900">{{ fcfa(s.montantTotal) }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">
+          <p class="text-xs text-gray-400">Part par membre</p>
+          <p class="text-lg font-black text-gray-900">{{ fcfa(s.partParMembre) }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">
+          <p class="text-xs text-gray-400">Collecté</p>
+          <p class="text-lg font-black text-green-700">{{ fcfa(s.totalCollecte) }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">
+          <p class="text-xs text-gray-400">Solde du fonds</p>
+          <p class="text-lg font-black" [class]="s.soldeFonds < 0 ? 'text-red-600' : 'text-gray-900'">
+            {{ fcfa(s.soldeFonds) }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Progression -->
+      <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">
+        <div class="flex justify-between text-sm mb-1.5">
+          <span class="text-gray-600 font-medium">Collecte des contributions</span>
+          <span class="text-gray-900 font-semibold">{{ s.nbPayes }}/{{ s.nbTotal }} · {{ progression() }}%</span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+          <div class="bg-green-500 h-full rounded-full transition-all" [style.width.%]="progression()"></div>
+        </div>
+        @if (s.soldeFonds < 0) {
+          <p class="text-[11px] text-red-600 mt-2">
+            La trésorerie est en avance de {{ fcfa(-s.soldeFonds) }} ; elle se résorbe à mesure des paiements.
+          </p>
+        }
+      </div>
+
+      <!-- Contributions -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-4 pt-4 pb-2">
+          <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Contributions des membres</h2>
+        </div>
+        <div class="divide-y divide-gray-100">
+          @for (c of s.contributions; track c.contributionId) {
+            <div class="flex items-center justify-between px-4 py-2.5 gap-3">
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-gray-800 flex items-center gap-1.5">
+                  {{ c.membreNom }}
+                  @if (c.estBeneficiaire) {
+                    <span class="text-[9px] font-semibold text-amber-700 bg-amber-100 rounded px-1 py-0.5">bénéficiaire</span>
+                  }
+                </p>
+                <p class="text-xs text-gray-400">
+                  {{ fcfa(c.montant) }}
+                  @if (c.statut === 'PAYEE') { · {{ formatDate(c.datePaiement) }} }
+                </p>
+              </div>
+              @if (c.statut === 'PAYEE') {
+                <span class="text-green-600 text-sm font-bold shrink-0">✓ Payé</span>
+              } @else {
+                <button (click)="payer(c.contributionId)" [disabled]="paiementId() === c.contributionId"
+                        class="px-3 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-semibold
+                               hover:bg-primary-700 disabled:opacity-60 shrink-0">
+                  {{ paiementId() === c.contributionId ? '…' : 'Marquer payé' }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+    }
+
+  </div>
+</div>

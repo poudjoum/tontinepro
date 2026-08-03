@@ -304,6 +304,15 @@
               }
             </div>
           }
+
+          <!-- Suivi de la collecte (aide du barème activée) -->
+          @if (a.rubriqueId && (a.statut === 'VALIDEE' || a.statut === 'PAYEE')) {
+            <a [routerLink]="['/aides', a.id, 'suivi']"
+               class="block text-center text-sm font-semibold text-primary-600 border border-primary-200
+                      rounded-lg py-2 mt-2 active:bg-primary-50">
+              📊 Voir le suivi de la collecte
+            </a>
+          }
         </div>
       }
     }

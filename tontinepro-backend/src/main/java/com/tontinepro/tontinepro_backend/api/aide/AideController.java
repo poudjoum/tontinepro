@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.AideSuiviResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ValiderAideRequest;
@@ -106,5 +107,12 @@ public class AideController {
     @Operation(summary = "Verser au bénéficiaire une aide du barème approuvée non préfinancée")
     public AideResponse verser(@PathVariable UUID id) {
         return aideService.verserAide(id);
+    }
+
+    @GetMapping("/demandes/{id}/suivi")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Suivi d'une aide activée : contributions, avancement de la collecte, solde du fonds")
+    public AideSuiviResponse suivi(@PathVariable UUID id) {
+        return aideService.getSuivi(id);
     }
 }

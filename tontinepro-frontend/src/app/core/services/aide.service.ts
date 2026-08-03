@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { AideResponse, TypeAide } from '../models/aide.model';
+import { AideResponse, AideSuiviResponse, TypeAide } from '../models/aide.model';
 
 @Injectable({ providedIn: 'root' })
 export class AideService {
@@ -52,5 +52,9 @@ export class AideService {
 
   verser(id: string) {
     return this.http.post<AideResponse>(`${this.api}/demandes/${id}/verser`, {});
+  }
+
+  getSuivi(id: string) {
+    return this.http.get<AideSuiviResponse>(`${this.api}/demandes/${id}/suivi`);
   }
 }

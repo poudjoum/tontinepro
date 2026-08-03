@@ -60,6 +60,35 @@ export interface SimulationAideResponse {
   prefinancable: boolean;
 }
 
+export interface LigneContributionAide {
+  contributionId: string;
+  membreId: string;
+  membreNom: string;
+  membreMatricule: string;
+  montant: number;
+  statut: 'A_PAYER' | 'PAYEE';
+  datePaiement: string | null;
+  estBeneficiaire: boolean;
+}
+
+export interface AideSuiviResponse {
+  aideId: string;
+  rubriqueLibelle: string | null;
+  beneficiaireNom: string;
+  beneficiaireMatricule: string;
+  statut: StatutAide;
+  prefinance: boolean;
+  montantTotal: number;
+  partParMembre: number;
+  nbMembresBase: number;
+  totalAttendu: number;
+  totalCollecte: number;
+  nbPayes: number;
+  nbTotal: number;
+  soldeFonds: number;
+  contributions: LigneContributionAide[];
+}
+
 export interface AideResponse {
   id: string;
   typeAide: TypeAide;

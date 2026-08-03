@@ -13,5 +13,7 @@ public interface ContributionFondsAideRepository extends JpaRepository<Contribut
 
     List<ContributionFondsAide> findAllByFondsAideIdAndStatut(UUID fondsAideId, ContributionFondsAide.Statut statut);
 
+    List<ContributionFondsAide> findAllByAideIdOrderByCreatedAtAsc(UUID aideId);
+
     boolean existsByFondsAideIdAndMembreIdAndMoisAndAnnee(UUID fondsAideId, UUID membreId, short mois, short annee);
 }

@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.AideSuiviResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SimulationAideResponse;
@@ -249,6 +250,70 @@ public class AideService {
                 aide.getId(), "AIDE");
 
         return response;
+    }
+
+    /**
+     * Suivi d'une aide activée : détail des contributions, avancement de la
+     * collecte et solde courant du fonds.
+     */
+    @Transactional(readOnly = true)
+    public AideSuiviResponse getSuivi(UUID id) {
+        Aide aide = aideRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Demande d'aide introuvable : " + id));
+
+        if (aide.getNbMembresBase() == null) {
+            throw new IllegalArgumentException("Cette aide n'a pas encore été activée");
+        }
+
+        UUID beneficiaireId = aide.getMembre().getId();
+        List<ContributionFondsAide> contributions =
+                contributionFondsAideRepository.findAllByAideIdOrderByCreatedAtAsc(id);
+
+        BigDecimal totalAttendu  = BigDecimal.ZERO;
+        BigDecimal totalCollecte = BigDecimal.ZERO;
+        int nbPayes = 0;
+        List<AideSuiviResponse.LigneContribution> lignes = new ArrayList<>(contributions.size());
+        for (ContributionFondsAide c : contributions) {
+            totalAttendu = totalAttendu.add(safe(c.getMontant()));
+            boolean payee = c.getStatut() == ContributionFondsAide.Statut.PAYEE;
+            if (payee) {
+                totalCollecte = totalCollecte.add(safe(c.getMontant()));
+                nbPayes++;
+            }
+            lignes.add(new AideSuiviResponse.LigneContribution(
+                    c.getId(),
+                    c.getMembre().getId(),
+                    c.getMembre().getNom() + " " + c.getMembre().getPrenom(),
+                    c.getMembre().getMatricule(),
+                    c.getMontant(),
+                    c.getStatut(),
+                    c.getDatePaiement(),
+                    c.getMembre().getId().equals(beneficiaireId)));
+        }
+
+        BigDecimal soldeFonds = fondsAideRepository.findByTontineId(aide.getMembre().getTontine().getId())
+                .map(FondsAide::getSolde).orElse(BigDecimal.ZERO);
+
+        return new AideSuiviResponse(
+                aide.getId(),
+                aide.getRubrique() != null ? aide.getRubrique().getLibelle() : null,
+                aide.getMembre().getNom() + " " + aide.getMembre().getPrenom(),
+                aide.getMembre().getMatricule(),
+                aide.getStatut(),
+                aide.isPrefinance(),
+                aide.getMontantAccorde(),
+                aide.getPartParMembre(),
+                aide.getNbMembresBase(),
+                totalAttendu,
+                totalCollecte,
+                nbPayes,
+                contributions.size(),
+                soldeFonds,
+                lignes);
+    }
+
+    private static BigDecimal safe(BigDecimal v) {
+        return v != null ? v : BigDecimal.ZERO;
     }
 
     /**
