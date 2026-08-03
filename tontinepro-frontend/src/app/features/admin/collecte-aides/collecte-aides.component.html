@@ -1,0 +1,103 @@
+<div class="space-y-4">
+
+  <div>
+    <a routerLink="/admin" class="text-primary-600 text-sm mb-2 inline-block">← Administration</a>
+    <h1 class="text-xl font-bold text-gray-900">Collecte des aides</h1>
+    <p class="text-sm text-gray-500 mt-0.5">
+      Suivi des parts dues par chaque membre pour les aides en cours. Objectif de chaque colonne = montant total de l'aide.
+    </p>
+  </div>
+
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="flex justify-center py-12">
+      <svg class="animate-spin w-7 h-7 text-primary-600" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+      </svg>
+    </div>
+  }
+
+  @if (data(); as d) {
+
+    @if (nbAides() === 0) {
+      <div class="bg-white rounded-xl border border-gray-100 px-4 py-8 text-center text-sm text-gray-500">
+        Aucune aide en cours de collecte. Les aides activées et non entièrement collectées apparaîtront ici.
+      </div>
+    } @else {
+
+      <!-- Total général -->
+      <div class="flex justify-between items-center bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3">
+        <span class="text-sm font-semibold text-indigo-800">Collecté / objectif (toutes aides)</span>
+        <span class="text-base font-black text-indigo-700">{{ fcfa(d.totalCollecte) }} / {{ fcfa(d.totalObjectif) }}</span>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <p class="px-4 pt-3 text-[11px] text-gray-400">
+          Clique sur un montant dû pour l'encaisser (crédite le fonds). « ✓ » = déjà payé · « — » = pas de part.
+        </p>
+        <div class="overflow-x-auto p-3">
+          <table class="text-xs border-collapse">
+            <thead>
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold sticky left-0 bg-white z-10 border-b border-gray-200">Membre</th>
+                @for (a of d.aides; track a.aideId) {
+                  <th class="px-2 py-2 text-right font-semibold whitespace-nowrap border-b border-gray-200 align-bottom min-w-[110px]">
+                    <div class="text-gray-900">{{ a.libelle }}{{ a.variante ? ' — ' + a.variante : '' }}</div>
+                    <div class="text-[10px] font-normal text-gray-500">{{ a.beneficiaireNom }}</div>
+                    <div class="text-[10px] font-normal text-indigo-600">obj {{ fcfa(a.objectif) }}</div>
+                    @if (a.prefinance) { <div class="text-[9px] text-amber-600">préfinancée</div> }
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (m of d.membres; track m.membreId; let i = $index) {
+                <tr [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+                  <td class="px-3 py-2 font-medium text-gray-800 whitespace-nowrap sticky left-0 z-10"
+                      [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+                    {{ m.nomPrenom }}
+                  </td>
+                  @for (a of d.aides; track a.aideId) {
+                    <td class="px-2 py-1.5 text-right">
+                      @if (a.cellules[i].estBeneficiaire) {
+                        <span class="text-[10px] text-amber-700 bg-amber-50 rounded px-1.5 py-0.5">bénéf.</span>
+                      } @else if (!a.cellules[i].contributionId) {
+                        <span class="text-gray-300">—</span>
+                      } @else if (a.cellules[i].paye) {
+                        <span class="text-green-600 font-semibold">✓ {{ a.cellules[i].montant | number:'1.0-0' }}</span>
+                      } @else {
+                        <button (click)="payer(a.cellules[i].contributionId!)"
+                                [disabled]="paiementId() === a.cellules[i].contributionId"
+                                class="px-2 py-1 rounded bg-primary-50 text-primary-700 font-semibold
+                                       hover:bg-primary-100 disabled:opacity-50 whitespace-nowrap">
+                          {{ paiementId() === a.cellules[i].contributionId ? '…' : (a.cellules[i].montant | number:'1.0-0') }}
+                        </button>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="bg-gray-800 text-white">
+                <td class="px-3 py-2 font-bold sticky left-0 bg-gray-800 z-10">Collecté / objectif</td>
+                @for (a of d.aides; track a.aideId) {
+                  <td class="px-2 py-2 text-right whitespace-nowrap">
+                    <div class="font-bold">{{ a.collecte | number:'1.0-0' }} / {{ a.objectif | number:'1.0-0' }}</div>
+                    <div class="text-[10px] text-gray-300">{{ progression(a.collecte, a.objectif) }}%</div>
+                  </td>
+                }
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    }
+  }
+
+</div>

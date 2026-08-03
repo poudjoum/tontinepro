@@ -2,6 +2,7 @@ package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideSuiviResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.CollecteAidesResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SaisirAidePourMembreRequest;
@@ -26,7 +27,10 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -420,6 +424,81 @@ public class AideService {
 
     private static BigDecimal safe(BigDecimal v) {
         return v != null ? v : BigDecimal.ZERO;
+    }
+
+    /**
+     * Tableau de collecte des aides d'une tontine : matrice Membres × Aides actives.
+     * Colonnes = aides du barème activées (VALIDEE/PAYEE) encore en cours de collecte
+     * (au moins une part à payer). Objectif d'une colonne = montant total de l'aide.
+     */
+    @Transactional(readOnly = true)
+    public CollecteAidesResponse getCollecteAides(UUID tontineId) {
+        List<Membre> membres = membreRepository.findAllByTontineIdAndStatut(tontineId, Membre.Statut.ACTIF)
+                .stream()
+                .sorted(Comparator.comparing(m -> (m.getNom() + " " + m.getPrenom()),
+                        String.CASE_INSENSITIVE_ORDER))
+                .toList();
+        List<CollecteAidesResponse.MembreRow> rows = membres.stream()
+                .map(m -> new CollecteAidesResponse.MembreRow(
+                        m.getId(), m.getNom() + " " + m.getPrenom(), m.getMatricule()))
+                .toList();
+
+        List<Aide> aides = aideRepository.findAllByMembreTontineId(tontineId).stream()
+                .filter(a -> a.getRubrique() != null)
+                .filter(a -> a.getStatut() == Aide.Statut.VALIDEE || a.getStatut() == Aide.Statut.PAYEE)
+                .sorted(Comparator.comparing(Aide::getCreatedAt))
+                .toList();
+
+        List<CollecteAidesResponse.AideColonne> colonnes = new ArrayList<>();
+        BigDecimal totalObjectif = BigDecimal.ZERO;
+        BigDecimal totalCollecte = BigDecimal.ZERO;
+
+        for (Aide a : aides) {
+            List<ContributionFondsAide> contribs =
+                    contributionFondsAideRepository.findAllByAideIdOrderByCreatedAtAsc(a.getId());
+            boolean resteAPayer = contribs.stream()
+                    .anyMatch(c -> c.getStatut() == ContributionFondsAide.Statut.A_PAYER);
+            if (!resteAPayer) continue; // on n'affiche que les aides encore en cours de collecte
+
+            Map<UUID, ContributionFondsAide> parMembre = new HashMap<>();
+            BigDecimal collecte = BigDecimal.ZERO;
+            for (ContributionFondsAide c : contribs) {
+                parMembre.put(c.getMembre().getId(), c);
+                if (c.getStatut() == ContributionFondsAide.Statut.PAYEE) {
+                    collecte = collecte.add(safe(c.getMontant()));
+                }
+            }
+
+            UUID beneficiaireId = a.getMembre().getId();
+            List<CollecteAidesResponse.Cellule> cellules = new ArrayList<>(rows.size());
+            for (Membre m : membres) {
+                ContributionFondsAide c = parMembre.get(m.getId());
+                cellules.add(new CollecteAidesResponse.Cellule(
+                        m.getId(),
+                        c != null ? c.getId() : null,
+                        c != null ? c.getMontant() : null,
+                        c != null && c.getStatut() == ContributionFondsAide.Statut.PAYEE,
+                        m.getId().equals(beneficiaireId)));
+            }
+
+            BigDecimal objectif = safe(a.getMontantAccorde());
+            totalObjectif = totalObjectif.add(objectif);
+            totalCollecte = totalCollecte.add(collecte);
+
+            colonnes.add(new CollecteAidesResponse.AideColonne(
+                    a.getId(),
+                    a.getRubrique().getLibelle(),
+                    a.getVariante(),
+                    beneficiaireId,
+                    a.getMembre().getNom() + " " + a.getMembre().getPrenom(),
+                    a.getStatut().name(),
+                    a.isPrefinance(),
+                    objectif,
+                    collecte,
+                    cellules));
+        }
+
+        return new CollecteAidesResponse(rows, colonnes, totalObjectif, totalCollecte);
     }
 
     /** Valide/normalise la variante : requise si la rubrique en propose, sinon null. */

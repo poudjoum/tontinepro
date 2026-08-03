@@ -103,6 +103,40 @@ export interface AideSuiviResponse {
   contributions: LigneContributionAide[];
 }
 
+export interface MembreRowCollecte {
+  membreId: string;
+  nomPrenom: string;
+  matricule: string;
+}
+
+export interface CelluleCollecte {
+  membreId: string;
+  contributionId: string | null;
+  montant: number | null;
+  paye: boolean;
+  estBeneficiaire: boolean;
+}
+
+export interface AideColonneCollecte {
+  aideId: string;
+  libelle: string;
+  variante: string | null;
+  beneficiaireId: string;
+  beneficiaireNom: string;
+  statut: StatutAide;
+  prefinance: boolean;
+  objectif: number;
+  collecte: number;
+  cellules: CelluleCollecte[];
+}
+
+export interface CollecteAidesResponse {
+  membres: MembreRowCollecte[];
+  aides: AideColonneCollecte[];
+  totalObjectif: number;
+  totalCollecte: number;
+}
+
 export interface AideResponse {
   id: string;
   typeAide: TypeAide;

@@ -150,5 +150,12 @@ export class AdminComponent {
       icon: '📋',
       color: 'bg-rose-50',
     },
+    {
+      title: 'Collecte des aides',
+      desc: 'Matrice membres × aides en cours de collecte',
+      route: '/admin/collecte-aides',
+      icon: '🧮',
+      color: 'bg-emerald-50',
+    },
   ];
 }

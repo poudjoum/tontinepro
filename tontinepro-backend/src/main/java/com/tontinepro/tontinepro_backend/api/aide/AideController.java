@@ -2,6 +2,7 @@ package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.AideSuiviResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.CollecteAidesResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SaisirAidePourMembreRequest;
@@ -140,5 +141,12 @@ public class AideController {
     @Operation(summary = "Suivi d'une aide activée : contributions, avancement de la collecte, solde du fonds")
     public AideSuiviResponse suivi(@PathVariable UUID id) {
         return aideService.getSuivi(id);
+    }
+
+    @GetMapping("/collecte/{tontineId}")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @Operation(summary = "Tableau de collecte des aides (matrice membres × aides actives)")
+    public CollecteAidesResponse collecte(@PathVariable UUID tontineId) {
+        return aideService.getCollecteAides(tontineId);
     }
 }
