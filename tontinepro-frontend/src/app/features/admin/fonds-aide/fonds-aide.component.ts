@@ -68,5 +68,23 @@ export class FondsAideComponent implements OnInit {
     return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n) + ' FCFA';
   }
 
-  imprimer(): void { window.print(); }
+  /** Impression en paysage (matrice large) sans impacter les autres rapports en portrait. */
+  imprimer(): void {
+    const STYLE_ID = 'print-landscape-fonds-aide';
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.media = 'print';
+    style.textContent = '@page { size: A4 landscape; margin: 10mm; }';
+    document.head.appendChild(style);
+
+    const cleanup = () => {
+      document.getElementById(STYLE_ID)?.remove();
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    // Filet de sécurité si l'événement afterprint n'est pas émis (certains navigateurs).
+    setTimeout(cleanup, 1000);
+
+    window.print();
+  }
 }
