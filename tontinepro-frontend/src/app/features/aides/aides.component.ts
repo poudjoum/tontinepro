@@ -1,8 +1,12 @@
 import { Component, OnInit, signal, inject, effect, untracked } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { AideService } from '../../core/services/aide.service';
+import { RubriqueAideService } from '../../core/services/rubrique-aide.service';
 import { TontineContextService } from '../../core/services/tontine-context.service';
-import { AideResponse, TypeAide, TYPE_AIDE_LABELS, TYPES_AIDE, StatutAide } from '../../core/models/aide.model';
+import {
+  AideResponse, TYPE_AIDE_LABELS, TYPES_AIDE, StatutAide,
+  RubriqueAideResponse, SimulationAideResponse,
+} from '../../core/models/aide.model';
 
 const STATUT_BADGE: Record<string, string> = {
   SOUMISE: 'badge-warning', VALIDEE: 'badge-info', REJETEE: 'badge-danger', PAYEE: 'badge-success',
@@ -18,6 +22,7 @@ const STATUT_LABEL: Record<string, string> = {
 export class AidesComponent implements OnInit {
   auth = inject(AuthService);
   private svc = inject(AideService);
+  private rubriqueSvc = inject(RubriqueAideService);
   private ctx = inject(TontineContextService);
 
   constructor() {
@@ -32,11 +37,13 @@ export class AidesComponent implements OnInit {
   submitting = signal(false);
   error      = signal('');
 
-  // Membre — formulaire demande
+  // Membre — formulaire demande (barème)
   showForm   = signal(false);
-  typeAide   = signal<TypeAide>('MALADIE');
-  montant    = signal(0);
   motif      = signal('');
+  rubriques  = signal<RubriqueAideResponse[]>([]);
+  rubriqueId = signal<string>('');
+  simulation = signal<SimulationAideResponse | null>(null);
+  simLoading = signal(false);
 
   // Admin — filtres + actions
   filtre     = signal<StatutAide | ''>('');
@@ -52,23 +59,49 @@ export class AidesComponent implements OnInit {
 
   charger(): void {
     this.loading.set(true);
+    const tontineId = this.ctx.tontineCouranteId() ?? undefined;
     const obs = this.auth.isAdmin()
       ? this.svc.getAll(this.filtre() || undefined)
-      : this.svc.getMesDemandes(this.ctx.tontineCouranteId() ?? undefined);
+      : this.svc.getMesDemandes(tontineId);
     obs.subscribe({
       next:  data => { this.aides.set(data); this.loading.set(false); },
       error: e    => { this.error.set(e.message ?? 'Erreur'); this.loading.set(false); },
     });
+    // Barème des rubriques actives (pour la demande membre)
+    if (!this.auth.isAdmin() && tontineId) {
+      this.rubriqueSvc.lister(tontineId, true).subscribe({
+        next: list => this.rubriques.set(list),
+        error: () => this.rubriques.set([]),
+      });
+    }
   }
 
   filtrer(f: StatutAide | ''): void { this.filtre.set(f); this.charger(); }
 
-  soumettre(): void {
-    if (!this.motif().trim() || this.montant() <= 0 || this.submitting()) return;
+  selectionnerRubrique(id: string): void {
+    this.rubriqueId.set(id);
+    this.simulation.set(null);
+    if (!id) return;
+    this.simLoading.set(true);
+    this.rubriqueSvc.simuler(id).subscribe({
+      next: s => { this.simulation.set(s); this.simLoading.set(false); },
+      error: () => { this.simLoading.set(false); this.error.set('Calcul du montant impossible.'); },
+    });
+  }
+
+  soumettreRubrique(): void {
+    if (!this.rubriqueId() || !this.motif().trim() || this.submitting()) return;
     this.submitting.set(true);
-    this.svc.soumettre(this.typeAide(), this.montant(), this.motif()).subscribe({
-      next: () => { this.submitting.set(false); this.showForm.set(false); this.montant.set(0); this.motif.set(''); this.charger(); },
-      error: e => { this.error.set(e.message ?? 'Erreur'); this.submitting.set(false); },
+    this.svc.soumettreDepuisRubrique(this.rubriqueId(), this.motif()).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        this.showForm.set(false);
+        this.rubriqueId.set('');
+        this.simulation.set(null);
+        this.motif.set('');
+        this.charger();
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
     });
   }
 

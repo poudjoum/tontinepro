@@ -33,12 +33,38 @@ public class AideService {
     private final FondsAideRepository fondsAideRepository;
     private final MouvementFondsAideRepository mouvementFondsAideRepository;
     private final ContributionFondsAideRepository contributionFondsAideRepository;
+    private final RubriqueAideRepository rubriqueAideRepository;
+    private final RubriqueAideService rubriqueAideService;
     private final NotificationService notificationService;
 
     @Transactional
     public AideResponse soumettreDemande(String email, DemandeAideRequest request) {
-        Membre membre = membreRepository.findByUserEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
+        Aide.TypeAide typeAide;
+        BigDecimal montant;
+        RubriqueAide rubrique = null;
+        Membre membre;
+
+        if (request.rubriqueId() != null) {
+            // Demande issue du barème : type + montant déduits de la rubrique
+            rubrique = rubriqueAideRepository.findById(request.rubriqueId())
+                    .orElseThrow(() -> new IllegalArgumentException("Rubrique d'aide introuvable"));
+            if (!rubrique.isActif()) {
+                throw new IllegalArgumentException("Cette rubrique d'aide n'est pas active");
+            }
+            membre = membreRepository.findByUserEmailAndTontineId(email, rubrique.getTontine().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Vous n'êtes pas membre de cette tontine"));
+            typeAide = rubrique.getTypeAide();
+            montant  = rubriqueAideService.simuler(rubrique.getId()).total();
+        } else {
+            // Demande libre : type + montant fournis directement
+            if (request.typeAide() == null || request.montantDemande() == null) {
+                throw new IllegalArgumentException("Le type et le montant sont obligatoires pour une aide libre");
+            }
+            membre = membreRepository.findByUserEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
+            typeAide = request.typeAide();
+            montant  = request.montantDemande();
+        }
 
         if (membre.getStatut() != Membre.Statut.ACTIF) {
             throw new IllegalArgumentException("Seuls les membres actifs peuvent soumettre une demande d'aide");
@@ -46,8 +72,9 @@ public class AideService {
 
         Aide aide = Aide.builder()
                 .membre(membre)
-                .typeAide(request.typeAide())
-                .montantDemande(request.montantDemande())
+                .rubrique(rubrique)
+                .typeAide(typeAide)
+                .montantDemande(montant)
                 .motif(request.motif())
                 .justificatifUrl(request.justificatifUrl())
                 .build();
@@ -59,7 +86,7 @@ public class AideService {
                 "Nouvelle demande d'aide",
                 "Le membre %s %s a soumis une demande d'aide (%s) de %s FCFA."
                         .formatted(membre.getNom(), membre.getPrenom(),
-                                request.typeAide(), request.montantDemande()),
+                                typeAide, montant),
                 response.id(), "AIDE");
 
         return response;

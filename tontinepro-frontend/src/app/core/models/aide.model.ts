@@ -48,9 +48,23 @@ export interface RubriqueAideRequest {
   description?: string | null;
 }
 
+export interface SimulationAideResponse {
+  rubriqueId: string;
+  libelle: string;
+  typeAide: TypeAide;
+  modeCalcul: ModeCalculAide;
+  montantReference: number;
+  nbMembresActifs: number;
+  partParMembre: number;
+  total: number;
+  prefinancable: boolean;
+}
+
 export interface AideResponse {
   id: string;
   typeAide: TypeAide;
+  rubriqueId: string | null;
+  rubriqueLibelle: string | null;
   montantDemande: number;
   montantAccorde: number | null;
   motif: string;

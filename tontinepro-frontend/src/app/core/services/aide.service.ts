@@ -27,6 +27,12 @@ export class AideService {
     });
   }
 
+  soumettreDepuisRubrique(rubriqueId: string, motif: string, justificatifUrl?: string) {
+    return this.http.post<AideResponse>(`${this.api}/demandes`, {
+      rubriqueId, motif, justificatifUrl,
+    });
+  }
+
   valider(id: string, montantAccorde: number) {
     return this.http.patch<AideResponse>(`${this.api}/demandes/${id}/valider`, { montantAccorde });
   }

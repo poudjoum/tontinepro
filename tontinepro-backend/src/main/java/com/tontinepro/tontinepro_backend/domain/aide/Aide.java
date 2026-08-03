@@ -31,6 +31,11 @@ public class Aide {
     @Column(name = "type_aide", nullable = false, length = 50)
     private TypeAide typeAide;
 
+    /** Rubrique du barème dont est issue la demande (null pour une aide libre). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rubrique_id")
+    private RubriqueAide rubrique;
+
     @Column(name = "montant_demande", nullable = false, precision = 15, scale = 2)
     private BigDecimal montantDemande;
 

@@ -2,15 +2,20 @@ package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.RubriqueAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RubriqueAideResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.SimulationAideResponse;
 import com.tontinepro.tontinepro_backend.domain.aide.Aide;
 import com.tontinepro.tontinepro_backend.domain.aide.RubriqueAide;
 import com.tontinepro.tontinepro_backend.domain.aide.RubriqueAideRepository;
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
+import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +25,7 @@ public class RubriqueAideService {
 
     private final RubriqueAideRepository rubriqueRepository;
     private final TontineRepository tontineRepository;
+    private final MembreRepository membreRepository;
 
     @Transactional(readOnly = true)
     public List<RubriqueAideResponse> lister(UUID tontineId, boolean actifSeulement) {
@@ -70,5 +76,35 @@ public class RubriqueAideService {
             throw new IllegalArgumentException("Rubrique d'aide introuvable : " + id);
         }
         rubriqueRepository.deleteById(id);
+    }
+
+    /** Calcule part par membre et total pour une rubrique, avec le N courant de sa tontine. */
+    @Transactional(readOnly = true)
+    public SimulationAideResponse simuler(UUID rubriqueId) {
+        RubriqueAide rubrique = rubriqueRepository.findById(rubriqueId)
+                .orElseThrow(() -> new IllegalArgumentException("Rubrique d'aide introuvable : " + rubriqueId));
+        int n = membreRepository.findAllByTontineIdAndStatut(
+                rubrique.getTontine().getId(), Membre.Statut.ACTIF).size();
+        return calculer(rubrique, n);
+    }
+
+    /**
+     * Calcul pur (réutilisé à l'activation) : N = membres actifs (bénéficiaire inclus).
+     *   PAR_PERSONNE : part = montantReference ; total = part × N
+     *   FORFAITAIRE  : total = montantReference ; part = total ÷ N (arrondi 2 déc.)
+     */
+    public static SimulationAideResponse calculer(RubriqueAide r, int n) {
+        BigDecimal ref = r.getMontantReference();
+        BigDecimal part, total;
+        if (r.getModeCalcul() == RubriqueAide.ModeCalcul.PAR_PERSONNE) {
+            part = ref;
+            total = ref.multiply(BigDecimal.valueOf(n));
+        } else {
+            total = ref;
+            part = n > 0 ? ref.divide(BigDecimal.valueOf(n), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        }
+        return new SimulationAideResponse(
+                r.getId(), r.getLibelle(), r.getTypeAide(), r.getModeCalcul(),
+                ref, n, part, total, r.isPrefinancable());
     }
 }

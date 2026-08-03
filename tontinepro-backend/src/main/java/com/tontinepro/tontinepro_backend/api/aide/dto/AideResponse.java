@@ -10,6 +10,8 @@ public record AideResponse(
 
         UUID id,
         Aide.TypeAide typeAide,
+        UUID rubriqueId,
+        String rubriqueLibelle,
         BigDecimal montantDemande,
         BigDecimal montantAccorde,
         String motif,
@@ -30,6 +32,8 @@ public record AideResponse(
         return new AideResponse(
                 a.getId(),
                 a.getTypeAide(),
+                a.getRubrique() != null ? a.getRubrique().getId() : null,
+                a.getRubrique() != null ? a.getRubrique().getLibelle() : null,
                 a.getMontantDemande(),
                 a.getMontantAccorde(),
                 a.getMotif(),

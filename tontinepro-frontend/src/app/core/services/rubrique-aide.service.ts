@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { RubriqueAideRequest, RubriqueAideResponse } from '../models/aide.model';
+import { RubriqueAideRequest, RubriqueAideResponse, SimulationAideResponse } from '../models/aide.model';
 
 @Injectable({ providedIn: 'root' })
 export class RubriqueAideService {
@@ -23,5 +23,9 @@ export class RubriqueAideService {
 
   supprimer(id: string) {
     return this.http.delete<void>(`${this.api}/${id}`);
+  }
+
+  simuler(rubriqueId: string) {
+    return this.http.get<SimulationAideResponse>(`${this.api}/simulation/${rubriqueId}`);
   }
 }

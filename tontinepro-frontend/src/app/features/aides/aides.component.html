@@ -25,40 +25,78 @@
         </button>
       </div>
 
-      <!-- Formulaire demande -->
+      <!-- Formulaire demande (barème du règlement intérieur) -->
       @if (showForm()) {
         <div class="card space-y-4">
           <h2 class="font-semibold text-gray-900">Demande d'aide mutuelle</h2>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">Type d'aide *</label>
-            <select [value]="typeAide()" (change)="typeAide.set($any($event.target).value)"
-                    class="input-field">
-              @for (t of TYPES_AIDE; track t) {
-                <option [value]="t">{{ TYPE_AIDE_LABELS[t] }}</option>
-              }
-            </select>
-          </div>
+          @if (rubriques().length === 0) {
+            <p class="text-sm text-gray-500 bg-gray-50 rounded-lg px-3 py-3">
+              Aucune rubrique d'aide n'est configurée pour cette tontine. Contactez le bureau
+              pour définir le barème des aides.
+            </p>
+          } @else {
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Type d'aide *</label>
+              <select [value]="rubriqueId()" (change)="selectionnerRubrique($any($event.target).value)"
+                      class="input-field">
+                <option value="">— Choisir une aide —</option>
+                @for (r of rubriques(); track r.id) {
+                  <option [value]="r.id">{{ r.libelle }}</option>
+                }
+              </select>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">Montant demandé (FCFA) *</label>
-            <input type="number" min="1" [value]="montant()"
-                   (input)="montant.set(+$any($event.target).value)"
-                   placeholder="50 000" class="input-field text-lg font-semibold">
-          </div>
+            @if (simLoading()) {
+              <p class="text-sm text-gray-400">Calcul du montant…</p>
+            }
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">Motif *</label>
-            <textarea rows="3" [value]="motif()"
-                      (input)="motif.set($any($event.target).value)"
-                      placeholder="Décrivez votre situation et la raison de cette demande…"
-                      class="input-field resize-none"></textarea>
-          </div>
+            @if (simulation(); as s) {
+              <div class="bg-primary-50 border border-primary-100 rounded-xl p-3 space-y-1.5">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">Mode</span>
+                  <span class="font-medium text-gray-800">
+                    {{ s.modeCalcul === 'PAR_PERSONNE' ? 'Par personne' : 'Forfaitaire' }}
+                  </span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">
+                    {{ s.modeCalcul === 'PAR_PERSONNE' ? 'Montant par membre' : 'Enveloppe totale' }}
+                  </span>
+                  <span class="font-medium text-gray-800">{{ fcfa(s.montantReference) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">Membres actifs</span>
+                  <span class="font-medium text-gray-800">{{ s.nbMembresActifs }}</span>
+                </div>
+                <div class="flex justify-between text-sm border-t border-primary-100 pt-1.5">
+                  <span class="text-gray-500">Part par membre</span>
+                  <span class="font-semibold text-gray-900">{{ fcfa(s.partParMembre) }}</span>
+                </div>
+                <div class="flex justify-between items-center bg-white rounded-lg px-3 py-2 mt-1">
+                  <span class="text-sm font-semibold text-primary-800">Total reçu</span>
+                  <span class="text-lg font-black text-primary-700">{{ fcfa(s.total) }}</span>
+                </div>
+                @if (s.prefinancable) {
+                  <p class="text-[11px] text-indigo-600 pt-0.5">Aide préfinançable par la trésorerie.</p>
+                }
+              </div>
+            }
 
-          <button (click)="soumettre()" [disabled]="montant() <= 0 || !motif().trim() || submitting()"
-                  class="btn-primary">
-            {{ submitting() ? 'Envoi…' : 'Soumettre la demande' }}
-          </button>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Motif *</label>
+              <textarea rows="3" [value]="motif()"
+                        (input)="motif.set($any($event.target).value)"
+                        placeholder="Décrivez votre situation et la raison de cette demande…"
+                        class="input-field resize-none"></textarea>
+            </div>
+
+            <button (click)="soumettreRubrique()"
+                    [disabled]="!rubriqueId() || !motif().trim() || submitting()"
+                    class="btn-primary">
+              {{ submitting() ? 'Envoi…' : 'Soumettre la demande' }}
+            </button>
+          }
         </div>
       }
 
@@ -79,7 +117,7 @@
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <p class="font-semibold text-gray-900">{{ TYPE_AIDE_LABELS[a.typeAide] }}</p>
+                <p class="font-semibold text-gray-900">{{ a.rubriqueLibelle ?? TYPE_AIDE_LABELS[a.typeAide] }}</p>
                 <span [class]="statutBadge(a.statut)">{{ statutLabel(a.statut) }}</span>
               </div>
               <p class="text-sm text-gray-500 mt-0.5 line-clamp-2">{{ a.motif }}</p>
@@ -139,7 +177,7 @@
                 <span class="badge-gray text-xs">{{ a.membreMatricule }}</span>
               </div>
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-xs text-gray-500 font-medium">{{ TYPE_AIDE_LABELS[a.typeAide] }}</span>
+                <span class="text-xs text-gray-500 font-medium">{{ a.rubriqueLibelle ?? TYPE_AIDE_LABELS[a.typeAide] }}</span>
                 <span [class]="statutBadge(a.statut)">{{ statutLabel(a.statut) }}</span>
               </div>
               <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ a.motif }}</p>

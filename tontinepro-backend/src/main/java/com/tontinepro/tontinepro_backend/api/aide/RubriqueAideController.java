@@ -2,6 +2,7 @@ package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.RubriqueAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RubriqueAideResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.SimulationAideResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -28,6 +29,12 @@ public class RubriqueAideController {
             @RequestParam(required = false, defaultValue = "false") boolean actifSeulement
     ) {
         return rubriqueAideService.lister(tontineId, actifSeulement);
+    }
+
+    @GetMapping("/simulation/{rubriqueId}")
+    @Operation(summary = "Simule part par membre et total d'une rubrique (N = membres actifs courant)")
+    public SimulationAideResponse simuler(@PathVariable UUID rubriqueId) {
+        return rubriqueAideService.simuler(rubriqueId);
     }
 
     @PostMapping("/{tontineId}")
