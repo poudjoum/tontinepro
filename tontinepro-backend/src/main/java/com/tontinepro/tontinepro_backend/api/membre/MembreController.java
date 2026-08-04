@@ -87,9 +87,10 @@ public class MembreController {
     @Operation(summary = "Modifier la fonction d'un membre dans le bureau")
     public MembreResponse updateFonction(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateMembreFonctionRequest request
+            @Valid @RequestBody UpdateMembreFonctionRequest request,
+            @AuthenticationPrincipal UserDetails principal
     ) {
-        return membreService.updateFonction(id, request);
+        return membreService.updateFonction(id, request, principal.getUsername());
     }
 
     @DeleteMapping("/tontine/{tontineId}/reinitialiser")

@@ -139,25 +139,98 @@ public class MembreService {
     }
 
     @Transactional
-    public MembreResponse updateFonction(UUID id, UpdateMembreFonctionRequest request) {
+    public MembreResponse updateFonction(UUID id, UpdateMembreFonctionRequest request, String auteurEmail) {
         Membre membre = membreRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Membre introuvable : " + id));
 
-        membre.setFonction(request.fonction());
+        verifierQueLAuteurNeSeRetirePas(membre, request.fonction(), auteurEmail);
+        verifierQueLeBureauResteAdministrable(membre, request.fonction());
 
-        // Synchroniser User.Role avec la nouvelle fonction du bureau
-        User.Role newRole = switch (request.fonction()) {
-            case PRESIDENT  -> User.Role.ADMIN;
-            case SECRETAIRE -> User.Role.SECRETAIRE;
-            default         -> User.Role.MEMBRE;
-        };
+        membre.setFonction(request.fonction());
+        membreRepository.save(membre);
+
+        synchroniserRole(membre.getUser());
+        return MembreResponse.from(membre);
+    }
+
+    /**
+     * Personne ne se retire à soi-même sa fonction dirigeante. Le rôle applicatif
+     * en découle, et c'est ce rôle qui autorise à modifier les fonctions : l'auteur
+     * du changement perdrait donc, du même geste, le droit de le défaire. Qu'un
+     * autre dirigeant existe ne suffit pas — encore faudrait-il disposer de son
+     * compte. Un SUPER_ADMIN n'est pas concerné : son rôle ne dépend d'aucune
+     * fonction et ne lui sera pas retiré.
+     */
+    private void verifierQueLAuteurNeSeRetirePas(Membre membre, Membre.Fonction nouvelle, String auteurEmail) {
         User user = membre.getUser();
-        if (user.getRole() != newRole) {
-            user.setRole(newRole);
+        if (user == null || user.getRole() == User.Role.SUPER_ADMIN) return;
+        if (!user.getEmail().equalsIgnoreCase(auteurEmail)) return;
+        if (estDirigeante(membre.getFonction()) && !estDirigeante(nouvelle)) {
+            throw new IllegalArgumentException(
+                    "Vous ne pouvez pas vous retirer vous-même votre fonction de "
+                    + "Président ou Secrétaire : vous perdriez l'accès à l'administration "
+                    + "sans pouvoir revenir en arrière. Demandez-le à un autre dirigeant.");
+        }
+    }
+
+    /**
+     * Une tontine doit toujours conserver au moins un Président ou un Secrétaire
+     * actif : ce sont les seules fonctions qui donnent le rôle applicatif
+     * permettant de modifier les fonctions du bureau. Lui retirer son dernier
+     * dirigeant la rendrait définitivement inadministrable — plus personne ne
+     * pourrait défaire le changement.
+     */
+    private void verifierQueLeBureauResteAdministrable(Membre membre, Membre.Fonction nouvelle) {
+        if (estDirigeante(nouvelle) || !estDirigeante(membre.getFonction())) {
+            return; // on n'enlève pas de dirigeant, rien à vérifier
+        }
+        boolean autreDirigeant = membreRepository
+                .findAllByTontineIdAndStatut(membre.getTontine().getId(), Membre.Statut.ACTIF)
+                .stream()
+                .anyMatch(m -> !m.getId().equals(membre.getId()) && estDirigeante(m.getFonction()));
+        if (!autreDirigeant) {
+            throw new IllegalArgumentException(
+                    "Impossible : la tontine n'aurait plus aucun Président ni Secrétaire pour "
+                    + "l'administrer. Désignez d'abord un autre dirigeant.");
+        }
+    }
+
+    private static boolean estDirigeante(Membre.Fonction f) {
+        return f == Membre.Fonction.PRESIDENT || f == Membre.Fonction.SECRETAIRE;
+    }
+
+    /**
+     * Recalcule le rôle applicatif d'un compte à partir de <em>toutes</em> ses
+     * adhésions.
+     *
+     * <p>Le rôle est global au compte alors que la fonction est propre à une
+     * tontine : le déduire de la seule tontine qu'on vient de modifier faisait
+     * perdre à un président de la tontine A son rôle ADMIN parce qu'on l'avait
+     * nommé trésorier dans la tontine B. On retient donc la fonction la plus
+     * élevée détenue, toutes tontines confondues.</p>
+     *
+     * <p>Un SUPER_ADMIN n'est jamais touché : son rôle est celui de l'opérateur
+     * de la plateforme, il ne découle d'aucune adhésion. L'ancienne version le
+     * rétrogradait en MEMBRE dès qu'on lui attribuait une fonction dans une
+     * tontine.</p>
+     */
+    private void synchroniserRole(User user) {
+        if (user.getRole() == User.Role.SUPER_ADMIN) return;
+
+        List<Membre> adhesions = membreRepository.findAllByUserEmail(user.getEmail());
+        boolean president  = adhesions.stream()
+                .anyMatch(m -> m.getFonction() == Membre.Fonction.PRESIDENT);
+        boolean secretaire = adhesions.stream()
+                .anyMatch(m -> m.getFonction() == Membre.Fonction.SECRETAIRE);
+
+        User.Role role = president ? User.Role.ADMIN
+                : secretaire ? User.Role.SECRETAIRE
+                : User.Role.MEMBRE;
+
+        if (user.getRole() != role) {
+            user.setRole(role);
             userRepository.save(user);
         }
-
-        return MembreResponse.from(membreRepository.save(membre));
     }
 
     @Transactional

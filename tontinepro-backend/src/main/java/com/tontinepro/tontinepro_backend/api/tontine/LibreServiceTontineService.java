@@ -105,9 +105,17 @@ public class LibreServiceTontineService {
             throw new IllegalArgumentException("Une tontine avec ce nom existe déjà");
         }
 
-        // Promouvoir en Secrétaire
-        user.setRole(User.Role.SECRETAIRE);
-        userRepository.save(user);
+        // Promouvoir en Secrétaire, sans jamais rétrograder : le rôle est global
+        // au compte alors que la fonction créée ici ne vaut que pour cette
+        // tontine. Écraser le rôle faisait perdre ADMIN au président d'une autre
+        // tontine, et SUPER_ADMIN à l'opérateur de la plateforme, pour le seul
+        // fait de créer une tontine.
+        if (user.getRole() != User.Role.SUPER_ADMIN
+                && user.getRole() != User.Role.ADMIN
+                && user.getRole() != User.Role.SECRETAIRE) {
+            user.setRole(User.Role.SECRETAIRE);
+            userRepository.save(user);
+        }
 
         Tontine tontine = tontineRepository.save(buildTontine(
                 request.nom(), request.description(),
