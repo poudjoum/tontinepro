@@ -73,7 +73,7 @@ public class AbsenceService {
 
             notificationService.notifier(membre.getUser(),
                     Notification.Type.SANCTION_INFLIGEE,
-                    "Sanction pour absence",
+                    "Sanction pour absence — réunion du " + request.dateReunion(),
                     "Une sanction de %s FCFA a été enregistrée pour absence non justifiée à la réunion du %s."
                             .formatted(montantAmende, request.dateReunion()),
                     sanction.getId(), "SANCTION");
@@ -141,7 +141,7 @@ public class AbsenceService {
 
                 notificationService.notifier(membre.getUser(),
                         Notification.Type.SANCTION_INFLIGEE,
-                        "Sanction pour absence",
+                        "Sanction pour absence — réunion du " + request.dateReunion(),
                         "Une sanction de %s FCFA a été enregistrée pour absence à la réunion du %s."
                                 .formatted(montantAmende, request.dateReunion()),
                         sanction.getId(), "SANCTION");

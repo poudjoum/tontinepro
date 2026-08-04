@@ -135,7 +135,8 @@ public class CotisationService {
 
         notificationService.notifier(cotisation.getMembre().getUser(),
                 Notification.Type.COTISATION_PAYEE,
-                "Cotisation enregistrée",
+                "Cotisation enregistrée — %02d/%d"
+                        .formatted(cotisation.getMois(), cotisation.getAnnee()),
                 "Votre cotisation de %02d/%d (%s FCFA) a bien été enregistrée."
                         .formatted(cotisation.getMois(), cotisation.getAnnee(), cotisation.getMontant()),
                 cotisation.getId(), "COTISATION");
@@ -172,7 +173,8 @@ public class CotisationService {
 
             notificationService.notifier(cotisation.getMembre().getUser(),
                     Notification.Type.SANCTION_INFLIGEE,
-                    "Sanction pour retard de cotisation",
+                    "Sanction pour retard de cotisation — %02d/%d"
+                            .formatted(cotisation.getMois(), cotisation.getAnnee()),
                     "Une sanction de %s FCFA a été enregistrée pour retard de cotisation %02d/%d."
                             .formatted(penalite, cotisation.getMois(), cotisation.getAnnee()),
                     sanction.getId(), "SANCTION");
@@ -180,7 +182,8 @@ public class CotisationService {
 
         notificationService.notifier(cotisation.getMembre().getUser(),
                 Notification.Type.COTISATION_EN_RETARD,
-                "Cotisation en retard",
+                "Cotisation en retard — %02d/%d"
+                        .formatted(cotisation.getMois(), cotisation.getAnnee()),
                 "Votre cotisation de %02d/%d est en retard. Veuillez régulariser votre situation."
                         .formatted(cotisation.getMois(), cotisation.getAnnee()),
                 cotisation.getId(), "COTISATION");

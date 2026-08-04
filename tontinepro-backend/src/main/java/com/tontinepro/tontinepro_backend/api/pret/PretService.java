@@ -125,14 +125,16 @@ public class PretService {
             pretRepository.save(pret);
             notificationService.notifier(pret.getMembre().getUser(),
                     Notification.Type.PRET_SOLDE,
-                    "Prêt intégralement remboursé",
+                    "Prêt intégralement remboursé — %s FCFA"
+                            .formatted(pret.getMontantPrincipal()),
                     "Félicitations ! Votre prêt de %s FCFA est entièrement remboursé."
                             .formatted(pret.getMontantPrincipal()),
                     pret.getId(), "PRET");
         } else {
             notificationService.notifier(pret.getMembre().getUser(),
                     Notification.Type.PRET_REMBOURSE,
-                    "Remboursement enregistré",
+                    "Remboursement de prêt enregistré — échéance %d"
+                            .formatted(echeance.getNumeroEcheance()),
                     "Votre remboursement de l'échéance %d a bien été enregistré."
                             .formatted(echeance.getNumeroEcheance()),
                     pret.getId(), "PRET");
@@ -183,7 +185,8 @@ public class PretService {
 
         notificationService.notifier(pret.getMembre().getUser(),
                 Notification.Type.PRET_APPROUVE,
-                "Prêt approuvé",
+                "Prêt approuvé — %s FCFA sur %s mois"
+                        .formatted(pret.getMontantPrincipal(), pret.getDureeMois()),
                 "Votre demande de prêt de %s FCFA sur %s mois a été approuvée et décaissée."
                         .formatted(pret.getMontantPrincipal(), pret.getDureeMois()),
                 pret.getId(), "PRET");

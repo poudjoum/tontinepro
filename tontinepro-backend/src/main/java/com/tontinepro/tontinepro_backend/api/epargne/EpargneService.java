@@ -108,7 +108,7 @@ public class EpargneService {
 
         notificationService.notifier(compte.getMembre().getUser(),
                 Notification.Type.EPARGNE_DEPOT,
-                "Dépôt effectué",
+                "Dépôt sur votre épargne — %s FCFA".formatted(request.montant()),
                 "Dépôt de %s FCFA enregistré. Nouveau solde : %s FCFA."
                         .formatted(request.montant(), compte.getSolde()),
                 compte.getId(), "EPARGNE");
@@ -144,7 +144,7 @@ public class EpargneService {
 
         notificationService.notifier(compte.getMembre().getUser(),
                 Notification.Type.EPARGNE_RETRAIT,
-                "Retrait effectué",
+                "Retrait sur votre épargne — %s FCFA".formatted(request.montant()),
                 "Retrait de %s FCFA effectué. Nouveau solde : %s FCFA."
                         .formatted(request.montant(), compte.getSolde()),
                 compte.getId(), "EPARGNE");
@@ -191,7 +191,7 @@ public class EpargneService {
 
             notificationService.notifier(compte.getMembre().getUser(),
                     Notification.Type.EPARGNE_INTERETS,
-                    "Intérêts crédités",
+                    "Intérêts crédités sur votre épargne — %s FCFA".formatted(interet),
                     "Intérêts de %s FCFA (%s%%) crédités. Nouveau solde : %s FCFA."
                             .formatted(interet, tontine.getTauxInteretEpargne(), compte.getSolde()),
                     compte.getId(), "EPARGNE");
