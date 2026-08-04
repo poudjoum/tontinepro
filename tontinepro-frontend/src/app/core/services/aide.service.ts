@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { AideResponse, AideSuiviResponse, CollecteAidesResponse, TypeAide } from '../models/aide.model';
+import { AideResponse, AideSuiviResponse, CollecteAidesResponse, SuppressionAideResponse, TypeAide } from '../models/aide.model';
 
 @Injectable({ providedIn: 'root' })
 export class AideService {
@@ -57,6 +57,11 @@ export class AideService {
 
   marquerPayee(id: string) {
     return this.http.patch<AideResponse>(`${this.api}/demandes/${id}/payer`, {});
+  }
+
+  /** Suppression définitive par le Président — annule aussi les effets sur le fonds. */
+  supprimer(id: string) {
+    return this.http.delete<SuppressionAideResponse>(`${this.api}/demandes/${id}`);
   }
 
   activer(id: string, prefinance: boolean) {

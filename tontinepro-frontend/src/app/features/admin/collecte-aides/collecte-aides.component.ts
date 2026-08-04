@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, computed, inject, effect, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { AideService } from '../../../core/services/aide.service';
 import { FondsAideService } from '../../../core/services/fonds-aide.service';
 import { TontineContextService } from '../../../core/services/tontine-context.service';
@@ -8,7 +8,7 @@ import { CollecteAidesResponse } from '../../../core/models/aide.model';
 
 @Component({
   selector: 'app-collecte-aides',
-  imports: [RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, DatePipe],
   templateUrl: './collecte-aides.component.html',
 })
 export class CollecteAidesComponent implements OnInit {

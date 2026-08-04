@@ -43,6 +43,10 @@ export class AidesComponent implements OnInit {
   loading    = signal(true);
   submitting = signal(false);
   error      = signal('');
+  success    = signal('');
+
+  /** Aide dont la suppression est en attente de confirmation. */
+  suppressionId = signal<string | null>(null);
 
   // Membre — formulaire demande (barème)
   showForm   = signal(false);
@@ -253,6 +257,31 @@ export class AidesComponent implements OnInit {
     this.svc.verser(id).subscribe({
       next: u => { this.aides.update(l => l.map(a => a.id === id ? u : a)); this.submitting.set(false); },
       error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
+    });
+  }
+
+  /**
+   * Suppression définitive par le Président. Le backend annule au passage les
+   * effets de l'aide sur le fonds ; on affiche le compte rendu qu'il renvoie.
+   */
+  confirmerSuppression(id: string): void {
+    this.submitting.set(true);
+    this.svc.supprimer(id).subscribe({
+      next: r => {
+        this.aides.update(l => l.filter(a => a.id !== id));
+        this.suppressionId.set(null);
+        this.submitting.set(false);
+        const collecte = r.montantCollecteAnnule ?? 0;
+        const decaisse = r.montantDecaisseRendu ?? 0;
+        this.success.set(
+          collecte || decaisse
+            ? `Aide supprimée. ${this.fcfa(collecte)} retiré du fonds, ${this.fcfa(decaisse)} rendu.`
+            : 'Aide supprimée.');
+      },
+      error: e => {
+        this.error.set(e.error?.detail ?? e.message ?? 'Suppression impossible');
+        this.submitting.set(false);
+      },
     });
   }
 

@@ -8,7 +8,9 @@ import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.notification.Notification;
 import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
 import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
+import com.tontinepro.tontinepro_backend.infrastructure.security.SecurityExpressionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class SanctionService {
     private final SanctionRepository sanctionRepository;
     private final MembreRepository membreRepository;
     private final NotificationService notificationService;
+    private final SecurityExpressionService securityExpressionService;
 
     @Transactional
     public SanctionResponse creer(CreerSanctionRequest request) {
@@ -40,7 +43,7 @@ public class SanctionService {
 
         notificationService.notifier(membre.getUser(),
                 Notification.Type.SANCTION_INFLIGEE,
-                "Sanction enregistrée",
+                "Sanction enregistrée — %s FCFA".formatted(request.montant()),
                 "Une sanction de %s FCFA a été enregistrée à votre encontre. Motif : %s"
                         .formatted(request.montant(), request.motif() != null ? request.motif() : "Non précisé"),
                 response.id(), "SANCTION");
@@ -49,12 +52,17 @@ public class SanctionService {
     }
 
     @Transactional
-    public SanctionResponse marquerPayee(UUID id) {
+    public SanctionResponse marquerPayee(UUID id, String encaisseurEmail) {
         Sanction sanction = sanctionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Sanction introuvable : " + id));
 
         if (sanction.isPayee()) {
             throw new IllegalArgumentException("Cette sanction est déjà marquée comme payée");
+        }
+
+        if (!securityExpressionService.peutEncaisser(encaisseurEmail, sanction.getTontine().getId())) {
+            throw new AccessDeniedException(
+                    "L'encaissement des amendes revient au Trésorier de la tontine");
         }
 
         sanction.setPayee(true);

@@ -1,12 +1,13 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
 import { AideService } from '../../../core/services/aide.service';
 import { FondsAideService } from '../../../core/services/fonds-aide.service';
 import { AideSuiviResponse } from '../../../core/models/aide.model';
 
 @Component({
   selector: 'app-aide-suivi',
-  imports: [RouterLink],
+  imports: [RouterLink, DatePipe],
   templateUrl: './aide-suivi.component.html',
 })
 export class AideSuiviComponent implements OnInit {

@@ -7,7 +7,9 @@ import com.tontinepro.tontinepro_backend.domain.aide.*;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
+import com.tontinepro.tontinepro_backend.infrastructure.security.SecurityExpressionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,7 @@ public class FondsAideService {
     private final MouvementFondsAideRepository mouvementRepository;
     private final ContributionFondsAideRepository contributionRepository;
     private final MembreRepository membreRepository;
+    private final SecurityExpressionService securityExpressionService;
 
     @Transactional(readOnly = true)
     public FondsAideResponse getByTontineId(UUID tontineId) {
@@ -101,12 +104,18 @@ public class FondsAideService {
      * Enregistre le paiement d'une contribution au fonds d'aide et crédite le solde.
      */
     @Transactional
-    public ContributionFondsAideResponse enregistrerPaiement(UUID contributionId) {
+    public ContributionFondsAideResponse enregistrerPaiement(UUID contributionId, String encaisseurEmail) {
         ContributionFondsAide contribution = contributionRepository.findById(contributionId)
                 .orElseThrow(() -> new IllegalArgumentException("Contribution introuvable : " + contributionId));
 
         if (contribution.getStatut() == ContributionFondsAide.Statut.PAYEE) {
             throw new IllegalArgumentException("Cette contribution est déjà payée");
+        }
+
+        UUID tontineId = contribution.getMembre().getTontine().getId();
+        if (!securityExpressionService.peutEncaisser(encaisseurEmail, tontineId)) {
+            throw new AccessDeniedException(
+                    "L'encaissement des contributions revient au Trésorier de la tontine");
         }
 
         FondsAide fonds = contribution.getFondsAide();

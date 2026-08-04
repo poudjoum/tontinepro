@@ -43,6 +43,29 @@ public class NotificationService {
         emailService.envoyer(destinataire.getEmail(), titre, message);
     }
 
+    /**
+     * Variante de {@link #notifier} quand l'email doit être plus détaillé que la
+     * notification affichée dans l'application (lien de consultation, rappel des
+     * montants…). La notification in-app reste courte, l'email porte le détail.
+     */
+    @Transactional
+    public void notifier(User destinataire, Notification.Type type,
+                         String titre, String message,
+                         String sujetEmail, String corpsEmail,
+                         UUID referenceId, String referenceType) {
+
+        notificationRepository.save(Notification.builder()
+                .user(destinataire)
+                .type(type)
+                .titre(titre)
+                .message(message)
+                .referenceId(referenceId)
+                .referenceType(referenceType)
+                .build());
+
+        emailService.envoyer(destinataire.getEmail(), sujetEmail, corpsEmail);
+    }
+
     /** Notifie tous les administrateurs. */
     @Transactional
     public void notifierAdmins(Notification.Type type, String titre, String message,

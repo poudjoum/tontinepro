@@ -4,6 +4,7 @@ import com.tontinepro.tontinepro_backend.domain.aide.Aide;
 import com.tontinepro.tontinepro_backend.domain.aide.RubriqueAide;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -32,6 +33,8 @@ public record AideResponse(
         UUID valideParId,
         String valideParEmail,
         OffsetDateTime dateValidation,
+        /** Date limite de recouvrement, fixée à l'activation (null avant). */
+        LocalDate dateEcheanceRecouvrement,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
@@ -59,6 +62,7 @@ public record AideResponse(
                 a.getValidePar() != null ? a.getValidePar().getId() : null,
                 a.getValidePar() != null ? a.getValidePar().getEmail() : null,
                 a.getDateValidation(),
+                a.getDateEcheanceRecouvrement(),
                 a.getCreatedAt(),
                 a.getUpdatedAt()
         );

@@ -48,9 +48,12 @@ public class SanctionController {
     }
 
     @PatchMapping("/{id}/payer")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Marquer une sanction comme payée (Secrétaire / Président)")
-    public SanctionResponse marquerPayee(@PathVariable UUID id) {
-        return sanctionService.marquerPayee(id);
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Marquer une sanction comme payée (Trésorier de la tontine)")
+    public SanctionResponse marquerPayee(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        return sanctionService.marquerPayee(id, principal.getUsername());
     }
 }

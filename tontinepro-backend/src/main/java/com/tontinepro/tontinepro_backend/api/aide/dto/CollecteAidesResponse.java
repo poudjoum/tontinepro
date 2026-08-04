@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.aide.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,6 +31,8 @@ public record CollecteAidesResponse(
             boolean prefinance,
             BigDecimal objectif,     // montant total de l'aide
             BigDecimal collecte,     // Σ parts payées
+            LocalDate dateEcheanceRecouvrement, // date limite de collecte (3 séances)
+            boolean enRetard,        // échéance dépassée (des parts restent dues)
             List<Cellule> cellules   // une par ligne membre, même ordre que `membres`
     ) {}
 

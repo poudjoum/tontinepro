@@ -4,6 +4,7 @@ import com.tontinepro.tontinepro_backend.domain.aide.Aide;
 import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAide;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -30,6 +31,9 @@ public record AideSuiviResponse(
         int nbTotal,
 
         BigDecimal soldeFonds,        // solde courant du fonds d'aide
+
+        LocalDate dateEcheanceRecouvrement, // date limite de collecte (3 séances)
+        boolean recouvrementEnRetard,       // échéance dépassée et parts restantes
 
         java.util.List<LigneContribution> contributions
 ) {

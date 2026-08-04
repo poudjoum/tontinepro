@@ -82,6 +82,19 @@
             La trésorerie est en avance de {{ fcfa(-s.soldeFonds) }} ; elle se résorbe à mesure des paiements.
           </p>
         }
+        @if (s.dateEcheanceRecouvrement) {
+          @if (s.recouvrementEnRetard) {
+            <p class="text-[11px] font-semibold text-red-600 mt-2">
+              ⚠ Délai de recouvrement dépassé — la collecte devait être terminée le
+              {{ s.dateEcheanceRecouvrement | date:'dd/MM/yyyy' }}.
+            </p>
+          } @else {
+            <p class="text-[11px] text-gray-500 mt-2">
+              À collecter avant le {{ s.dateEcheanceRecouvrement | date:'dd/MM/yyyy' }}
+              (3 séances après l'activation).
+            </p>
+          }
+        }
       </div>
 
       <!-- Contributions -->

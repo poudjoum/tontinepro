@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard, superAdminGuard, mustChangePasswordGuard } from './core/guards/auth.guard';
+import { authGuard, adminGuard, superAdminGuard, mustChangePasswordGuard, encaissementGuard } from './core/guards/auth.guard';
 import { notConfiguredGuard } from './core/guards/setup.guard';
 import { ShellComponent } from './layout/shell.component';
 
@@ -139,6 +139,14 @@ export const routes: Routes = [
           import('./features/aides/suivi/aide-suivi.component').then(m => m.AideSuiviComponent),
       },
       {
+        // Encaissement — accessible au Trésorier, dont le compte est en rôle MEMBRE
+        // et qui n'a donc pas accès à /admin.
+        path: 'tresorerie/collecte',
+        canActivate: [encaissementGuard],
+        loadComponent: () =>
+          import('./features/admin/collecte-aides/collecte-aides.component').then(m => m.CollecteAidesComponent),
+      },
+      {
         path: 'notifications',
         loadComponent: () =>
           import('./features/notifications/notifications.component').then(m => m.NotificationsComponent),
@@ -265,9 +273,10 @@ export const routes: Routes = [
               import('./features/admin/bareme-aide/bareme-aide.component').then(m => m.BaremeAideComponent),
           },
           {
+            // L'écran a migré hors de /admin pour être ouvert au Trésorier.
             path: 'collecte-aides',
-            loadComponent: () =>
-              import('./features/admin/collecte-aides/collecte-aides.component').then(m => m.CollecteAidesComponent),
+            redirectTo: '/tresorerie/collecte',
+            pathMatch: 'full',
           },
         ],
       },

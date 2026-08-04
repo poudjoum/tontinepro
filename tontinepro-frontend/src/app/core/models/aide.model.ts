@@ -100,6 +100,10 @@ export interface AideSuiviResponse {
   nbPayes: number;
   nbTotal: number;
   soldeFonds: number;
+  /** Date limite de collecte (3 séances après l'activation). */
+  dateEcheanceRecouvrement: string | null;
+  /** Échéance dépassée alors que des parts restent dues. */
+  recouvrementEnRetard: boolean;
   contributions: LigneContributionAide[];
 }
 
@@ -127,6 +131,8 @@ export interface AideColonneCollecte {
   prefinance: boolean;
   objectif: number;
   collecte: number;
+  dateEcheanceRecouvrement: string | null;
+  enRetard: boolean;
   cellules: CelluleCollecte[];
 }
 
@@ -135,6 +141,17 @@ export interface CollecteAidesResponse {
   aides: AideColonneCollecte[];
   totalObjectif: number;
   totalCollecte: number;
+}
+
+/** Compte rendu de la suppression d'une aide (effets annulés sur le fonds). */
+export interface SuppressionAideResponse {
+  aideId: string;
+  libelle: string;
+  beneficiaireNom: string;
+  nbContributionsSupprimees: number;
+  montantCollecteAnnule: number;
+  montantDecaisseRendu: number;
+  soldeFondsApres: number | null;
 }
 
 export interface AideResponse {
@@ -160,6 +177,8 @@ export interface AideResponse {
   valideParId: string | null;
   valideParEmail: string | null;
   dateValidation: string | null;
+  /** Date limite de recouvrement, fixée à l'activation (null avant). */
+  dateEcheanceRecouvrement: string | null;
   createdAt: string;
   updatedAt: string;
 }

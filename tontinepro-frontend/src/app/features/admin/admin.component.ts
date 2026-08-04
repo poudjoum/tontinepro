@@ -153,7 +153,7 @@ export class AdminComponent {
     {
       title: 'Collecte des aides',
       desc: 'Matrice membres × aides en cours de collecte',
-      route: '/admin/collecte-aides',
+      route: '/tresorerie/collecte',
       icon: '🧮',
       color: 'bg-emerald-50',
     },

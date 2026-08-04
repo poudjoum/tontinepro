@@ -8,4 +8,7 @@ import java.util.UUID;
 public interface MouvementFondsAideRepository extends JpaRepository<MouvementFondsAide, UUID> {
 
     List<MouvementFondsAide> findAllByFondsAideIdOrderByCreatedAtDesc(UUID fondsAideId);
+
+    /** Mouvements rattachés à une aide (décaissements de préfinancement/versement). */
+    List<MouvementFondsAide> findAllByAideId(UUID aideId);
 }

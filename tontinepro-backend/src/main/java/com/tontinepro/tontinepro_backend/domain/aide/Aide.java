@@ -7,6 +7,7 @@ import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -89,6 +90,18 @@ public class Aide {
 
     @Column(name = "motif_rejet", columnDefinition = "TEXT")
     private String motifRejet;
+
+    /**
+     * Date limite de recouvrement, figée à l'activation : date du 3e tour à venir.
+     * Passé ce délai, l'aide non entièrement collectée est signalée en retard.
+     */
+    @Column(name = "date_echeance_recouvrement")
+    private LocalDate dateEcheanceRecouvrement;
+
+    /** Évite de renvoyer l'alerte de retard à chaque passage du job quotidien. */
+    @Column(name = "relance_recouvrement_envoyee", nullable = false)
+    @Builder.Default
+    private boolean relanceRecouvrementEnvoyee = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

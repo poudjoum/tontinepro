@@ -13,6 +13,10 @@ public interface AideRepository extends JpaRepository<Aide, UUID> {
 
     List<Aide> findAllByStatut(Aide.Statut statut);
 
+    /** Aides dont le délai de recouvrement est dépassé et non encore relancées. */
+    List<Aide> findAllByRelanceRecouvrementEnvoyeeFalseAndDateEcheanceRecouvrementLessThan(
+            java.time.LocalDate date);
+
     List<Aide> findAllByMembreTontineId(UUID tontineId);
 
     List<Aide> findAllByMembreTontineIdAndCreatedAtBetween(UUID tontineId,

@@ -51,6 +51,7 @@ public class Notification {
     public enum Type {
         // Aide
         AIDE_PROPOSEE, AIDE_SOUMISE, AIDE_VALIDEE, AIDE_REJETEE, AIDE_PAYEE,
+        AIDE_RECOUVREMENT_RETARD,
         // Prêt
         PRET_DEMANDE, PRET_APPROUVE, PRET_REJETE, PRET_REMBOURSE, PRET_SOLDE,
         // Cotisation

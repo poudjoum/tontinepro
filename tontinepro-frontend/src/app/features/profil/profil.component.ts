@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { MembreService } from '../../core/services/membre.service';
 import { ProfilService } from '../../core/services/profil.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { MembreResponse } from '../../core/models/membre.model';
 import { TwoFaSetupResponse } from '../../core/models/auth.model';
 
@@ -24,6 +25,7 @@ export class ProfilComponent implements OnInit {
   auth = inject(AuthService);
   private membreSvc = inject(MembreService);
   private profilSvc = inject(ProfilService);
+  private ctx       = inject(TontineContextService);
 
   membre     = signal<MembreResponse | null>(null);
   loading    = signal(true);
@@ -45,7 +47,9 @@ export class ProfilComponent implements OnInit {
   code2fa  = signal('');
 
   ngOnInit(): void {
-    this.membreSvc.getMonProfil().subscribe({
+    // Profil de la tontine courante : la fonction (dont Trésorier) varie d'une
+    // tontine à l'autre, un profil non cloisonné afficherait le mauvais rôle.
+    this.membreSvc.getMonProfil(this.ctx.tontineCouranteId() ?? undefined).subscribe({
       next:  m => { this.membre.set(m); this.loading.set(false); },
       error: e => {
         if (e.status !== 404 && e.status !== 400) {

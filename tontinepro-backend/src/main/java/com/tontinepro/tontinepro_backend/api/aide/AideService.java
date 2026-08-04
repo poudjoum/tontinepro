@@ -7,18 +7,22 @@ import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SaisirAidePourMembreRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SimulationAideResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.SuppressionAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ValiderAideRequest;
 import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.domain.aide.*;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.notification.Notification;
+import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaire;
+import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaireRepository;
 import com.tontinepro.tontinepro_backend.domain.session.SessionTontine;
 import com.tontinepro.tontinepro_backend.domain.session.SessionTontineRepository;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.user.User;
 import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +50,14 @@ public class AideService {
     private final RubriqueAideRepository rubriqueAideRepository;
     private final RubriqueAideService rubriqueAideService;
     private final SessionTontineRepository sessionTontineRepository;
+    private final OrdreBeneficiaireRepository ordreBeneficiaireRepository;
     private final NotificationService notificationService;
+
+    /** Nombre de séances de tontine accordées pour recouvrer une aide activée. */
+    public static final int SEANCES_RECOUVREMENT = 3;
+
+    @Value("${app.frontend-url:https://tontinepro.tontinepro.uk}")
+    private String frontendUrl;
 
     @Transactional
     public AideResponse soumettreDemande(String email, DemandeAideRequest request) {
@@ -146,14 +157,72 @@ public class AideService {
 
         AideResponse response = AideResponse.from(aideRepository.save(aide));
 
-        notificationService.notifier(membre.getUser(),
-                Notification.Type.AIDE_PROPOSEE,
-                "Une aide vous est proposée",
-                "Le bureau a saisi une aide « %s » (%s FCFA) à votre nom. Marquez votre accord pour la valider."
-                        .formatted(rubrique.getLibelle(), montant),
-                aide.getId(), "AIDE");
+        if (membre.getUser() != null) {
+            notificationService.notifier(membre.getUser(),
+                    Notification.Type.AIDE_PROPOSEE,
+                    "Une aide vous est proposée",
+                    "Le bureau a saisi une aide « %s » (%s FCFA) à votre nom. Marquez votre accord pour la valider."
+                            .formatted(rubrique.getLibelle(), montant),
+                    sujetConsentement(rubrique),
+                    corpsConsentement(aide, rubrique, montant),
+                    aide.getId(), "AIDE");
+        }
 
         return response;
+    }
+
+    /**
+     * Dénomination de l'aide pour les objets d'email et titres de notification :
+     * libellé du barème, à défaut le type. Permet de distinguer deux aides dans
+     * une boîte mail sans ouvrir le message.
+     */
+    private static String libelleAide(Aide aide) {
+        if (aide.getRubrique() != null && aide.getRubrique().getLibelle() != null) {
+            return "« " + aide.getRubrique().getLibelle() + " »";
+        }
+        return "(" + aide.getTypeAide() + ")";
+    }
+
+    /** Objet de l'email de consentement : « Votre aide <dénomination> ». */
+    private static String sujetConsentement(RubriqueAide rubrique) {
+        return "Votre aide " + rubrique.getLibelle();
+    }
+
+    /**
+     * Corps de l'email envoyé au bénéficiaire quand le bureau saisit une aide à
+     * son nom. Il doit se suffire à lui-même : nature de l'aide, montant, ce qui
+     * est attendu du membre, et où le faire.
+     */
+    private String corpsConsentement(Aide aide, RubriqueAide rubrique, BigDecimal montant) {
+        Membre membre = aide.getMembre();
+        String lien = frontendUrl + "/aides";
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Bonjour %s %s,\n\n".formatted(membre.getPrenom(), membre.getNom()));
+        sb.append("Le bureau de la tontine « %s » a enregistré une aide à votre nom.\n\n"
+                .formatted(membre.getTontine().getNom()));
+
+        sb.append("── Détail de l'aide ──\n");
+        sb.append("Nature      : %s\n".formatted(rubrique.getLibelle()));
+        if (aide.getVariante() != null && !aide.getVariante().isBlank()) {
+            sb.append("Variante    : %s\n".formatted(aide.getVariante()));
+        }
+        sb.append("Montant     : %s FCFA\n".formatted(montant));
+        if (aide.getMotif() != null && !aide.getMotif().isBlank()) {
+            sb.append("Motif       : %s\n".formatted(aide.getMotif()));
+        }
+        sb.append('\n');
+
+        sb.append("Cette aide n'est pas encore engagée : elle attend votre accord.\n\n");
+        sb.append("Consultez-la et donnez votre réponse ici :\n%s\n\n".formatted(lien));
+        sb.append("Si vous l'acceptez, le bureau pourra l'activer. Chaque membre de la ")
+          .append("tontine devra alors verser sa part, et la collecte doit être ")
+          .append("terminée en %d séances de tontine au maximum.\n\n".formatted(SEANCES_RECOUVREMENT));
+        sb.append("Si cette aide ne correspond pas à votre situation, refusez-la depuis ")
+          .append("la même page et signalez-le au bureau.\n\n");
+        sb.append("— TontinePro");
+
+        return sb.toString();
     }
 
     /** Le membre bénéficiaire accepte une aide PROPOSEE → passe à SOUMISE (prête à activer). */
@@ -269,7 +338,7 @@ public class AideService {
 
         notificationService.notifier(aide.getMembre().getUser(),
                 Notification.Type.AIDE_VALIDEE,
-                "Demande d'aide approuvée",
+                "Votre demande d'aide %s a été approuvée".formatted(libelleAide(aide)),
                 "Votre demande d'aide a été approuvée. Montant accordé : %s FCFA."
                         .formatted(request.montantAccorde()),
                 aide.getId(), "AIDE");
@@ -298,7 +367,7 @@ public class AideService {
 
         notificationService.notifier(aide.getMembre().getUser(),
                 Notification.Type.AIDE_REJETEE,
-                "Demande d'aide rejetée",
+                "Votre demande d'aide %s a été rejetée".formatted(libelleAide(aide)),
                 "Votre demande d'aide a été rejetée. Motif : %s.".formatted(request.motifRejet()),
                 aide.getId(), "AIDE");
 
@@ -355,7 +424,7 @@ public class AideService {
 
         notificationService.notifier(aide.getMembre().getUser(),
                 Notification.Type.AIDE_PAYEE,
-                "Aide versée",
+                "Votre aide %s a été versée".formatted(libelleAide(aide)),
                 "Votre aide de %s FCFA a été versée.".formatted(aide.getMontantAccorde()),
                 aide.getId(), "AIDE");
 
@@ -419,7 +488,21 @@ public class AideService {
                 nbPayes,
                 contributions.size(),
                 soldeFonds,
+                aide.getDateEcheanceRecouvrement(),
+                estEnRetardRecouvrement(aide, nbPayes, contributions.size()),
                 lignes);
+    }
+
+    /**
+     * Une aide est en retard de recouvrement lorsque son échéance est dépassée
+     * alors que toutes les parts ne sont pas encore versées.
+     */
+    private static boolean estEnRetardRecouvrement(Aide aide, int nbPayes, int nbTotal) {
+        LocalDate echeance = aide.getDateEcheanceRecouvrement();
+        return echeance != null
+                && nbTotal > 0
+                && nbPayes < nbTotal
+                && LocalDate.now().isAfter(echeance);
     }
 
     private static BigDecimal safe(BigDecimal v) {
@@ -495,6 +578,11 @@ public class AideService {
                     a.isPrefinance(),
                     objectif,
                     collecte,
+                    a.getDateEcheanceRecouvrement(),
+                    // la colonne n'existe que s'il reste des parts à payer :
+                    // l'échéance dépassée suffit donc à qualifier le retard
+                    a.getDateEcheanceRecouvrement() != null
+                            && LocalDate.now().isAfter(a.getDateEcheanceRecouvrement()),
                     cellules));
         }
 
@@ -608,6 +696,7 @@ public class AideService {
         aide.setPrefinance(prefinance);
         aide.setValidePar(admin);
         aide.setDateValidation(OffsetDateTime.now());
+        aide.setDateEcheanceRecouvrement(calculerEcheanceRecouvrement(tontine));
 
         FondsAide fonds = fondsAideRepository.findByTontineId(tontine.getId())
                 .orElseThrow(() -> new IllegalStateException("Fonds d'aide introuvable pour la tontine"));
@@ -648,7 +737,8 @@ public class AideService {
 
         notificationService.notifier(aide.getMembre().getUser(),
                 prefinance ? Notification.Type.AIDE_PAYEE : Notification.Type.AIDE_VALIDEE,
-                prefinance ? "Aide versée" : "Aide approuvée",
+                (prefinance ? "Votre aide %s a été versée" : "Votre aide %s a été approuvée")
+                        .formatted(libelleAide(aide)),
                 (prefinance
                         ? "Votre aide « %s » de %s FCFA a été versée (préfinancée par la trésorerie)."
                         : "Votre aide « %s » a été approuvée. Montant : %s FCFA, en cours de collecte.")
@@ -656,6 +746,99 @@ public class AideService {
                 aide.getId(), "AIDE");
 
         return response;
+    }
+
+    /**
+     * Supprime définitivement une aide et défait ses effets sur la trésorerie.
+     *
+     * <p>Une aide activée a laissé trois traces : les parts dues par chaque membre,
+     * les versements déjà encaissés (qui ont crédité le fonds) et l'éventuel
+     * décaissement au bénéficiaire (préfinancement ou versement). La suppression
+     * annule le tout, de sorte que le solde du fonds revienne à ce qu'il serait si
+     * l'aide n'avait jamais existé.</p>
+     *
+     * <p>Réservée au Président : c'est une mesure de correction, pas une étape du
+     * cycle de vie normal — une aide qui ne doit pas aboutir se rejette ou se refuse.</p>
+     *
+     * @return un résumé de ce qui a été défait, pour affichage à l'appelant
+     */
+    @Transactional
+    public SuppressionAideResponse supprimer(UUID id) {
+        Aide aide = aideRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Demande d'aide introuvable : " + id));
+
+        List<ContributionFondsAide> contributions =
+                contributionFondsAideRepository.findAllByAideIdOrderByCreatedAtAsc(id);
+        List<MouvementFondsAide> mouvements = mouvementFondsAideRepository.findAllByAideId(id);
+
+        BigDecimal collecte = contributions.stream()
+                .filter(c -> c.getStatut() == ContributionFondsAide.Statut.PAYEE)
+                .map(c -> safe(c.getMontant()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal decaisse = mouvements.stream()
+                .filter(m -> m.getTypeMouvement() == MouvementFondsAide.TypeMouvement.DECAISSEMENT)
+                .map(m -> safe(m.getMontant()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        FondsAide fonds = fondsAideRepository
+                .findByTontineId(aide.getMembre().getTontine().getId())
+                .orElse(null);
+        BigDecimal soldeApres = null;
+        if (fonds != null && (collecte.signum() != 0 || decaisse.signum() != 0)) {
+            // On retire ce que la collecte avait crédité et on rend ce qui avait été décaissé.
+            fonds.setSolde(fonds.getSolde().subtract(collecte).add(decaisse));
+            fondsAideRepository.save(fonds);
+            soldeApres = fonds.getSolde();
+        }
+
+        // Les mouvements référencent l'aide : ils doivent partir avec elle.
+        mouvementFondsAideRepository.deleteAll(mouvements);
+        contributionFondsAideRepository.deleteAll(contributions);
+        aideRepository.delete(aide);
+
+        return new SuppressionAideResponse(
+                id,
+                aide.getRubrique() != null ? aide.getRubrique().getLibelle() : aide.getTypeAide().name(),
+                aide.getMembre().getNom() + " " + aide.getMembre().getPrenom(),
+                contributions.size(),
+                collecte,
+                decaisse,
+                soldeApres);
+    }
+
+    /**
+     * Échéance de recouvrement : date du {@value #SEANCES_RECOUVREMENT}e tour à
+     * venir de la session en cours.
+     *
+     * <p>Si la session compte moins de tours restants (fin de session proche), on
+     * retient le dernier tour connu. Sans session ni tour exploitable — reprise en
+     * cours, calendrier non encore saisi — on retombe sur un délai calendaire
+     * équivalent de 3 mois, pour ne jamais laisser une aide sans échéance.</p>
+     */
+    private LocalDate calculerEcheanceRecouvrement(Tontine tontine) {
+        LocalDate aujourdhui = LocalDate.now();
+        LocalDate repli = aujourdhui.plusMonths(SEANCES_RECOUVREMENT);
+
+        SessionTontine session = sessionTontineRepository
+                .findFirstByTontineIdAndStatutOrderByNumeroDesc(tontine.getId(), SessionTontine.Statut.EN_COURS)
+                .orElse(null);
+        if (session == null) {
+            return repli;
+        }
+
+        List<LocalDate> tersAVenir = ordreBeneficiaireRepository
+                .findAllBySessionIdOrderByOrdre(session.getId()).stream()
+                .map(OrdreBeneficiaire::getDateBenefice)
+                .filter(d -> d != null && !d.isBefore(aujourdhui))
+                .sorted()
+                .toList();
+        if (tersAVenir.isEmpty()) {
+            return repli;
+        }
+
+        int index = Math.min(SEANCES_RECOUVREMENT, tersAVenir.size()) - 1;
+        return tersAVenir.get(index);
     }
 
     /**
@@ -695,7 +878,8 @@ public class AideService {
         AideResponse response = AideResponse.from(aideRepository.save(aide));
 
         notificationService.notifier(aide.getMembre().getUser(),
-                Notification.Type.AIDE_PAYEE, "Aide versée",
+                Notification.Type.AIDE_PAYEE,
+                "Votre aide %s a été versée".formatted(libelleAide(aide)),
                 "Votre aide « %s » de %s FCFA a été versée."
                         .formatted(aide.getRubrique().getLibelle(), total),
                 aide.getId(), "AIDE");

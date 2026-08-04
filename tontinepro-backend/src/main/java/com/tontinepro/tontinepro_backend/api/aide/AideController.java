@@ -6,6 +6,7 @@ import com.tontinepro.tontinepro_backend.api.aide.dto.CollecteAidesResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.DemandeAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SaisirAidePourMembreRequest;
+import com.tontinepro.tontinepro_backend.api.aide.dto.SuppressionAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ValiderAideRequest;
 import com.tontinepro.tontinepro_backend.domain.aide.Aide;
 import io.swagger.v3.oas.annotations.Operation;
@@ -143,8 +144,17 @@ public class AideController {
         return aideService.getSuivi(id);
     }
 
+    @DeleteMapping("/demandes/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Supprimer définitivement une aide et annuler ses effets sur le fonds "
+            + "(Président — mesure de correction, hors cycle de vie normal)")
+    public SuppressionAideResponse supprimer(@PathVariable UUID id) {
+        return aideService.supprimer(id);
+    }
+
     @GetMapping("/collecte/{tontineId}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+            + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Tableau de collecte des aides (matrice membres × aides actives)")
     public CollecteAidesResponse collecte(@PathVariable UUID tontineId) {
         return aideService.getCollecteAides(tontineId);

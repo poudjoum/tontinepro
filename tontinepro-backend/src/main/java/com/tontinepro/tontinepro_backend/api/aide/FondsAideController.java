@@ -24,21 +24,24 @@ public class FondsAideController {
     private final FondsAideService fondsAideService;
 
     @GetMapping("/{tontineId}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+            + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Ã‰tat du fonds d'aide d'une tontine (solde, mode, montant par membre)")
     public FondsAideResponse getByTontineId(@PathVariable UUID tontineId) {
         return fondsAideService.getByTontineId(tontineId);
     }
 
     @GetMapping("/{tontineId}/mouvements")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+            + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Historique des mouvements du fonds d'aide")
     public List<MouvementFondsAideResponse> getMouvements(@PathVariable UUID tontineId) {
         return fondsAideService.getMouvements(tontineId);
     }
 
     @GetMapping("/{tontineId}/contributions")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+            + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Contributions des membres au fonds (filtrables par statut)")
     public List<ContributionFondsAideResponse> getContributions(
             @PathVariable UUID tontineId,
@@ -48,7 +51,8 @@ public class FondsAideController {
     }
 
     @PostMapping("/{tontineId}/contributions/generer")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+            + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "GÃ©nÃ©rer les contributions mensuelles pour tous les membres actifs (mode MENSUEL)")
     public List<ContributionFondsAideResponse> genererContributionsMensuelles(
             @PathVariable UUID tontineId,
@@ -59,10 +63,14 @@ public class FondsAideController {
     }
 
     @PatchMapping("/contributions/{id}/payer")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
-    @Operation(summary = "Enregistrer le paiement d'une contribution au fonds d'aide")
-    public ContributionFondsAideResponse enregistrerPaiement(@PathVariable UUID id) {
-        return fondsAideService.enregistrerPaiement(id);
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Enregistrer le paiement d'une contribution au fonds d'aide "
+            + "(rÃ©servÃ© au TrÃ©sorier de la tontine ; voir sec.peutEncaisser)")
+    public ContributionFondsAideResponse enregistrerPaiement(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        return fondsAideService.enregistrerPaiement(id, principal.getUsername());
     }
 
     @GetMapping("/mes-contributions")

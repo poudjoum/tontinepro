@@ -50,6 +50,17 @@
                     <div class="text-[10px] font-normal text-gray-500">{{ a.beneficiaireNom }}</div>
                     <div class="text-[10px] font-normal text-indigo-600">obj {{ fcfa(a.objectif) }}</div>
                     @if (a.prefinance) { <div class="text-[9px] text-amber-600">préfinancée</div> }
+                    @if (a.dateEcheanceRecouvrement) {
+                      @if (a.enRetard) {
+                        <div class="text-[9px] font-semibold text-red-600">
+                          ⚠ en retard — échéance {{ a.dateEcheanceRecouvrement | date:'dd/MM/yy' }}
+                        </div>
+                      } @else {
+                        <div class="text-[9px] font-normal text-gray-500">
+                          à collecter avant le {{ a.dateEcheanceRecouvrement | date:'dd/MM/yy' }}
+                        </div>
+                      }
+                    }
                   </th>
                 }
               </tr>
