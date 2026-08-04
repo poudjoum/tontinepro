@@ -97,16 +97,30 @@ public class RubriqueAideService {
     }
 
     /**
+     * Pas d'arrondi des parts, en FCFA. Une part doit pouvoir se compter avec les
+     * coupures réellement en circulation : on ne demande pas 4 166,67 ni même
+     * 4 166 FCFA à un membre, mais 4 150. Changer cette valeur suffit à changer
+     * la granularité de toutes les parts.
+     */
+    private static final BigDecimal PAS_ARRONDI_PART = BigDecimal.valueOf(50);
+
+    /**
      * Calcul pur (réutilisé à l'activation) : N = membres actifs (bénéficiaire inclus).
      *   PAR_PERSONNE : part = montantReference ; total = part × N
-     *   FORFAITAIRE  : total = montantReference ; part = total ÷ N arrondi au franc inférieur
+     *   FORFAITAIRE  : total = montantReference ; part = total ÷ N arrondi au pas supérieur
      *
-     * <p>L'arrondi se fait vers le bas, à l'unité : le franc CFA n'a pas de
-     * subdivision — personne ne verse 4 166,67 FCFA — et surtout un arrondi au
-     * plus proche ferait payer aux membres un peu <em>plus</em> que leur part,
-     * le reliquat devenant négatif. En tronquant, le reste à couvrir est
-     * toujours positif et revient au bénéficiaire, qui doit être celui qui paie
-     * le plus (voir la répartition dans {@code AideService.activerAide}).</p>
+     * <p>L'arrondi va vers le haut, et <strong>tous les membres paient la même
+     * part</strong>, bénéficiaire compris. La collecte dépasse donc légèrement le
+     * montant de l'aide — 12 × 4 200 = 50 400 pour une aide de 50 000 — et
+     * l'excédent reste acquis au fonds. C'est un choix de la tontine : l'égalité
+     * des parts prime, et le surplus constitue un coussin pour un fonds que
+     * chaque préfinancement fait passer en négatif.</p>
+     *
+     * <p>Ne pas revenir à un arrondi vers le bas avec reliquat sur le bénéficiaire :
+     * cela le faisait payer plus que les autres, ce que la tontine a écarté.</p>
+     *
+     * <p>Le mode PAR_PERSONNE n'est pas arrondi : son montant est saisi tel quel
+     * par le bureau, ce n'est pas le résultat d'une division.</p>
      */
     public static SimulationAideResponse calculer(RubriqueAide r, int n) {
         BigDecimal ref = r.getMontantReference();
@@ -116,7 +130,10 @@ public class RubriqueAideService {
             total = ref.multiply(BigDecimal.valueOf(n));
         } else {
             total = ref;
-            part = n > 0 ? ref.divide(BigDecimal.valueOf(n), 0, RoundingMode.DOWN) : BigDecimal.ZERO;
+            part = n > 0
+                    ? ref.divide(BigDecimal.valueOf(n).multiply(PAS_ARRONDI_PART), 0, RoundingMode.UP)
+                         .multiply(PAS_ARRONDI_PART)
+                    : BigDecimal.ZERO;
         }
         return new SimulationAideResponse(
                 r.getId(), r.getLibelle(), r.getTypeAide(), r.getModeCalcul(),

@@ -512,7 +512,8 @@ public class AideService {
     /**
      * Tableau de collecte des aides d'une tontine : matrice Membres × Aides actives.
      * Colonnes = aides du barème activées (VALIDEE/PAYEE) encore en cours de collecte
-     * (au moins une part à payer). Objectif d'une colonne = montant total de l'aide.
+     * (au moins une part à payer). Objectif d'une colonne = somme des parts dues,
+     * qui dépasse le montant de l'aide de l'excédent d'arrondi acquis au fonds.
      */
     @Transactional(readOnly = true)
     public CollecteAidesResponse getCollecteAides(UUID tontineId) {
@@ -545,8 +546,10 @@ public class AideService {
 
             Map<UUID, ContributionFondsAide> parMembre = new HashMap<>();
             BigDecimal collecte = BigDecimal.ZERO;
+            BigDecimal attendu  = BigDecimal.ZERO;
             for (ContributionFondsAide c : contribs) {
                 parMembre.put(c.getMembre().getId(), c);
+                attendu = attendu.add(safe(c.getMontant()));
                 if (c.getStatut() == ContributionFondsAide.Statut.PAYEE) {
                     collecte = collecte.add(safe(c.getMontant()));
                 }
@@ -564,7 +567,11 @@ public class AideService {
                         m.getId().equals(beneficiaireId)));
             }
 
-            BigDecimal objectif = safe(a.getMontantAccorde());
+            // Somme des parts, et non le montant versé : les parts étant arrondies
+            // au pas supérieur, la collecte dépasse l'aide et l'excédent reste au
+            // fonds. Prendre le montant versé pour objectif ferait afficher plus
+            // de 100 % dès la dernière part encaissée.
+            BigDecimal objectif = attendu;
             totalObjectif = totalObjectif.add(objectif);
             totalCollecte = totalCollecte.add(collecte);
 
@@ -701,28 +708,18 @@ public class AideService {
         FondsAide fonds = fondsAideRepository.findByTontineId(tontine.getId())
                 .orElseThrow(() -> new IllegalStateException("Fonds d'aide introuvable pour la tontine"));
 
-        // Une contribution par membre. Le reliquat d'arrondi revient au
-        // bénéficiaire : c'est son aide, il n'y a pas de raison de faire payer
-        // aux autres plus que leur part. La part étant tronquée au franc
-        // inférieur, ce reliquat est toujours positif — le bénéficiaire est donc
-        // celui qui paie le plus, ou autant que les autres si la division tombe
-        // juste. Repli sur le dernier membre si le bénéficiaire ne figure pas
-        // parmi les actifs, pour que la somme des parts reste égale au total.
-        UUID beneficiaireId = aide.getMembre().getId();
-        int porteurDuReliquat = membresActifs.stream()
-                .map(Membre::getId)
-                .toList()
-                .indexOf(beneficiaireId);
-        if (porteurDuReliquat < 0) porteurDuReliquat = n - 1;
-
-        BigDecimal reliquat = total.subtract(part.multiply(BigDecimal.valueOf(n - 1L)));
+        // Une contribution par membre, toutes égales — bénéficiaire compris, il
+        // cotise pour sa propre aide comme les autres. La part étant arrondie au
+        // pas supérieur, la collecte dépasse le montant versé (12 × 4 200 = 50 400
+        // pour une aide de 50 000) ; l'excédent n'a pas besoin d'écriture propre,
+        // il apparaît naturellement dans le solde du fonds, crédité par les
+        // contributions et débité du seul montant de l'aide.
         List<ContributionFondsAide> contributions = new ArrayList<>(n);
-        for (int i = 0; i < n; i++) {
-            BigDecimal montantPart = (i == porteurDuReliquat) ? reliquat : part;
+        for (Membre membre : membresActifs) {
             contributions.add(ContributionFondsAide.builder()
                     .fondsAide(fonds)
-                    .membre(membresActifs.get(i))
-                    .montant(montantPart)
+                    .membre(membre)
+                    .montant(part)
                     .aide(aide)
                     .build());
         }
