@@ -23,7 +23,17 @@ export class TontineContextService {
   private auth = inject(AuthService);
 
   tontines           = signal<TontineResponse[]>([]);
-  tontineCouranteId  = signal<string | null>(null);
+
+  /**
+   * Amorcé depuis localStorage plutôt qu'à null : les gardes de route lisent ce
+   * signal de façon synchrone, bien avant que `init()` n'ait reçu sa réponse.
+   * Sans valeur initiale, tout accès à froid — URL collée, favori, F5 — à un
+   * écran gardé rebondissait vers la sélection de tontine. La valeur restaurée
+   * est provisoire : `init()` la revalide contre la liste réelle des tontines
+   * du compte et la corrige si elle n'y figure pas.
+   */
+  tontineCouranteId  = signal<string | null>(
+    localStorage.getItem(storageKey(this.auth.currentUser()?.email ?? null)));
   tontineCourante    = computed(() =>
     this.tontines().find(t => t.id === this.tontineCouranteId()) ?? null);
 

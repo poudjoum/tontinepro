@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { catchError, map, of } from 'rxjs';
+import { catchError, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { MembreService } from '../services/membre.service';
 import { TontineContextService } from '../services/tontine-context.service';
@@ -55,13 +55,26 @@ export const encaissementGuard: CanActivateFn = () => {
   const ctx = inject(TontineContextService);
 
   if (!auth.isLoggedIn()) return router.createUrlTree(['/auth/login']);
-  if (auth.isGestionnaire()) return true;
 
   const tontineId = ctx.tontineCouranteId();
   if (!tontineId) return router.createUrlTree(['/mes-tontines']);
 
+  // Même règle que sec.peutEncaisser : trésorier ou président toujours,
+  // secrétaire seulement faute de trésorier désigné. Un simple isGestionnaire()
+  // ne suffisait pas — il laissait entrer tout secrétaire, y compris dans une
+  // tontine pourvue d'un trésorier, sur une matrice dont chaque clic finissait
+  // en 403.
   return membres.getMonProfil(tontineId).pipe(
-    map(m => m.fonction === 'TRESORIER' ? true : router.createUrlTree(['/dashboard'])),
+    switchMap(moi => {
+      if (moi.fonction === 'TRESORIER' || moi.fonction === 'PRESIDENT') return of(true);
+      if (moi.fonction !== 'SECRETAIRE') return of(router.createUrlTree(['/dashboard']));
+      // La liste n'est demandée que dans ce cas : un trésorier, en rôle MEMBRE,
+      // n'a pas le droit de l'appeler et n'en a pas l'usage.
+      return membres.getAll(tontineId, 'ACTIF').pipe(
+        map(tous => tous.some(m => m.fonction === 'TRESORIER')
+          ? router.createUrlTree(['/dashboard'])
+          : true));
+    }),
     catchError(() => of(router.createUrlTree(['/dashboard']))),
   );
 };

@@ -42,7 +42,7 @@ export class CollecteAidesComponent implements OnInit {
     this.error.set('');
     this.svc.getCollecte(tontineId).subscribe({
       next: d => { this.data.set(d); this.loading.set(false); },
-      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur de chargement'); this.loading.set(false); },
+      error: e => { this.error.set(this.messageErreur(e, 'Erreur de chargement')); this.loading.set(false); },
     });
   }
 
@@ -50,8 +50,22 @@ export class CollecteAidesComponent implements OnInit {
     this.paiementId.set(contributionId);
     this.fondsSvc.payerContribution(contributionId).subscribe({
       next: () => { this.paiementId.set(null); this.charger(this.tontineId()); },
-      error: e => { this.error.set(e.error?.detail ?? 'Paiement impossible'); this.paiementId.set(null); },
+      error: e => { this.error.set(this.messageErreur(e, 'Paiement impossible')); this.paiementId.set(null); },
     });
+  }
+
+  /**
+   * Un 403 signifie ici « vous n'êtes pas celui qui encaisse », jamais un
+   * incident technique. Le dire explicitement : « Paiement impossible » laissait
+   * croire à une panne alors que la règle est simplement que l'encaissement
+   * revient au trésorier.
+   */
+  private messageErreur(e: { status?: number; error?: { detail?: string; message?: string } }, defaut: string): string {
+    if (e.status === 403) {
+      return e.error?.detail
+        ?? "L'encaissement des contributions revient au Trésorier de la tontine.";
+    }
+    return e.error?.detail ?? e.error?.message ?? defaut;
   }
 
   progression(collecte: number, objectif: number): number {
