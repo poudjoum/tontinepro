@@ -114,7 +114,17 @@
   @media print{
     body{background:white;}
     .page{padding:0;}
-    .feature-card,.section,.comp-col{break-inside:avoid;}
+
+    /* Anti-coupure sur les blocs atomiques uniquement. Sur .section entiere,
+       une section plus haute qu'une page ne peut pas etre "evitee" : le moteur
+       la laisse deborder et la rogne (cas de la section Interface). */
+    .feature-card,.comp-col,.phone-wrap,.security-item,.multi-card,.multi-row,.cta{
+      break-inside:avoid;
+    }
+    /* Un intitule ne reste jamais seul en bas de page : le chapeau est inclus
+       dans la chaine pour que titre + lead + premier bloc restent solidaires. */
+    .section-title,.section h2,.section .lead{break-after:avoid;}
+    .section h2,.section .lead{break-inside:avoid;}
   }
 </style>
 </head>

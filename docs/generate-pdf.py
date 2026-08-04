@@ -26,15 +26,21 @@ except Exception:
 
 DOCS_DIR = Path(__file__).resolve().parent
 
-# clé CLI -> (source HTML, PDF de sortie)
+SANS_MARGE = {"top": "0", "right": "0", "bottom": "0", "left": "0"}
+MARGE_DOC = {"top": "12mm", "right": "10mm", "bottom": "12mm", "left": "10mm"}
+
+# clé CLI -> (source HTML, PDF de sortie, marges de page)
+# Le guide est concu en pleine page (couverture a fond perdu) : marges nulles.
+# La presentation est un document de lecture : marges reelles, sinon les titres
+# de section sont rognes en haut de page.
 DOCUMENTS = {
-    "guide": ("guide-utilisateur.html", "TontinePro-Guide-Utilisateur.pdf"),
+    "guide": ("guide-utilisateur.html", "TontinePro-Guide-Utilisateur.pdf", SANS_MARGE),
     # Nom de sortie aligne sur le fichier servi par l'app (public/docs/)
-    "promotion": ("document-promotion.html", "TontinePro-Presentation.pdf"),
+    "promotion": ("document-promotion.html", "TontinePro-Presentation.pdf", MARGE_DOC),
 }
 
 
-def generer(page, source: str, sortie: str) -> None:
+def generer(page, source: str, sortie: str, marges: dict) -> None:
     src_path = DOCS_DIR / source
     out_path = DOCS_DIR / sortie
     if not src_path.exists():
@@ -47,7 +53,7 @@ def generer(page, source: str, sortie: str) -> None:
         print_background=True,
         display_header_footer=False,
         prefer_css_page_size=True,
-        margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
+        margin=marges,
     )
     taille_ko = round(out_path.stat().st_size / 1024)
     print(f"  ✓ {sortie} ({taille_ko} Ko)")
@@ -66,8 +72,8 @@ def main() -> None:
         browser = p.chromium.launch()
         page = browser.new_page()
         for cle in cles:
-            source, sortie = DOCUMENTS[cle]
-            generer(page, source, sortie)
+            source, sortie, marges = DOCUMENTS[cle]
+            generer(page, source, sortie, marges)
         browser.close()
     print("Terminé.")
 
