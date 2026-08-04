@@ -29,7 +29,8 @@ DOCS_DIR = Path(__file__).resolve().parent
 # clé CLI -> (source HTML, PDF de sortie)
 DOCUMENTS = {
     "guide": ("guide-utilisateur.html", "TontinePro-Guide-Utilisateur.pdf"),
-    "promotion": ("document-promotion.html", "TontinePro-Document-Promotion.pdf"),
+    # Nom de sortie aligne sur le fichier servi par l'app (public/docs/)
+    "promotion": ("document-promotion.html", "TontinePro-Presentation.pdf"),
 }
 
 

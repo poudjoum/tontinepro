@@ -4,10 +4,10 @@ const pptx = new PptxGenJS();
 
 // ── Thème global ────────────────────────────────────────────────────────────
 pptx.layout = 'LAYOUT_WIDE';
-pptx.author  = 'Poudjoum Leutche Gedeon Rodrigue';
+pptx.author  = 'Poudjoum Leutcho Gedeon Rodrigue';
 pptx.company = 'JumpyTech';
 pptx.subject = 'TontinePro — Présentation';
-pptx.title   = 'TontinePro v1.0';
+pptx.title   = 'TontinePro v1.1';
 
 const PRIMARY = '4F46E5';
 const DARK    = '1E293B';
@@ -18,7 +18,7 @@ const AMBER   = 'F59E0B';
 const RED     = 'EF4444';
 
 function addFooter(slide, num) {
-  slide.addText(`TontinePro v1.0  ·  JumpyTech  ·  © 2026`, {
+  slide.addText(`TontinePro v1.1  ·  JumpyTech  ·  © 2026`, {
     x: 0.3, y: 6.9, w: 12, h: 0.3,
     fontSize: 8, color: '94A3B8', align: 'center',
   });
@@ -51,7 +51,7 @@ sl.addText('La plateforme digitale pour gérer votre tontine\navec simplicité, 
   x: 1, y: 3.0, w: 10.8, h: 1.0,
   fontSize: 18, color: 'C7D2FE', align: 'center',
 });
-sl.addText('Version 1.0  ·  Mai 2026  ·  JumpyTech', {
+sl.addText('Version 1.1  ·  Août 2026  ·  JumpyTech', {
   x: 1, y: 4.2, w: 10.8, h: 0.5,
   fontSize: 13, color: '818CF8', align: 'center',
 });
@@ -103,7 +103,7 @@ solutions.forEach((s, i) => {
 addFooter(sl, 2);
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 3 — Fonctionnalités (9 features)
+// SLIDE 3 — Fonctionnalités (12 features)
 // ═══════════════════════════════════════════════════════════════════════════
 sl = pptx.addSlide();
 sl.background = { color: 'F8FAFC' };
@@ -116,24 +116,27 @@ const features = [
   { icon: '🔄', title: 'Sessions', desc: 'Tours de bénéfice, calendrier, validation du pot mensuel' },
   { icon: '🏦', title: 'Épargne', desc: 'Compte individuel, capital prêtable, intérêts distribués' },
   { icon: '📋', title: 'Prêts', desc: 'Demande + documents, validation, échéancier automatique' },
-  { icon: '⚠️', title: 'Absences & Sanctions', desc: 'Appel de présence, sanctions auto, suivi des amendes' },
-  { icon: '🤝', title: 'Fond de solidarité', desc: 'Mensuel ou par session, gestion des dettes, projets' },
+  { icon: '⚠️', title: 'Absences & Sanctions', desc: 'Grille configurable, sanctions auto, suivi des amendes' },
+  { icon: '🤝', title: 'Aides sur barème', desc: 'Barème par tontine, demande, activation, collecte des parts' },
   { icon: '📊', title: 'Suivi mensuel', desc: 'Vue synthétique par mois : cotis., épargne, prêts' },
   { icon: '📤', title: 'Rattrapage historique', desc: 'Import Excel pour tontines déjà en cours' },
-  { icon: '🔗', title: 'Invitations par lien', desc: 'SMS/WhatsApp, compte créé en 1 minute' },
+  { icon: '🔗', title: 'Invitations par lien', desc: 'SMS/WhatsApp, connexion par email ou téléphone' },
+  { icon: '⏪', title: 'Reprise en cours', desc: 'Assistant de rattrapage mois par mois, tour par tour' },
+  { icon: '📄', title: 'Rapports PDF', desc: 'Rapport de tour et bilan de fin de session, envoyés par email' },
+  { icon: '🎯', title: 'Tontine à lot', desc: 'Cagnotte, lots partageables, figeage automatique' },
 ];
 
-const cols = 3, rows = 3;
+const cols = 4;
 features.forEach((f, i) => {
   const col = i % cols;
   const row = Math.floor(i / cols);
-  const x = 0.3 + col * 4.3;
-  const y = 1.3 + row * 1.8;
+  const x = 0.3 + col * 3.25;
+  const y = 1.3 + row * 1.85;
 
-  sl.addShape(pptx.ShapeType.roundRect, { x, y, w: 4.0, h: 1.6, fill: { color: WHITE }, line: { color: 'E2E8F0', width: 1 } });
-  sl.addText(f.icon, { x: x + 0.15, y: y + 0.15, w: 0.7, h: 0.7, fontSize: 22 });
-  sl.addText(f.title, { x: x + 0.9, y: y + 0.15, w: 2.9, h: 0.4, fontSize: 12, bold: true, color: DARK });
-  sl.addText(f.desc, { x: x + 0.9, y: y + 0.55, w: 2.9, h: 0.8, fontSize: 9.5, color: GRAY });
+  sl.addShape(pptx.ShapeType.roundRect, { x, y, w: 3.0, h: 1.6, fill: { color: WHITE }, line: { color: 'E2E8F0', width: 1 } });
+  sl.addText(f.icon, { x: x + 0.15, y: y + 0.12, w: 0.5, h: 0.45, fontSize: 18 });
+  sl.addText(f.title, { x: x + 0.7, y: y + 0.12, w: 2.2, h: 0.45, fontSize: 11, bold: true, color: DARK });
+  sl.addText(f.desc, { x: x + 0.15, y: y + 0.62, w: 2.7, h: 0.85, fontSize: 9, color: GRAY });
 });
 
 addFooter(sl, 3);
@@ -206,7 +209,49 @@ imported.forEach((item, i) => {
 addFooter(sl, 5);
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 6 — Multi-tontine & Sécurité
+// SLIDE 6 — Aides sur barème
+// ═══════════════════════════════════════════════════════════════════════════
+sl = pptx.addSlide();
+sl.background = { color: 'FFFFFF' };
+
+sl.addText('AIDES SUR BARÈME', { x: 0.5, y: 0.2, w: 12, h: 0.4, fontSize: 11, bold: true, color: PRIMARY, charSpacing: 3 });
+sl.addText('La solidarité du groupe, encadrée et traçable', { x: 0.5, y: 0.6, w: 12, h: 0.5, fontSize: 22, bold: true, color: DARK });
+
+sl.addShape(pptx.ShapeType.roundRect, { x: 0.3, y: 1.3, w: 7.5, h: 5.3, fill: { color: 'F8FAFC' }, line: { color: 'E2E8F0', width: 1 } });
+sl.addText('Du barème au versement', { x: 0.5, y: 1.4, w: 7.0, h: 0.5, fontSize: 14, bold: true, color: PRIMARY });
+
+const aideSteps = [
+  { n: '1', t: 'Le bureau définit le barème', d: 'Rubriques propres à la tontine : décès, mariage, naissance…' },
+  { n: '2', t: 'Le membre fait sa demande', d: 'Depuis le barème, avec le montant calculé en direct' },
+  { n: '3', t: 'Le bureau active l\'aide', d: 'Contrôle d\'éligibilité : limite et portée par rubrique' },
+  { n: '4', t: 'Chaque membre verse sa part', d: 'Écran de collecte dédié — matrice membres × aides' },
+];
+aideSteps.forEach((s, i) => {
+  const y = 2.0 + i * 1.1;
+  sl.addShape(pptx.ShapeType.ellipse, { x: 0.5, y, w: 0.5, h: 0.5, fill: { color: PRIMARY }, line: { color: PRIMARY, width: 0 } });
+  sl.addText(s.n, { x: 0.5, y, w: 0.5, h: 0.5, fontSize: 13, bold: true, color: WHITE, align: 'center', valign: 'middle' });
+  sl.addText(s.t, { x: 1.2, y: y + 0.0, w: 6.3, h: 0.3, fontSize: 12, bold: true, color: DARK });
+  sl.addText(s.d, { x: 1.2, y: y + 0.28, w: 6.3, h: 0.4, fontSize: 10, color: GRAY });
+});
+
+sl.addShape(pptx.ShapeType.roundRect, { x: 8.1, y: 1.3, w: 4.5, h: 5.3, fill: { color: 'F0FDF4' }, line: { color: '86EFAC', width: 1 } });
+sl.addText('Ce que le bureau maîtrise', { x: 8.3, y: 1.4, w: 4.1, h: 0.5, fontSize: 13, bold: true, color: '15803D' });
+const aidePoints = [
+  '✅  Barème configurable par tontine',
+  '✅  Préfinancement par la caisse',
+  '✅  Saisie bureau + accord du membre',
+  '✅  Variantes père / mère',
+  '✅  Suivi collecte et trésorerie',
+  '✅  Fonds d\'aide mois par mois',
+];
+aidePoints.forEach((item, i) => {
+  sl.addText(item, { x: 8.3, y: 2.1 + i * 0.7, w: 4.1, h: 0.6, fontSize: 11, color: '166534' });
+});
+
+addFooter(sl, 6);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 7 — Multi-tontine & Sécurité
 // ═══════════════════════════════════════════════════════════════════════════
 sl = pptx.addSlide();
 sl.background = { color: 'FFFFFF' };
@@ -237,14 +282,14 @@ secItems.forEach((s, i) => {
 // Multi-tontine box
 sl.addShape(pptx.ShapeType.roundRect, { x: 0.3, y: 5.0, w: 12.3, h: 1.6, fill: { color: 'F0FDF4' }, line: { color: '86EFAC', width: 1 } });
 sl.addText('Multi-tontine :', { x: 0.6, y: 5.1, w: 2.5, h: 0.4, fontSize: 12, bold: true, color: '15803D' });
-sl.addText('Un même opérateur peut gérer plusieurs tontines avec des comptes distincts. Chaque membre ne voit que les données de SA tontine. Isolation totale garantie.', {
+sl.addText('Un même compte peut appartenir à plusieurs tontines. L\'écran « Mes tontines » à la connexion fixe la tontine courante, et un sélecteur dans l\'en-tête permet d\'en changer. Cotisations, épargne, prêts, aides, documents et rapports sont cloisonnés sur cette tontine : aucune fuite d\'une tontine à l\'autre.', {
   x: 0.6, y: 5.5, w: 12.0, h: 0.8, fontSize: 11, color: '166534',
 });
 
-addFooter(sl, 6);
+addFooter(sl, 7);
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 7 — Contact & CTA
+// SLIDE 8 — Contact & CTA
 // ═══════════════════════════════════════════════════════════════════════════
 sl = pptx.addSlide();
 sl.background = { color: '1E1B4B' };
@@ -258,7 +303,7 @@ sl.addText('TontinePro', { x: 4.3, y: 1.5, w: 4.2, h: 0.7, fontSize: 24, bold: t
 sl.addText('tontinepro.tontinepro.uk', { x: 4.3, y: 2.2, w: 4.2, h: 0.5, fontSize: 13, color: 'C7D2FE', align: 'center', underline: true });
 
 sl.addText('Contact & Support', { x: 1, y: 4.8, w: 10.8, h: 0.5, fontSize: 16, bold: true, color: WHITE, align: 'center' });
-sl.addText('Poudjoum Leutche Gedeon Rodrigue', { x: 1, y: 5.3, w: 10.8, h: 0.45, fontSize: 14, color: 'C7D2FE', align: 'center' });
+sl.addText('Poudjoum Leutcho Gedeon Rodrigue', { x: 1, y: 5.3, w: 10.8, h: 0.45, fontSize: 14, color: 'C7D2FE', align: 'center' });
 sl.addText('📞  697 853 398  /  678 026 373', { x: 1, y: 5.75, w: 10.8, h: 0.45, fontSize: 14, color: 'A5B4FC', align: 'center' });
 sl.addText('JumpyTech  ·  © 2026  ·  Tous droits réservés', { x: 1, y: 6.6, w: 10.8, h: 0.35, fontSize: 10, color: '6366F1', align: 'center' });
 

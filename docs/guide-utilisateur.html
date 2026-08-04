@@ -138,6 +138,8 @@
       <li><a href="#profil">Mon profil et sécurité</a></li>
       <li><a href="#admin">Administration (Secrétaire / Président)</a></li>
       <li><a href="#historique">Rattrapage historique — Import Excel</a></li>
+      <li><a href="#multi-tontine">Plusieurs tontines — choisir sa tontine courante</a></li>
+      <li><a href="#outils-bureau">Outils du bureau — reprise, tontine à lot, import des membres</a></li>
     </ol>
   </div>
 
@@ -151,7 +153,8 @@
     <div class="two-col">
       <div class="text">
         <h3>Se connecter</h3>
-        <p>Accède à l'application via le lien fourni par ton secrétaire. Saisis ton <strong>email</strong> et ton <strong>mot de passe</strong>.</p>
+        <p>Accède à l'application via le lien fourni par ton secrétaire. Saisis ton <strong>email ou ton numéro de téléphone</strong>, puis ton <strong>mot de passe</strong>. Les membres sans adresse email se connectent simplement avec leur numéro.</p>
+        <p>Mot de passe oublié ? Utilise le lien <strong>"Mot de passe oublié"</strong> : ta demande est transmise au bureau, qui te renvoie un lien de réinitialisation.</p>
 
         <h3>Activer son compte (membres pré-inscrits)</h3>
         <p>Si ton secrétaire t'a inscrit directement avec ton numéro de téléphone, utilise la page <strong>"Activer mon compte"</strong> pour définir ton propre email et mot de passe.</p>
@@ -773,13 +776,109 @@
     </div>
   </div>
 
+  <!-- 12. Multi-tontine -->
+  <div class="section" id="multi-tontine">
+    <div class="section-header">
+      <div class="section-icon icon-blue">🔀</div>
+      <h2>12. Plusieurs tontines — choisir sa tontine courante</h2>
+    </div>
+
+    <p>Un même compte peut appartenir à <strong>plusieurs tontines</strong>. Tout ce que tu vois dans l'application dépend alors de la <strong>tontine courante</strong>, c'est-à-dire celle que tu as sélectionnée.</p>
+
+    <div class="two-col">
+      <div class="text">
+        <h3>À la connexion</h3>
+        <p>Juste après la connexion, l'écran <strong>« Mes tontines »</strong> liste les tontines auxquelles ton compte appartient. Choisis-en une : tu arrives ensuite sur le tableau de bord de cette tontine.</p>
+        <p>Si tu n'appartiens encore à aucune tontine, cet écran te propose d'en découvrir une ou de rejoindre celle de ton secrétaire.</p>
+
+        <h3>Changer de tontine</h3>
+        <p>Un <strong>sélecteur dans l'en-tête</strong> permet de basculer d'une tontine à l'autre à tout moment, sans se déconnecter. L'écran se recharge aussitôt avec les données de la nouvelle tontine.</p>
+
+        <h3>Ce qui est cloisonné</h3>
+        <ul>
+          <li>✅ Cotisations, épargne, prêts et sanctions</li>
+          <li>✅ Aides et fonds de solidarité</li>
+          <li>✅ Calendrier, sessions et tours</li>
+          <li>✅ Documents officiels et rapports</li>
+          <li>✅ Liste des membres et suivi mensuel</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="sc-header"><span class="sc-title">Mes tontines</span></div>
+            <div class="sc-body">
+              <div class="sc-card">
+                <div class="sc-row">
+                  <div><div class="sc-card-title">Tontine Famille A</div><div class="sc-card-sub">12 membres · Session 2</div></div>
+                  <span class="sc-badge badge-green">Active</span>
+                </div>
+              </div>
+              <div class="sc-card">
+                <div class="sc-row">
+                  <div><div class="sc-card-title">Tontine Collègues B</div><div class="sc-card-sub">8 membres · Session 1</div></div>
+                  <span class="sc-badge badge-green">Active</span>
+                </div>
+              </div>
+              <div style="font-size:9px;color:#64748b;text-align:center;margin-top:10px;">Touche une tontine pour l'ouvrir</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Choix de la tontine</div>
+      </div>
+    </div>
+
+    <div class="warning">
+      <div class="warning-title">💡 En cas de doute</div>
+      <p>Le nom de la tontine courante est toujours affiché dans l'en-tête. Si un montant te semble incohérent, vérifie d'abord que tu es bien sur la bonne tontine.</p>
+    </div>
+  </div>
+
+  <!-- 13. Outils du bureau -->
+  <div class="section" id="outils-bureau">
+    <div class="section-header">
+      <div class="section-icon icon-orange">🛠️</div>
+      <h2>13. Outils du bureau — reprise, tontine à lot, import des membres</h2>
+    </div>
+
+    <h3>Assistant de reprise d'une tontine en cours</h3>
+    <p>Différent de l'import Excel du chapitre 11 : l'assistant de reprise permet de <strong>rattraper une session mois par mois, directement dans l'application</strong>, sans fichier à préparer. Le bureau saisit chaque tour passé (bénéficiaire, cotisations, repas, fond) puis valide, jusqu'à rejoindre le mois courant.</p>
+    <ul>
+      <li>Une reprise interrompue est proposée à la reprise suivante — rien n'est perdu.</li>
+      <li>Un membre inscrit en retard peut être rattrapé automatiquement sur les tours déjà passés.</li>
+      <li>Une date de passage antérieure est acceptée pour coller à la réalité du groupe.</li>
+    </ul>
+
+    <h3>Tontine à lot</h3>
+    <p>En complément de la tontine à tour classique, le mode <strong>tontine à lot</strong> gère une cagnotte dont les lots peuvent être partagés entre plusieurs membres. La répartition est <strong>figée automatiquement</strong> passé le 3<sup>e</sup> mois, afin d'éviter les modifications tardives contestées.</p>
+
+    <h3>Import Excel des membres</h3>
+    <p>Le secrétaire peut créer les membres <strong>en masse depuis un fichier Excel</strong> plutôt qu'un par un. Chaque membre reçoit un <strong>mot de passe temporaire</strong> qu'il devra changer à sa première connexion.</p>
+
+    <h3>Rapports envoyés au groupe</h3>
+    <ul>
+      <li><strong>Rapport de tour</strong> — généré à chaque bénéfice, consultable par tous les membres et envoyé par email en PDF.</li>
+      <li><strong>Bilan de fin de session</strong> — bilan financier complet : cotisations, épargne, intérêts distribués, sanctions, aides.</li>
+      <li><strong>Fonds d'aide collectés</strong> — matrice membres × mois, imprimable en PDF paysage.</li>
+    </ul>
+
+    <h3>Sanctions configurables</h3>
+    <p>La grille des sanctions se règle par tontine pour coller au <strong>règlement intérieur</strong> du groupe : type de manquement, montant, application automatique ou non.</p>
+
+    <div class="warning">
+      <div class="warning-title">⚠️ Annulation et table rase</div>
+      <p>Un tour validé peut être annulé, et une session <strong>EN_COURS</strong> peut être supprimée pour repartir de zéro. Ces actions sont irréversibles : elles sont réservées au bureau et doivent être décidées en réunion.</p>
+    </div>
+  </div>
+
   <!-- Footer -->
   <div style="text-align:center;padding:32px 0 16px;color:#94a3b8;font-size:12px;border-top:1px solid #e2e8f0;margin-top:16px;">
-    <div style="font-weight:700;font-size:14px;color:#4f46e5;margin-bottom:4px;">TontinePro v1.0</div>
+    <div style="font-weight:700;font-size:14px;color:#4f46e5;margin-bottom:4px;">TontinePro v1.1</div>
     <div style="margin-bottom:10px;">tontinepro.tontinepro.uk · Août 2026</div>
     <div style="background:#f8fafc;border-radius:12px;padding:14px 20px;display:inline-block;text-align:left;margin-bottom:10px;">
       <div style="font-weight:700;font-size:12px;color:#1e293b;margin-bottom:6px;">Auteur &amp; Contact</div>
-      <div style="color:#475569;">Poudjoum Leutche Gedeon Rodrigue</div>
+      <div style="color:#475569;">Poudjoum Leutcho Gedeon Rodrigue</div>
       <div style="color:#475569;">📞 697 853 398 / 678 026 373</div>
       <div style="color:#475569;margin-top:4px;font-weight:600;">© 2026 JumpyTech — Tous droits réservés</div>
     </div>
