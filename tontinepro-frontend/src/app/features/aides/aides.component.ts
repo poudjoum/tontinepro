@@ -48,6 +48,14 @@ export class AidesComponent implements OnInit {
   /** Aide dont la suppression est en attente de confirmation. */
   suppressionId = signal<string | null>(null);
 
+  /**
+   * Profil membre du gestionnaire connecte dans la tontine courante. Un membre
+   * du bureau est aussi un membre : il peut etre beneficiaire d'une aide et doit
+   * alors pouvoir donner son accord depuis la vue admin, faute de quoi la
+   * proposition reste bloquee a « a confirmer ».
+   */
+  monMembreId = signal<string | null>(null);
+
   // Membre — formulaire demande (barème)
   showForm   = signal(false);
   motif      = signal('');
@@ -104,6 +112,13 @@ export class AidesComponent implements OnInit {
       this.rubriqueSvc.lister(tontineId, true).subscribe({
         next: list => this.rubriques.set(list),
         error: () => this.rubriques.set([]),
+      });
+    }
+    // Mon propre profil membre : un gestionnaire peut etre beneficiaire
+    if (this.auth.isAdmin() && tontineId) {
+      this.membreSvc.getMonProfil(tontineId).subscribe({
+        next: m => this.monMembreId.set(m.id),
+        error: () => this.monMembreId.set(null),
       });
     }
     // Liste des membres actifs (pour la saisie admin)

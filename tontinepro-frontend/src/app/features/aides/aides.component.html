@@ -319,6 +319,27 @@
             </p>
           }
 
+          <!-- Consentement : le gestionnaire est aussi membre et peut etre le
+               beneficiaire ; sans ces boutons sa propre aide resterait bloquee -->
+          @if (a.statut === 'PROPOSEE' && a.membreId === monMembreId()) {
+            <div class="border-t pt-3 space-y-2">
+              <p class="text-xs text-gray-500">
+                Cette aide vous concerne : elle attend votre accord.
+              </p>
+              <div class="flex gap-2">
+                <button (click)="accepter(a.id)" [disabled]="submitting()"
+                        class="btn-primary text-sm py-2 flex-1">
+                  ✓ J'accepte
+                </button>
+                <button (click)="refuser(a.id)" [disabled]="submitting()"
+                        class="text-sm font-semibold text-red-600 border border-red-200
+                               rounded-lg py-2 flex-1 active:bg-red-50">
+                  ✕ Je refuse
+                </button>
+              </div>
+            </div>
+          }
+
           <!-- Actions SOUMISE -->
           @if (a.statut === 'SOUMISE' && actionId() !== a.id && activationId() !== a.id) {
             <div class="flex gap-2 border-t pt-3">
