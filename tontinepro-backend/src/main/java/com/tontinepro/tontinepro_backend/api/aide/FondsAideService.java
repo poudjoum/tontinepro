@@ -128,6 +128,14 @@ public class FondsAideService {
                 .montant(contribution.getMontant())
                 .soldeApres(fonds.getSolde())
                 .membre(contribution.getMembre())
+                // Rattacher le mouvement à l'aide qu'il finance (null en mode
+                // MENSUEL, où la contribution n'en dépend pas). Sans ce lien,
+                // AideService.supprimer — qui retrouve les mouvements par
+                // findAllByAideId — laissait derrière lui tous les crédits de
+                // collecte : le solde était bien rembobiné, mais le journal des
+                // mouvements gardait des lignes sans contrepartie et cessait de
+                // se réconcilier avec le solde.
+                .aide(contribution.getAide())
                 .description("Contribution fonds d'aide — membre " + contribution.getMembre().getMatricule())
                 .build());
 
