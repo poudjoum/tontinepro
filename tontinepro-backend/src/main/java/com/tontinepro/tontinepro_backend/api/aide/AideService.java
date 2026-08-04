@@ -701,12 +701,24 @@ public class AideService {
         FondsAide fonds = fondsAideRepository.findByTontineId(tontine.getId())
                 .orElseThrow(() -> new IllegalStateException("Fonds d'aide introuvable pour la tontine"));
 
-        // Une contribution par membre ; le reliquat d'arrondi tombe sur le dernier
+        // Une contribution par membre. Le reliquat d'arrondi revient au
+        // bénéficiaire : c'est son aide, il n'y a pas de raison de faire payer
+        // aux autres plus que leur part. La part étant tronquée au franc
+        // inférieur, ce reliquat est toujours positif — le bénéficiaire est donc
+        // celui qui paie le plus, ou autant que les autres si la division tombe
+        // juste. Repli sur le dernier membre si le bénéficiaire ne figure pas
+        // parmi les actifs, pour que la somme des parts reste égale au total.
+        UUID beneficiaireId = aide.getMembre().getId();
+        int porteurDuReliquat = membresActifs.stream()
+                .map(Membre::getId)
+                .toList()
+                .indexOf(beneficiaireId);
+        if (porteurDuReliquat < 0) porteurDuReliquat = n - 1;
+
+        BigDecimal reliquat = total.subtract(part.multiply(BigDecimal.valueOf(n - 1L)));
         List<ContributionFondsAide> contributions = new ArrayList<>(n);
-        BigDecimal cumul = BigDecimal.ZERO;
         for (int i = 0; i < n; i++) {
-            BigDecimal montantPart = (i < n - 1) ? part : total.subtract(cumul);
-            cumul = cumul.add(part);
+            BigDecimal montantPart = (i == porteurDuReliquat) ? reliquat : part;
             contributions.add(ContributionFondsAide.builder()
                     .fondsAide(fonds)
                     .membre(membresActifs.get(i))

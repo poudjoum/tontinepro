@@ -99,7 +99,14 @@ public class RubriqueAideService {
     /**
      * Calcul pur (réutilisé à l'activation) : N = membres actifs (bénéficiaire inclus).
      *   PAR_PERSONNE : part = montantReference ; total = part × N
-     *   FORFAITAIRE  : total = montantReference ; part = total ÷ N (arrondi 2 déc.)
+     *   FORFAITAIRE  : total = montantReference ; part = total ÷ N arrondi au franc inférieur
+     *
+     * <p>L'arrondi se fait vers le bas, à l'unité : le franc CFA n'a pas de
+     * subdivision — personne ne verse 4 166,67 FCFA — et surtout un arrondi au
+     * plus proche ferait payer aux membres un peu <em>plus</em> que leur part,
+     * le reliquat devenant négatif. En tronquant, le reste à couvrir est
+     * toujours positif et revient au bénéficiaire, qui doit être celui qui paie
+     * le plus (voir la répartition dans {@code AideService.activerAide}).</p>
      */
     public static SimulationAideResponse calculer(RubriqueAide r, int n) {
         BigDecimal ref = r.getMontantReference();
@@ -109,7 +116,7 @@ public class RubriqueAideService {
             total = ref.multiply(BigDecimal.valueOf(n));
         } else {
             total = ref;
-            part = n > 0 ? ref.divide(BigDecimal.valueOf(n), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            part = n > 0 ? ref.divide(BigDecimal.valueOf(n), 0, RoundingMode.DOWN) : BigDecimal.ZERO;
         }
         return new SimulationAideResponse(
                 r.getId(), r.getLibelle(), r.getTypeAide(), r.getModeCalcul(),
