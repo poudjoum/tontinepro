@@ -1,7 +1,8 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { tap, finalize, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   AuthResponse, LoginRequest, LoginResponse,
@@ -15,6 +16,9 @@ export class AuthService {
   private api = `${environment.apiUrl}/auth`;
 
   private _auth = signal<AuthResponse | null>(this.loadFromStorage());
+
+  /** Rafraîchissement partagé tant qu'il est en vol (voir {@link rafraichir}). */
+  private refreshEnCours: Observable<AuthResponse> | null = null;
 
   readonly isLoggedIn    = computed(() => !!this._auth()?.accessToken);
   readonly currentUser   = computed(() => this._auth());
@@ -44,10 +48,30 @@ export class AuthService {
     );
   }
 
-  refresh(refreshToken: string) {
-    return this.http.post<AuthResponse>(`${this.api}/refresh`, { refreshToken }).pipe(
-      tap(auth => this.saveAuth(auth))
+  /**
+   * Rafraîchit le jeton d'accès en garantissant un seul appel en vol.
+   *
+   * Le refresh token est à usage unique : le serveur le révoque dès qu'il sert.
+   * Deux appels concurrents portant le même jeton se sabotent donc — le premier
+   * réussit et révoque, le second reçoit « Refresh token révoqué » et fait
+   * déconnecter l'utilisateur. Or c'est le cas courant : quand un écran charge
+   * plusieurs ressources en parallèle, toutes tombent en 401 ensemble à
+   * l'expiration. Les appelants simultanés partagent donc la même requête.
+   */
+  rafraichir(): Observable<AuthResponse> {
+    if (this.refreshEnCours) return this.refreshEnCours;
+
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) return throwError(() => new Error('Aucun refresh token disponible'));
+
+    this.refreshEnCours = this.http.post<AuthResponse>(`${this.api}/refresh`, { refreshToken }).pipe(
+      tap(auth => this.saveAuth(auth)),
+      // Avant shareReplay : ne se déclenche qu'une fois, à la fin de la requête
+      // partagée, et non à chaque désabonnement d'appelant.
+      finalize(() => { this.refreshEnCours = null; }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+    return this.refreshEnCours;
   }
 
   changerMotDePasse(nouveauMotDePasse: string) {
@@ -104,6 +128,9 @@ export class AuthService {
   private clearAuth(): void {
     localStorage.removeItem(TOKEN_KEY);
     this._auth.set(null);
+    // Sans cette remise à zéro, un rafraîchissement encore en vol resterait
+    // partagé après la déconnexion et servirait un jeton au compte suivant.
+    this.refreshEnCours = null;
   }
 
   private loadFromStorage(): AuthResponse | null {
