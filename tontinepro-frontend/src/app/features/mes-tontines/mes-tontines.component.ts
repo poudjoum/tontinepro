@@ -44,6 +44,25 @@ import { TontineContextService } from '../../core/services/tontine-context.servi
 
         @if (loading()) {
           <div class="text-center py-8 text-gray-400">Chargement…</div>
+        } @else if (erreurChargement()) {
+          <!-- Ne jamais presenter un echec de chargement comme une absence de
+               tontine : le message serait faux et ferait croire a une perte. -->
+          <div class="bg-white rounded-2xl p-6 shadow-sm border border-red-100 text-center space-y-3">
+            <p class="text-gray-800 font-semibold">Impossible de charger vos tontines</p>
+            <p class="text-sm text-gray-500">
+              Votre session a peut-être expiré. Réessayez, ou reconnectez-vous.
+            </p>
+            <div class="space-y-2 pt-1">
+              <button type="button" (click)="reessayer()"
+                      class="w-full py-3 rounded-xl bg-primary-600 text-white font-semibold text-sm">
+                Réessayer
+              </button>
+              <button type="button" (click)="deconnexion()"
+                      class="w-full py-3 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold text-sm">
+                Se reconnecter
+              </button>
+            </div>
+          </div>
         } @else if (tontines().length > 0) {
           <div class="space-y-3">
             @for (t of tontines(); track t.id) {
@@ -99,10 +118,15 @@ export class MesTontinesComponent implements OnInit {
   private ctx    = inject(TontineContextService);
   private router = inject(Router);
 
-  tontines = computed(() => this.ctx.tontines());
-  loading  = computed(() => this.ctx.chargement());
+  tontines         = computed(() => this.ctx.tontines());
+  loading          = computed(() => this.ctx.chargement());
+  erreurChargement = computed(() => this.ctx.erreurChargement());
 
   ngOnInit(): void {
+    this.ctx.init();
+  }
+
+  reessayer(): void {
     this.ctx.init();
   }
 

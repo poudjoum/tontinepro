@@ -30,6 +30,13 @@ export class TontineContextService {
   /** Vrai tant que le chargement de la liste des tontines est en cours. */
   chargement = signal(false);
 
+  /**
+   * Vrai si le dernier chargement a échoué. Sans ce drapeau, une liste vide par
+   * erreur réseau est indiscernable d'une liste vide légitime, et l'interface
+   * affirme à tort que le compte n'appartient à aucune tontine.
+   */
+  erreurChargement = signal(false);
+
   /** Email du compte pour lequel les tontines ont été chargées (détecte les changements de compte). */
   private loadedForEmail: string | null = null;
 
@@ -41,6 +48,7 @@ export class TontineContextService {
 
     this.loadedForEmail = email;
     this.chargement.set(true);
+    this.erreurChargement.set(false);
     this.tontineSvc.getAll().subscribe({
       next: list => {
         this.tontines.set(list);
@@ -50,7 +58,11 @@ export class TontineContextService {
         if (valide) localStorage.setItem(storageKey(email), valide);
         this.chargement.set(false);
       },
-      error: () => { this.loadedForEmail = null; this.chargement.set(false); },
+      error: () => {
+        this.loadedForEmail = null;
+        this.erreurChargement.set(true);
+        this.chargement.set(false);
+      },
     });
   }
 

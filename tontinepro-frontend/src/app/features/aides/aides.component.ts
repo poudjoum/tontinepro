@@ -35,7 +35,20 @@ export class AidesComponent implements OnInit {
   constructor() {
     effect(() => {
       const id = this.ctx.tontineCouranteId();
-      if (id) untracked(() => this.charger());
+      if (id) {
+        untracked(() => this.charger());
+        return;
+      }
+      // Sans tontine courante, charger() n'est jamais appele : sans ce garde
+      // le spinner tournerait indefiniment, sans message.
+      if (!this.ctx.chargement()) {
+        untracked(() => {
+          this.loading.set(false);
+          this.error.set(this.ctx.erreurChargement()
+            ? 'Impossible de charger vos tontines. Votre session a peut-être expiré.'
+            : 'Aucune tontine sélectionnée.');
+        });
+      }
     });
   }
 

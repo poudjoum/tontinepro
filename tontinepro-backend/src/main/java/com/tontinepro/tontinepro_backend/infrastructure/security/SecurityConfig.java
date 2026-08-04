@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.infrastructure.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -56,6 +57,17 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+                // Sans point d'entrée explicite, Spring Security se rabat sur
+                // Http403ForbiddenEntryPoint : une requête non authentifiée (jeton
+                // expiré ou absent) reçoit alors 403 au lieu de 401. Le client ne
+                // peut plus distinguer « session expirée » de « droits
+                // insuffisants », et son rafraîchissement de jeton — déclenché sur
+                // 401 — ne partait jamais. On rétablit la sémantique :
+                //   401 = non authentifié → le client rafraîchit son jeton
+                //   403 = authentifié mais pas autorisé → refus définitif
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        (request, response, authException) -> response.sendError(
+                                HttpServletResponse.SC_UNAUTHORIZED, "Authentification requise")))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
