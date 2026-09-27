@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 
 /**
  * PDF paysage de la reconstitution des fonds d'aide collectés mois par mois :
@@ -39,6 +40,7 @@ public class FondsAideMensuelPdfBuilder {
             ajouterEntete(doc, r);
             doc.add(Chunk.NEWLINE);
             ajouterMatrice(doc, r);
+            ajouterSituation(doc, r);
             ajouterPied(doc);
         } catch (DocumentException e) {
             throw new RuntimeException("Erreur génération PDF fonds d'aide", e);
@@ -134,6 +136,89 @@ public class FondsAideMensuelPdfBuilder {
             t.addCell(cell(montant(c.total()), fTot, BLEU_FONCE, Element.ALIGN_RIGHT));
         }
         t.addCell(cell(montant(r.totalGeneral()), fTot, INDIGO, Element.ALIGN_RIGHT));
+
+        doc.add(t);
+    }
+
+    /**
+     * Situation du fond par membre : versé, parts des aides versées sur le fonds
+     * imputées au membre, solde et montant à rattraper en fin de session.
+     */
+    private void ajouterSituation(Document doc, FondsAideMensuelResponse r) throws DocumentException {
+        if (r.membres().isEmpty()) return;
+
+        boolean avecAnterieur = r.totalAnterieur() != null && r.totalAnterieur().signum() != 0;
+        int nbAides = r.aides().size();
+
+        Font fTitre = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, BLEU_FONCE);
+        Font fNote  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.GRAY);
+        Paragraph titre = new Paragraph("SITUATION DU FOND PAR MEMBRE", fTitre);
+        titre.setSpacingBefore(10f);
+        doc.add(titre);
+        Paragraph note = new Paragraph(
+                "Fond prévu par membre : " + fcfaUnite(r.objectifFond())
+                        + "   ·   Les aides versées sur le fonds sont retranchées du fond de chaque membre ;"
+                        + " il rattrape en fin de session de quoi retrouver le fond prévu.", fNote);
+        note.setSpacingAfter(6f);
+        doc.add(note);
+
+        Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+        Font fData = FontFactory.getFont(FontFactory.HELVETICA, 8, BLEU_FONCE);
+        Font fVide = FontFactory.getFont(FontFactory.HELVETICA, 8, GRIS_TEXTE);
+        Font fNeg  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, new Color(192, 57, 43));
+        Font fRatt = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, new Color(180, 83, 9));
+
+        int nbCol = 1 + 1 + (avecAnterieur ? 1 : 0) + nbAides + 2;
+        PdfPTable t = new PdfPTable(nbCol);
+        t.setWidthPercentage(100f);
+        t.setHeaderRows(1);
+        float[] widths = new float[nbCol];
+        Arrays.fill(widths, 11f);
+        widths[0] = 26f;
+        try { t.setWidths(widths); } catch (DocumentException ignored) {}
+
+        t.addCell(cellEntete("Membre", fEnt, Element.ALIGN_LEFT));
+        t.addCell(cellEntete("Fond versé", fEnt, Element.ALIGN_RIGHT));
+        if (avecAnterieur) t.addCell(cellEntete("Antérieur", fEnt, Element.ALIGN_RIGHT));
+        for (FondsAideMensuelResponse.AideColonne a : r.aides()) {
+            String date = a.datePaiement() != null ? "\n" + a.datePaiement().format(FMT) : "";
+            t.addCell(cellEntete("− " + a.libelle() + date, fEnt, Element.ALIGN_RIGHT));
+        }
+        t.addCell(cellEntete("Solde", fEnt, Element.ALIGN_RIGHT));
+        t.addCell(cellEntete("À rattraper", fEnt, Element.ALIGN_RIGHT));
+
+        boolean pair = false;
+        BigDecimal totalSolde = BigDecimal.ZERO;
+        for (FondsAideMensuelResponse.LigneMembre l : r.membres()) {
+            Color bg = pair ? Color.WHITE : GRIS_CLAIR;
+            pair = !pair;
+            String nom = l.nomPrenom();
+            if ("AIDE_SOCIALE".equals(l.typeParticipation())) nom += "  (AS)";
+            t.addCell(cell(nom, fData, bg, Element.ALIGN_LEFT));
+            t.addCell(cell(montant(l.total()), fData, bg, Element.ALIGN_RIGHT));
+            if (avecAnterieur) {
+                boolean vide = l.anterieur().signum() == 0;
+                t.addCell(cell(vide ? "—" : montant(l.anterieur()), vide ? fVide : fData, bg, Element.ALIGN_RIGHT));
+            }
+            for (BigDecimal p : l.partsAides()) {
+                boolean vide = p.signum() == 0;
+                t.addCell(cell(vide ? "—" : montant(p), vide ? fVide : fData, bg, Element.ALIGN_RIGHT));
+            }
+            t.addCell(cell(montant(l.solde()), l.solde().signum() < 0 ? fNeg : fData, bg, Element.ALIGN_RIGHT));
+            boolean aJour = l.aRattraper().signum() == 0;
+            t.addCell(cell(aJour ? "à jour" : montant(l.aRattraper()), aJour ? fVide : fRatt, bg, Element.ALIGN_RIGHT));
+            totalSolde = totalSolde.add(l.solde());
+        }
+
+        Font fTot = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+        t.addCell(cell("TOTAL", fTot, BLEU_FONCE, Element.ALIGN_LEFT));
+        t.addCell(cell(montant(r.totalGeneral()), fTot, BLEU_FONCE, Element.ALIGN_RIGHT));
+        if (avecAnterieur) t.addCell(cell(montant(r.totalAnterieur()), fTot, BLEU_FONCE, Element.ALIGN_RIGHT));
+        for (FondsAideMensuelResponse.AideColonne a : r.aides()) {
+            t.addCell(cell(montant(a.totalImpute()), fTot, BLEU_FONCE, Element.ALIGN_RIGHT));
+        }
+        t.addCell(cell(montant(totalSolde), fTot, BLEU_FONCE, Element.ALIGN_RIGHT));
+        t.addCell(cell(montant(r.totalARattraper()), fTot, INDIGO, Element.ALIGN_RIGHT));
 
         doc.add(t);
     }

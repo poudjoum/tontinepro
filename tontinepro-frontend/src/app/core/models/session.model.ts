@@ -209,6 +209,25 @@ export interface LigneMembreFondsAide {
   typeParticipation: 'TONTINE' | 'AIDE_SOCIALE';
   cellules: number[];   // aligné sur `mois`
   total: number;
+  /** Fond versé avant l'application (reprise). */
+  anterieur: number;
+  /** Part de chaque aide imputée sur le fond du membre — aligné sur `aides`. */
+  partsAides: number[];
+  totalImpute: number;
+  /** Versé (mois + antérieur) − parts imputées ; peut être négatif. */
+  solde: number;
+  /** À verser en fin de session pour retrouver le fond prévu. */
+  aRattraper: number;
+}
+
+/** Aide versée sur le fonds pendant la session. */
+export interface AideColonneFondsAide {
+  aideId: string;
+  libelle: string;
+  beneficiaire: string;
+  datePaiement: string | null;
+  partParMembre: number | null;
+  totalImpute: number;
 }
 
 export interface FondsAideMensuelResponse {
@@ -218,6 +237,12 @@ export interface FondsAideMensuelResponse {
   mois: MoisColonneFondsAide[];
   membres: LigneMembreFondsAide[];
   totalGeneral: number;
+  /** Fond prévu par membre pour la session. */
+  objectifFond: number;
+  aides: AideColonneFondsAide[];
+  totalAnterieur: number;
+  totalImpute: number;
+  totalARattraper: number;
 }
 
 export interface MonTourResponse {

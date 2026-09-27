@@ -107,6 +107,99 @@
 
       }
 
+      <!-- Situation du fond par membre : aides imputées et rattrapage -->
+      @if (d.membres.length > 0) {
+        <div class="grid grid-cols-3 gap-2 print-card">
+          <div class="bg-white rounded-xl border border-gray-100 px-3 py-2.5">
+            <p class="text-[11px] text-gray-500">Fond prévu / membre</p>
+            <p class="text-sm font-bold text-gray-900 tabular-nums">{{ d.objectifFond ? fcfa(d.objectifFond) : 'non configuré' }}</p>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100 px-3 py-2.5">
+            <p class="text-[11px] text-gray-500">Aides imputées</p>
+            <p class="text-sm font-bold text-red-600 tabular-nums">{{ fcfa(d.totalImpute) }}</p>
+          </div>
+          <div class="bg-amber-50 rounded-xl border border-amber-200 px-3 py-2.5">
+            <p class="text-[11px] text-amber-700">À rattraper</p>
+            <p class="text-sm font-bold text-amber-800 tabular-nums">{{ fcfa(d.totalARattraper) }}</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden print-card">
+          <div class="px-4 pt-4 pb-2">
+            <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Situation du fond par membre</h2>
+            <p class="text-[11px] text-gray-400 mt-0.5">
+              Les aides versées sur le fonds sont retranchées du fond de chaque membre (sa part non payée à la collecte).
+              En fin de session, il rattrape de quoi retrouver le fond prévu.
+            </p>
+          </div>
+          @if (d.aides.length === 0) {
+            <p class="px-4 pb-3 text-xs text-gray-500">Aucune aide versée sur le fonds pendant cette session.</p>
+          }
+          <div class="overflow-x-auto">
+            <table class="text-xs border-collapse w-full">
+              <thead class="bg-gray-800 text-white">
+                <tr>
+                  <th class="px-3 py-2 text-left font-semibold sticky left-0 bg-gray-800 z-10">Membre</th>
+                  <th class="px-2 py-2 text-right font-semibold whitespace-nowrap">Fond versé</th>
+                  @if (d.totalAnterieur > 0) {
+                    <th class="px-2 py-2 text-right font-semibold whitespace-nowrap">Antérieur</th>
+                  }
+                  @for (a of d.aides; track a.aideId) {
+                    <th class="px-2 py-2 text-right font-semibold whitespace-nowrap" [title]="a.beneficiaire">
+                      − {{ a.libelle }}
+                      @if (a.datePaiement) {
+                        <span class="block text-[10px] font-normal text-gray-300">{{ dateCourte(a.datePaiement) }}</span>
+                      }
+                    </th>
+                  }
+                  <th class="px-2 py-2 text-right font-semibold">Solde</th>
+                  <th class="px-3 py-2 text-right font-semibold bg-amber-700 whitespace-nowrap">À rattraper</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (l of d.membres; track l.membreId; let i = $index) {
+                  <tr [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+                    <td class="px-3 py-2 font-medium text-gray-800 whitespace-nowrap sticky left-0 z-10"
+                        [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">{{ l.nomPrenom }}</td>
+                    <td class="px-2 py-2 text-right tabular-nums text-gray-700">{{ l.total | number:'1.0-0' }}</td>
+                    @if (d.totalAnterieur > 0) {
+                      <td class="px-2 py-2 text-right tabular-nums" [class]="l.anterieur > 0 ? 'text-gray-700' : 'text-gray-300'">
+                        {{ l.anterieur > 0 ? (l.anterieur | number:'1.0-0') : '—' }}
+                      </td>
+                    }
+                    @for (p of l.partsAides; track $index) {
+                      <td class="px-2 py-2 text-right tabular-nums" [class]="p > 0 ? 'text-red-600' : 'text-gray-300'">
+                        {{ p > 0 ? (p | number:'1.0-0') : '—' }}
+                      </td>
+                    }
+                    <td class="px-2 py-2 text-right tabular-nums font-semibold"
+                        [class]="l.solde < 0 ? 'text-red-600' : 'text-gray-800'">{{ l.solde | number:'1.0-0' }}</td>
+                    <td class="px-3 py-2 text-right tabular-nums font-bold bg-amber-50/70"
+                        [class]="l.aRattraper > 0 ? 'text-amber-800' : 'text-green-600'">
+                      {{ l.aRattraper > 0 ? (l.aRattraper | number:'1.0-0') : 'à jour' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot class="bg-gray-800 text-white">
+                <tr>
+                  <td class="px-3 py-2 font-bold sticky left-0 bg-gray-800 z-10">TOTAL</td>
+                  <td class="px-2 py-2 text-right font-bold tabular-nums">{{ d.totalGeneral | number:'1.0-0' }}</td>
+                  @if (d.totalAnterieur > 0) {
+                    <td class="px-2 py-2 text-right font-bold tabular-nums">{{ d.totalAnterieur | number:'1.0-0' }}</td>
+                  }
+                  @for (a of d.aides; track a.aideId) {
+                    <td class="px-2 py-2 text-right font-bold tabular-nums">{{ a.totalImpute | number:'1.0-0' }}</td>
+                  }
+                  <td class="px-2 py-2 text-right font-bold tabular-nums">{{ totalSolde() | number:'1.0-0' }}</td>
+                  <td class="px-3 py-2 text-right font-black tabular-nums bg-amber-800">{{ d.totalARattraper | number:'1.0-0' }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      }
+
       <!-- Pied de page impression -->
       <div class="hidden print:block text-center mt-6 pt-3 border-t border-gray-300">
         <p class="text-[10px] text-gray-500 italic">

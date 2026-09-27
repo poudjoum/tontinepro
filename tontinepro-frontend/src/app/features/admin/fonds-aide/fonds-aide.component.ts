@@ -23,6 +23,7 @@ export class FondsAideComponent implements OnInit {
   aucuneSession = signal(false);
 
   nbMois = computed(() => this.data()?.mois.length ?? 0);
+  totalSolde = computed(() => (this.data()?.membres ?? []).reduce((s, l) => s + l.solde, 0));
 
   private MOIS_COURT = ['', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
     'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
@@ -61,6 +62,11 @@ export class FondsAideComponent implements OnInit {
 
   moisLabel(mois: number, annee: number): string {
     return `${this.MOIS_COURT[mois] ?? ''} ${String(annee).slice(-2)}`;
+  }
+
+  dateCourte(iso: string): string {
+    const [a, m, j] = iso.split('-');
+    return `${j}/${m}/${a.slice(-2)}`;
   }
 
   fcfa(n: number | null | undefined): string {

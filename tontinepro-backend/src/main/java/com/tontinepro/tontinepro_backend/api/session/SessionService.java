@@ -5,7 +5,12 @@ import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.api.session.dto.*;
 import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
 import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
+import com.tontinepro.tontinepro_backend.domain.aide.Aide;
+import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAide;
+import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAideRepository;
 import com.tontinepro.tontinepro_backend.domain.aide.FondsAideRepository;
+import com.tontinepro.tontinepro_backend.domain.aide.MouvementFondsAide;
+import com.tontinepro.tontinepro_backend.domain.aide.MouvementFondsAideRepository;
 import com.tontinepro.tontinepro_backend.domain.aide.VersementAnterieurFonds;
 import com.tontinepro.tontinepro_backend.domain.aide.VersementAnterieurFondsRepository;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
@@ -49,6 +54,8 @@ public class SessionService {
     private final PretRepository pretRepository;
     private final FondsAideRepository fondsAideRepository;
     private final VersementAnterieurFondsRepository versementAnterieurRepository;
+    private final MouvementFondsAideRepository mouvementFondsAideRepository;
+    private final ContributionFondsAideRepository contributionFondsAideRepository;
 
     @Transactional
     public SessionResponse creerSession(CreerSessionRequest request) {
@@ -1191,12 +1198,35 @@ public class SessionService {
             }
         }
 
+        // Fond versé avant l'application, sur les années couvertes par la session
+        Map<UUID, BigDecimal> anterieurParMembre = new HashMap<>();
+        moisList.stream().map(YearMonth::getYear).distinct().forEach(an ->
+                versementAnterieurRepository.findAllByTontineIdAndAnnee(tontineId, an.shortValue())
+                        .forEach(v -> anterieurParMembre.merge(v.getMembre().getId(), v.getMontant(), BigDecimal::add)));
+
+        // Aides versées sur le fonds pendant la session : la part de chaque membre non
+        // encore remboursée (contribution A_PAYER) est imputée sur son fond.
+        List<Aide> aidesPayees = aidesVerseesSurLeFonds(tontineId, debut, fin);
+        List<Map<UUID, BigDecimal>> imputationsParAide = aidesPayees.stream()
+                .map(a -> contributionFondsAideRepository.findAllByAideIdOrderByCreatedAtAsc(a.getId()).stream()
+                        .filter(c -> c.getStatut() == ContributionFondsAide.Statut.A_PAYER)
+                        .collect(Collectors.toMap(c -> c.getMembre().getId(),
+                                c -> safe(c.getMontant()), BigDecimal::add)))
+                .toList();
+
+        BigDecimal objectif = safe(tontine.getMontantFondAideAnnuelMembre());
+
         // Lignes : tous les membres actifs (contributeurs TONTINE + AIDE_SOCIALE)
         List<Membre> membres = membreRepository.findAllByTontineIdAndStatut(tontineId, Membre.Statut.ACTIF);
 
         BigDecimal[] totauxMois = new BigDecimal[moisList.size()];
         Arrays.fill(totauxMois, BigDecimal.ZERO);
+        BigDecimal[] totauxAides = new BigDecimal[aidesPayees.size()];
+        Arrays.fill(totauxAides, BigDecimal.ZERO);
         BigDecimal totalGeneral = BigDecimal.ZERO;
+        BigDecimal totalAnterieur = BigDecimal.ZERO;
+        BigDecimal totalImpute = BigDecimal.ZERO;
+        BigDecimal totalARattraper = BigDecimal.ZERO;
 
         List<FondsAideMensuelResponse.LigneMembre> lignes = new ArrayList<>();
         for (Membre m : membres) {
@@ -1210,9 +1240,39 @@ public class SessionService {
                 totauxMois[i] = totauxMois[i].add(v);
             }
             totalGeneral = totalGeneral.add(totalLigne);
+
+            BigDecimal anterieur = anterieurParMembre.getOrDefault(m.getId(), BigDecimal.ZERO);
+            List<BigDecimal> parts = new ArrayList<>(aidesPayees.size());
+            BigDecimal imputeLigne = BigDecimal.ZERO;
+            for (int i = 0; i < aidesPayees.size(); i++) {
+                BigDecimal p = imputationsParAide.get(i).getOrDefault(m.getId(), BigDecimal.ZERO);
+                parts.add(p);
+                imputeLigne = imputeLigne.add(p);
+                totauxAides[i] = totauxAides[i].add(p);
+            }
+            BigDecimal solde = totalLigne.add(anterieur).subtract(imputeLigne);
+            BigDecimal aRattraper = objectif.subtract(solde).max(BigDecimal.ZERO);
+
+            totalAnterieur = totalAnterieur.add(anterieur);
+            totalImpute = totalImpute.add(imputeLigne);
+            totalARattraper = totalARattraper.add(aRattraper);
+
             lignes.add(new FondsAideMensuelResponse.LigneMembre(
                     m.getId(), m.getMatricule(), m.getPrenom() + " " + m.getNom(),
-                    m.getTypeParticipation().name(), cellules, totalLigne));
+                    m.getTypeParticipation().name(), cellules, totalLigne,
+                    anterieur, parts, imputeLigne, solde, aRattraper));
+        }
+
+        List<FondsAideMensuelResponse.AideColonne> colonnesAides = new ArrayList<>();
+        for (int i = 0; i < aidesPayees.size(); i++) {
+            Aide a = aidesPayees.get(i);
+            colonnesAides.add(new FondsAideMensuelResponse.AideColonne(
+                    a.getId(),
+                    a.getRubrique() != null ? a.getRubrique().getLibelle() : a.getTypeAide().name(),
+                    a.getMembre().getPrenom() + " " + a.getMembre().getNom(),
+                    datePaiementAide(a),
+                    a.getPartParMembre(),
+                    totauxAides[i]));
         }
         lignes.sort(Comparator.comparing(FondsAideMensuelResponse.LigneMembre::nomPrenom,
                 String.CASE_INSENSITIVE_ORDER));
@@ -1226,7 +1286,37 @@ public class SessionService {
 
         return new FondsAideMensuelResponse(
                 sessionId, session.getNumero(), tontine.getNom(),
-                colonnes, lignes, totalGeneral);
+                colonnes, lignes, totalGeneral,
+                objectif, colonnesAides, totalAnterieur, totalImpute, totalARattraper);
+    }
+
+    /**
+     * Aides payées (versées au bénéficiaire) depuis le fonds de la tontine entre
+     * deux dates, d'après leur mouvement de décaissement, dans l'ordre chronologique.
+     */
+    private List<Aide> aidesVerseesSurLeFonds(UUID tontineId, LocalDate debut, LocalDate fin) {
+        return fondsAideRepository.findByTontineId(tontineId)
+                .map(f -> mouvementFondsAideRepository.findAllByFondsAideIdOrderByCreatedAtDesc(f.getId()))
+                .orElse(List.of()).stream()
+                .filter(mv -> mv.getTypeMouvement() == MouvementFondsAide.TypeMouvement.DECAISSEMENT
+                        && mv.getAide() != null
+                        && mv.getAide().getStatut() == Aide.Statut.PAYEE)
+                .filter(mv -> {
+                    LocalDate d = mv.getCreatedAt().toLocalDate();
+                    return !d.isBefore(debut) && !d.isAfter(fin);
+                })
+                .sorted(Comparator.comparing(MouvementFondsAide::getCreatedAt))
+                .map(MouvementFondsAide::getAide)
+                .distinct()
+                .toList();
+    }
+
+    private LocalDate datePaiementAide(Aide aide) {
+        return mouvementFondsAideRepository.findAllByAideId(aide.getId()).stream()
+                .filter(mv -> mv.getTypeMouvement() == MouvementFondsAide.TypeMouvement.DECAISSEMENT)
+                .map(mv -> mv.getCreatedAt().toLocalDate())
+                .min(Comparator.naturalOrder())
+                .orElse(null);
     }
 
     // ─── Inscription en retard ──────────────────────────────────────────────────
