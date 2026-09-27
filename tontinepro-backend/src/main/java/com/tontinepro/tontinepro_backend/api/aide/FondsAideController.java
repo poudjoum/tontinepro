@@ -1,6 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.aide;
 
 import com.tontinepro.tontinepro_backend.api.aide.dto.ContributionFondsAideResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.EncaisserRattrapageRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.FondsAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.MouvementFondsAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.VersementsAnterieursRequest;
@@ -15,7 +16,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -86,6 +89,20 @@ public class FondsAideController {
             @Valid @RequestBody VersementsAnterieursRequest request
     ) {
         return fondsAideService.enregistrerVersementsAnterieurs(tontineId, request);
+    }
+
+    @PostMapping("/{tontineId}/rattrapage")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Encaisser le rattrapage de fin de session d'un membre (ses parts dues sur les "
+            + "aides versées) — réservé au Trésorier de la tontine ; voir sec.peutEncaisser")
+    public Map<String, BigDecimal> encaisserRattrapage(
+            @PathVariable UUID tontineId,
+            @Valid @RequestBody EncaisserRattrapageRequest request,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        BigDecimal total = fondsAideService.encaisserRattrapage(
+                tontineId, request.membreId(), request.aideIds(), principal.getUsername());
+        return Map.of("montantEncaisse", total);
     }
 
     @PatchMapping("/contributions/{id}/payer")

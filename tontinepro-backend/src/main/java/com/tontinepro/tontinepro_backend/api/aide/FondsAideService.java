@@ -126,6 +126,49 @@ public class FondsAideService {
                     "L'encaissement des contributions revient au Trésorier de la tontine");
         }
 
+        return ContributionFondsAideResponse.from(crediter(contribution,
+                "Contribution fonds d'aide — membre " + contribution.getMembre().getMatricule()));
+    }
+
+    /**
+     * Encaisse le rattrapage de fin de session d'un membre : ses parts encore dues
+     * sur les aides versées sur le fonds. Chaque part passe PAYEE et crédite le
+     * fonds, exactement comme un encaissement depuis la collecte des aides.
+     *
+     * @param aideIds aides concernées (colonnes du tableau de situation du fond)
+     * @return le montant total encaissé
+     */
+    @Transactional
+    public BigDecimal encaisserRattrapage(UUID tontineId, UUID membreId, List<UUID> aideIds, String encaisseurEmail) {
+        if (!securityExpressionService.peutEncaisser(encaisseurEmail, tontineId)) {
+            throw new AccessDeniedException("L'encaissement du rattrapage revient au Trésorier de la tontine");
+        }
+        Membre membre = membreRepository.findById(membreId)
+                .orElseThrow(() -> new IllegalArgumentException("Membre introuvable : " + membreId));
+        if (!membre.getTontine().getId().equals(tontineId)) {
+            throw new IllegalArgumentException("Le membre n'appartient pas à cette tontine");
+        }
+
+        List<ContributionFondsAide> dues = contributionRepository.findAllByMembreId(membreId).stream()
+                .filter(c -> c.getStatut() == ContributionFondsAide.Statut.A_PAYER
+                        && c.getAide() != null
+                        && c.getAide().getStatut() == Aide.Statut.PAYEE
+                        && aideIds.contains(c.getAide().getId()))
+                .toList();
+        if (dues.isEmpty()) {
+            throw new IllegalArgumentException("Aucune part d'aide à rattraper pour ce membre");
+        }
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (ContributionFondsAide c : dues) {
+            crediter(c, "Rattrapage fin de session — membre " + membre.getMatricule());
+            total = total.add(c.getMontant());
+        }
+        return total;
+    }
+
+    /** Marque la contribution payée, crédite le fonds et journalise le mouvement. */
+    private ContributionFondsAide crediter(ContributionFondsAide contribution, String description) {
         FondsAide fonds = contribution.getFondsAide();
         fonds.setSolde(fonds.getSolde().add(contribution.getMontant()));
         fondsAideRepository.save(fonds);
@@ -144,12 +187,12 @@ public class FondsAideService {
                 // mouvements gardait des lignes sans contrepartie et cessait de
                 // se réconcilier avec le solde.
                 .aide(contribution.getAide())
-                .description("Contribution fonds d'aide — membre " + contribution.getMembre().getMatricule())
+                .description(description)
                 .build());
 
         contribution.setStatut(ContributionFondsAide.Statut.PAYEE);
         contribution.setDatePaiement(OffsetDateTime.now());
-        return ContributionFondsAideResponse.from(contributionRepository.save(contribution));
+        return contributionRepository.save(contribution);
     }
 
     /**

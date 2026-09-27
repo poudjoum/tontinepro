@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { SessionService } from '../../../core/services/session.service';
 import { TontineContextService } from '../../../core/services/tontine-context.service';
+import { FondsAideService } from '../../../core/services/fonds-aide.service';
 import { FondsAideMensuelResponse } from '../../../core/models/session.model';
 
 @Component({
@@ -13,6 +14,7 @@ import { FondsAideMensuelResponse } from '../../../core/models/session.model';
 export class FondsAideComponent implements OnInit {
   private sessionSvc = inject(SessionService);
   private ctx        = inject(TontineContextService);
+  private fondsSvc   = inject(FondsAideService);
 
   data     = signal<FondsAideMensuelResponse | null>(null);
   loading  = signal(true);
@@ -41,11 +43,54 @@ export class FondsAideComponent implements OnInit {
     if (!this.ctx.tontineCouranteId()) this.loading.set(false);
   }
 
-  private charger(tontineId: string): void {
-    this.loading.set(true);
+  /** Membre dont le rattrapage attend confirmation, puis en cours d'encaissement. */
+  confirmRattrapage = signal<string | null>(null);
+  encaissement      = signal<string | null>(null);
+  success           = signal('');
+
+  demanderRattrapage(membreId: string): void {
+    this.success.set('');
     this.error.set('');
+    this.confirmRattrapage.set(membreId);
+  }
+
+  annulerRattrapage(): void { this.confirmRattrapage.set(null); }
+
+  encaisserRattrapage(membreId: string, nom: string): void {
+    const d = this.data();
+    if (!d) return;
+    this.encaissement.set(membreId);
+    this.fondsSvc.encaisserRattrapage(this.tontineId, membreId, d.aides.map(a => a.aideId)).subscribe({
+      next: r => {
+        this.encaissement.set(null);
+        this.confirmRattrapage.set(null);
+        this.success.set(`Rattrapage de ${nom} encaissé : ${this.fcfa(r.montantEncaisse)}.`);
+        this.charger(this.tontineId, false);
+      },
+      error: e => {
+        this.encaissement.set(null);
+        this.confirmRattrapage.set(null);
+        // Un 403 signifie « ce n'est pas vous qui encaissez », pas une panne.
+        this.error.set(e.status === 403
+          ? (e.error?.detail ?? 'L\'encaissement du rattrapage revient au Trésorier de la tontine.')
+          : (e.error?.detail ?? e.error?.message ?? 'Encaissement impossible.'));
+      },
+    });
+  }
+
+  private tontineId = '';
+
+  private charger(tontineId: string, reinitialiser = true): void {
+    this.tontineId = tontineId;
+    // Après un encaissement, on garde le tableau affiché pendant le rechargement
+    // (pas de spinner ni de retour en haut de page).
+    if (reinitialiser) {
+      this.loading.set(true);
+      this.error.set('');
+      this.success.set('');
+      this.data.set(null);
+    }
     this.aucuneSession.set(false);
-    this.data.set(null);
 
     this.sessionSvc.listerSessions(tontineId).subscribe({
       next: list => {
