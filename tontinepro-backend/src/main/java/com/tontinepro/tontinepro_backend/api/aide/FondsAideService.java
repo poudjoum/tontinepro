@@ -3,6 +3,8 @@ package com.tontinepro.tontinepro_backend.api.aide;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ContributionFondsAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.FondsAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.MouvementFondsAideResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.VersementsAnterieursRequest;
+import com.tontinepro.tontinepro_backend.api.aide.dto.VersementsAnterieursResponse;
 import com.tontinepro.tontinepro_backend.domain.aide.*;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
@@ -13,9 +15,14 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +31,7 @@ public class FondsAideService {
     private final FondsAideRepository fondsAideRepository;
     private final MouvementFondsAideRepository mouvementRepository;
     private final ContributionFondsAideRepository contributionRepository;
+    private final VersementAnterieurFondsRepository versementAnterieurRepository;
     private final MembreRepository membreRepository;
     private final SecurityExpressionService securityExpressionService;
 
@@ -142,6 +150,90 @@ public class FondsAideService {
         contribution.setStatut(ContributionFondsAide.Statut.PAYEE);
         contribution.setDatePaiement(OffsetDateTime.now());
         return ContributionFondsAideResponse.from(contributionRepository.save(contribution));
+    }
+
+    /**
+     * Fond de caisse versé avant l'application, pour chaque membre actif de la
+     * tontine sur l'année donnée (0 si rien n'a été déclaré).
+     */
+    @Transactional(readOnly = true)
+    public VersementsAnterieursResponse getVersementsAnterieurs(UUID tontineId, short annee) {
+        FondsAide fonds = loadFonds(tontineId);
+        Map<UUID, BigDecimal> declares = versementAnterieurRepository
+                .findAllByTontineIdAndAnnee(tontineId, annee).stream()
+                .collect(Collectors.toMap(v -> v.getMembre().getId(),
+                        VersementAnterieurFonds::getMontant, BigDecimal::add));
+
+        List<VersementsAnterieursResponse.Ligne> lignes = membreRepository
+                .findAllByTontineIdAndStatut(tontineId, Membre.Statut.ACTIF).stream()
+                .map(m -> new VersementsAnterieursResponse.Ligne(
+                        m.getId(), m.getMatricule(), m.getPrenom() + " " + m.getNom(),
+                        declares.getOrDefault(m.getId(), BigDecimal.ZERO)))
+                .sorted(Comparator.comparing(VersementsAnterieursResponse.Ligne::nomPrenom,
+                        String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
+        BigDecimal total = lignes.stream().map(VersementsAnterieursResponse.Ligne::montant)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal obligation = fonds.getTontine().getMontantFondAideAnnuelMembre();
+        return new VersementsAnterieursResponse(annee,
+                obligation != null ? obligation : BigDecimal.ZERO, lignes, total);
+    }
+
+    /**
+     * Enregistre le fond de caisse versé avant l'application. Pour chaque membre,
+     * l'écart avec la déclaration précédente est reporté sur le solde du fonds et
+     * journalisé (REPRISE à la hausse, REPRISE_CORRECTION à la baisse), de sorte
+     * que le journal des mouvements reste réconcilié avec le solde.
+     */
+    @Transactional
+    public VersementsAnterieursResponse enregistrerVersementsAnterieurs(UUID tontineId,
+                                                                        VersementsAnterieursRequest request) {
+        FondsAide fonds = loadFonds(tontineId);
+        short annee = request.annee();
+
+        for (VersementsAnterieursRequest.Ligne ligne : request.lignes()) {
+            Membre membre = membreRepository.findById(ligne.membreId())
+                    .orElseThrow(() -> new IllegalArgumentException("Membre introuvable : " + ligne.membreId()));
+            if (!membre.getTontine().getId().equals(tontineId)) {
+                throw new IllegalArgumentException("Le membre " + membre.getMatricule()
+                        + " n'appartient pas à cette tontine");
+            }
+
+            BigDecimal nouveau = ligne.montant().setScale(2, RoundingMode.HALF_UP);
+            var existant = versementAnterieurRepository.findByMembreIdAndAnnee(membre.getId(), annee);
+            BigDecimal ancien = existant.map(VersementAnterieurFonds::getMontant).orElse(BigDecimal.ZERO);
+            BigDecimal ecart = nouveau.subtract(ancien);
+            if (ecart.signum() == 0) continue;
+
+            if (nouveau.signum() == 0) {
+                existant.ifPresent(versementAnterieurRepository::delete);
+            } else {
+                VersementAnterieurFonds v = existant.orElseGet(() -> VersementAnterieurFonds.builder()
+                        .tontine(fonds.getTontine())
+                        .membre(membre)
+                        .annee(annee)
+                        .build());
+                v.setMontant(nouveau);
+                versementAnterieurRepository.save(v);
+            }
+
+            fonds.setSolde(fonds.getSolde().add(ecart));
+            mouvementRepository.save(MouvementFondsAide.builder()
+                    .fondsAide(fonds)
+                    .typeMouvement(ecart.signum() > 0
+                            ? MouvementFondsAide.TypeMouvement.REPRISE
+                            : MouvementFondsAide.TypeMouvement.REPRISE_CORRECTION)
+                    .montant(ecart.abs())
+                    .soldeApres(fonds.getSolde())
+                    .membre(membre)
+                    .description("Fond de caisse versé avant l'application (" + annee + ") — membre "
+                            + membre.getMatricule())
+                    .build());
+        }
+        fondsAideRepository.save(fonds);
+
+        return getVersementsAnterieurs(tontineId, annee);
     }
 
     FondsAide loadFonds(UUID tontineId) {

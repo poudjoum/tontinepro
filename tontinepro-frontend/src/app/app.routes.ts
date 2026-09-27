@@ -268,6 +268,11 @@ export const routes: Routes = [
               import('./features/admin/fonds-aide/fonds-aide.component').then(m => m.FondsAideComponent),
           },
           {
+            path: 'fonds-caisse-anterieur',
+            loadComponent: () =>
+              import('./features/admin/fonds-caisse-anterieur/fonds-caisse-anterieur.component').then(m => m.FondsCaisseAnterieurComponent),
+          },
+          {
             path: 'bareme-aide',
             loadComponent: () =>
               import('./features/admin/bareme-aide/bareme-aide.component').then(m => m.BaremeAideComponent),

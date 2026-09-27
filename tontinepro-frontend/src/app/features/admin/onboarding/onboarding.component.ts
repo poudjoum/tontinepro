@@ -4,6 +4,7 @@ import { TontineService } from '../../../core/services/tontine.service';
 import { DemandeService } from '../../../core/services/demande.service';
 import { SessionService } from '../../../core/services/session.service';
 import { MembreService } from '../../../core/services/membre.service';
+import { FondsAideService } from '../../../core/services/fonds-aide.service';
 import { TontineResponse } from '../../../core/models/tontine.model';
 
 interface Etape {
@@ -13,6 +14,8 @@ interface Etape {
   route: string;
   icone: string;
   complete: boolean;
+  /** Étape facultative : affichée mais non comptée dans la progression. */
+  optionnel?: boolean;
 }
 
 @Component({
@@ -25,14 +28,16 @@ export class OnboardingComponent implements OnInit {
   private demSvc  = inject(DemandeService);
   private sesSvc  = inject(SessionService);
   private mbrSvc  = inject(MembreService);
+  private fondsSvc = inject(FondsAideService);
 
   tontine         = signal<TontineResponse | null>(null);
   loading         = signal(true);
   etapes          = signal<Etape[]>([]);
 
-  etapesCompletes = computed(() => this.etapes().filter(e => e.complete).length);
+  etapesRequises  = computed(() => this.etapes().filter(e => !e.optionnel));
+  etapesCompletes = computed(() => this.etapesRequises().filter(e => e.complete).length);
   progression     = computed(() => {
-    const total = this.etapes().length;
+    const total = this.etapesRequises().length;
     return total ? Math.round(this.etapesCompletes() / total * 100) : 0;
   });
 
@@ -54,7 +59,8 @@ export class OnboardingComponent implements OnInit {
       this.demSvc.documentsOfficielsTontine(t.id).toPromise().catch(() => []),
       this.mbrSvc.getAll(t.id).toPromise().catch(() => []),
       this.sesSvc.listerSessions(t.id).toPromise().catch(() => []),
-    ]).then(([docs, membres, sessions]: any[]) => {
+      this.fondsSvc.getVersementsAnterieurs(t.id, new Date().getFullYear()).toPromise().catch(() => null),
+    ]).then(([docs, membres, sessions, anterieur]: any[]) => {
       const hasDocs = Array.isArray(docs) && docs.length > 0;
       const hasMembres = Array.isArray(membres) && membres.length >= 2;
       const hasSession = Array.isArray(sessions) && sessions.length > 0;
@@ -94,6 +100,15 @@ export class OnboardingComponent implements OnInit {
           route: '/admin/membres',
           icone: '🏛️',
           complete: hasBureau,
+        },
+        {
+          id: 'fonds-anterieur',
+          titre: 'Déclarer le fond de caisse déjà versé',
+          desc: 'Si la tontine existait avant l\'application : ce que chaque membre a déjà versé.',
+          route: '/admin/fonds-caisse-anterieur',
+          icone: '💰',
+          complete: !!anterieur && anterieur.total > 0,
+          optionnel: true,
         },
         {
           id: 'session',

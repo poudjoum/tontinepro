@@ -3,8 +3,11 @@ package com.tontinepro.tontinepro_backend.api.aide;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ContributionFondsAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.FondsAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.MouvementFondsAideResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.VersementsAnterieursRequest;
+import com.tontinepro.tontinepro_backend.api.aide.dto.VersementsAnterieursResponse;
 import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAide;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -60,6 +63,29 @@ public class FondsAideController {
             @RequestParam short annee
     ) {
         return fondsAideService.genererContributionsMensuelles(tontineId, mois, annee);
+    }
+
+    @GetMapping("/{tontineId}/versements-anterieurs")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+            + "or @sec.peutEncaisser(authentication.name, #tontineId)")
+    @Operation(summary = "Fond de caisse versé avant l'application, par membre, pour une année")
+    public VersementsAnterieursResponse getVersementsAnterieurs(
+            @PathVariable UUID tontineId,
+            @RequestParam short annee
+    ) {
+        return fondsAideService.getVersementsAnterieurs(tontineId, annee);
+    }
+
+    @PutMapping("/{tontineId}/versements-anterieurs")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+            + "or @sec.peutEncaisser(authentication.name, #tontineId)")
+    @Operation(summary = "Déclarer le fond de caisse versé avant l'application (crédite le fonds, "
+            + "réduit la retenue au bénéfice)")
+    public VersementsAnterieursResponse enregistrerVersementsAnterieurs(
+            @PathVariable UUID tontineId,
+            @Valid @RequestBody VersementsAnterieursRequest request
+    ) {
+        return fondsAideService.enregistrerVersementsAnterieurs(tontineId, request);
     }
 
     @PatchMapping("/contributions/{id}/payer")

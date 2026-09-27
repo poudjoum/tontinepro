@@ -144,6 +144,13 @@ export class AdminComponent {
       color: 'bg-indigo-50',
     },
     {
+      title: 'Fond de caisse antérieur',
+      desc: 'Fond déjà versé par chaque membre avant l\'application',
+      route: '/admin/fonds-caisse-anterieur',
+      icon: '💰',
+      color: 'bg-amber-50',
+    },
+    {
       title: 'Barème des aides',
       desc: 'Rubriques et montants du règlement intérieur',
       route: '/admin/bareme-aide',

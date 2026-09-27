@@ -52,6 +52,10 @@ public class MouvementFondsAide {
 
     public enum TypeMouvement {
         CONTRIBUTION,
-        DECAISSEMENT
+        DECAISSEMENT,
+        /** Fond de caisse versé avant l'application, déclaré à la reprise. */
+        REPRISE,
+        /** Déclaration de reprise revue à la baisse. */
+        REPRISE_CORRECTION
     }
 }

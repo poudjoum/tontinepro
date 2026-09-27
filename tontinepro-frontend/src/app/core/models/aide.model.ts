@@ -154,6 +154,27 @@ export interface SuppressionAideResponse {
   soldeFondsApres: number | null;
 }
 
+/** Fond de caisse versé par un membre avant l'arrivée de la tontine dans l'application. */
+export interface LigneVersementAnterieur {
+  membreId: string;
+  matricule: string;
+  nomPrenom: string;
+  montant: number;
+}
+
+export interface VersementsAnterieursResponse {
+  annee: number;
+  /** Fond de caisse annuel dû par membre (configuration de la tontine). */
+  obligationAnnuelle: number;
+  lignes: LigneVersementAnterieur[];
+  total: number;
+}
+
+export interface VersementsAnterieursRequest {
+  annee: number;
+  lignes: { membreId: string; montant: number }[];
+}
+
 export interface AideResponse {
   id: string;
   typeAide: TypeAide;

@@ -25,7 +25,7 @@
         <p class="text-xs text-green-600 font-medium">✅ Votre tontine est prête à fonctionner !</p>
       } @else {
         <p class="text-xs text-gray-500">
-          {{ etapesCompletes() }} / {{ etapes().length }} étapes complétées
+          {{ etapesCompletes() }} / {{ etapesRequises().length }} étapes complétées
         </p>
       }
     </div>
@@ -50,6 +50,9 @@
                 <p [class]="'text-sm font-semibold ' + (etape.complete ? 'text-gray-500 line-through' : 'text-gray-900')">
                   {{ etape.titre }}
                 </p>
+                @if (etape.optionnel && !etape.complete) {
+                  <span class="text-[10px] font-semibold text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">facultatif</span>
+                }
               </div>
               <p class="text-xs text-gray-500 mt-0.5 ml-7">{{ etape.desc }}</p>
             </div>

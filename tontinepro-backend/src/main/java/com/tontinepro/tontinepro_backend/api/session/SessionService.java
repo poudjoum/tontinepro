@@ -6,6 +6,8 @@ import com.tontinepro.tontinepro_backend.api.session.dto.*;
 import com.tontinepro.tontinepro_backend.domain.sanction.Sanction;
 import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
 import com.tontinepro.tontinepro_backend.domain.aide.FondsAideRepository;
+import com.tontinepro.tontinepro_backend.domain.aide.VersementAnterieurFonds;
+import com.tontinepro.tontinepro_backend.domain.aide.VersementAnterieurFondsRepository;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.epargne.CompteEpargne;
@@ -46,6 +48,7 @@ public class SessionService {
     private final CompteEpargneRepository compteEpargneRepository;
     private final PretRepository pretRepository;
     private final FondsAideRepository fondsAideRepository;
+    private final VersementAnterieurFondsRepository versementAnterieurRepository;
 
     @Transactional
     public SessionResponse creerSession(CreerSessionRequest request) {
@@ -285,7 +288,8 @@ public class SessionService {
                     + ". La saisie des montants reçus reste possible avant cette date.");
         }
 
-        // Calcul automatique : Σcotisations(PAYEE) + Σrepas(PAYEE) - fondAideAnnuelMembre
+        // Calcul automatique : Σcotisations(PAYEE) + Σrepas(PAYEE) - reste dû du fond de caisse
+        // (fond annuel − déjà versé cette année : cotisations + versement antérieur déclaré).
         // Le montant reçu est calculé sur les cotisations du MOIS DU TOUR (dateBenefice),
         // pas sur le mois de début de session (sinon tous les tours d'une session
         // multi-mois seraient calculés sur le premier mois).
@@ -307,10 +311,9 @@ public class SessionService {
                 .map(c -> c.getMontantRepas() != null ? c.getMontantRepas() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal fondAideAnnuel = tontine.getMontantFondAideAnnuelMembre() != null
-                ? tontine.getMontantFondAideAnnuelMembre() : BigDecimal.ZERO;
+        BigDecimal retenueFondAide = resteDuFondAide(tontine, ob.getMembre().getId(), annee);
 
-        BigDecimal montantRecu = totalCotisations.add(totalRepas).subtract(fondAideAnnuel);
+        BigDecimal montantRecu = totalCotisations.add(totalRepas).subtract(retenueFondAide);
         if (montantRecu.compareTo(BigDecimal.ZERO) < 0) montantRecu = BigDecimal.ZERO;
 
         ob.setBeneficie(true);
@@ -599,16 +602,8 @@ public class SessionService {
             benefMatricule = prochainOb.getMembre().getMatricule();
 
             if (obligation.compareTo(BigDecimal.ZERO) > 0) {
-                fondAidePayeAnnee = cotisationRepository
-                        .findAllByMembreIdAndAnneeAndStatut(benefId, annee, Cotisation.Statut.PAYEE)
-                        .stream()
-                        .map(c -> c.getMontantFondAide() != null ? c.getMontantFondAide() : BigDecimal.ZERO)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                dettesFondsAide = obligation.subtract(fondAidePayeAnnee);
-                if (dettesFondsAide.compareTo(BigDecimal.ZERO) < 0) {
-                    dettesFondsAide = BigDecimal.ZERO;
-                }
+                fondAidePayeAnnee = fondAideDejaVerse(benefId, annee);
+                dettesFondsAide = resteDuFondAide(tontine, benefId, annee);
             }
         }
 
@@ -1480,6 +1475,35 @@ public class SessionService {
         if (cotis.isEmpty()) return BigDecimal.ZERO;
         BigDecimal sum = cotis.stream().map(c -> safe(c.getMontantFondAide())).reduce(BigDecimal.ZERO, BigDecimal::add);
         return sum.divide(BigDecimal.valueOf(cotis.size()), 2, java.math.RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Fond de caisse déjà versé par un membre sur l'année : part fond des
+     * cotisations payées dans l'application + versement antérieur déclaré à la
+     * reprise (argent collecté avant l'application).
+     */
+    private BigDecimal fondAideDejaVerse(UUID membreId, short annee) {
+        BigDecimal viaCotisations = cotisationRepository
+                .findAllByMembreIdAndAnneeAndStatut(membreId, annee, Cotisation.Statut.PAYEE)
+                .stream()
+                .map(c -> safe(c.getMontantFondAide()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal anterieur = versementAnterieurRepository.findByMembreIdAndAnnee(membreId, annee)
+                .map(VersementAnterieurFonds::getMontant)
+                .orElse(BigDecimal.ZERO);
+        return viaCotisations.add(anterieur);
+    }
+
+    /**
+     * Reste dû du fond de caisse annuel, retenu sur le pot au bénéfice :
+     * obligation annuelle − déjà versé, jamais négatif. Un membre qui a versé
+     * son fond mensuellement (ou avant l'application) n'est pas prélevé deux fois.
+     */
+    private BigDecimal resteDuFondAide(Tontine tontine, UUID membreId, short annee) {
+        BigDecimal obligation = safe(tontine.getMontantFondAideAnnuelMembre());
+        if (obligation.signum() <= 0) return BigDecimal.ZERO;
+        BigDecimal reste = obligation.subtract(fondAideDejaVerse(membreId, annee));
+        return reste.signum() > 0 ? reste : BigDecimal.ZERO;
     }
 
     private static BigDecimal safe(BigDecimal v) {
