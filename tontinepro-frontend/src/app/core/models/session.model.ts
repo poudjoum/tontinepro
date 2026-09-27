@@ -216,7 +216,9 @@ export interface LigneMembreFondsAide {
   totalImpute: number;
   /** Versé (mois + antérieur) − parts imputées ; peut être négatif. */
   solde: number;
-  /** À verser en fin de session pour retrouver le fond prévu. */
+  /** Fond prévu pas encore versé (payé au mois ou retenu au bénéfice). */
+  fondRestantDu: number;
+  /** Parts d'aides imputées, à rattraper en fin de session. */
   aRattraper: number;
 }
 
@@ -242,6 +244,7 @@ export interface FondsAideMensuelResponse {
   aides: AideColonneFondsAide[];
   totalAnterieur: number;
   totalImpute: number;
+  totalFondRestantDu: number;
   totalARattraper: number;
 }
 

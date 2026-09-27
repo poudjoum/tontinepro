@@ -1226,6 +1226,7 @@ public class SessionService {
         BigDecimal totalGeneral = BigDecimal.ZERO;
         BigDecimal totalAnterieur = BigDecimal.ZERO;
         BigDecimal totalImpute = BigDecimal.ZERO;
+        BigDecimal totalFondRestantDu = BigDecimal.ZERO;
         BigDecimal totalARattraper = BigDecimal.ZERO;
 
         List<FondsAideMensuelResponse.LigneMembre> lignes = new ArrayList<>();
@@ -1251,16 +1252,20 @@ public class SessionService {
                 totauxAides[i] = totauxAides[i].add(p);
             }
             BigDecimal solde = totalLigne.add(anterieur).subtract(imputeLigne);
-            BigDecimal aRattraper = objectif.subtract(solde).max(BigDecimal.ZERO);
+            // Deux obligations distinctes : le fond prévu pas encore versé (payé au
+            // mois ou retenu au bénéfice) et les parts d'aides à rattraper en fin de session.
+            BigDecimal fondRestantDu = objectif.subtract(totalLigne).subtract(anterieur).max(BigDecimal.ZERO);
+            BigDecimal aRattraper = imputeLigne;
 
             totalAnterieur = totalAnterieur.add(anterieur);
             totalImpute = totalImpute.add(imputeLigne);
+            totalFondRestantDu = totalFondRestantDu.add(fondRestantDu);
             totalARattraper = totalARattraper.add(aRattraper);
 
             lignes.add(new FondsAideMensuelResponse.LigneMembre(
                     m.getId(), m.getMatricule(), m.getPrenom() + " " + m.getNom(),
                     m.getTypeParticipation().name(), cellules, totalLigne,
-                    anterieur, parts, imputeLigne, solde, aRattraper));
+                    anterieur, parts, imputeLigne, solde, fondRestantDu, aRattraper));
         }
 
         List<FondsAideMensuelResponse.AideColonne> colonnesAides = new ArrayList<>();
@@ -1287,7 +1292,7 @@ public class SessionService {
         return new FondsAideMensuelResponse(
                 sessionId, session.getNumero(), tontine.getNom(),
                 colonnes, lignes, totalGeneral,
-                objectif, colonnesAides, totalAnterieur, totalImpute, totalARattraper);
+                objectif, colonnesAides, totalAnterieur, totalImpute, totalFondRestantDu, totalARattraper);
     }
 
     /**

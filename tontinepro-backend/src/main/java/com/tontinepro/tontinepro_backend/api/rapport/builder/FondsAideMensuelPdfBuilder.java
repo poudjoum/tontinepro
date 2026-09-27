@@ -157,8 +157,8 @@ public class FondsAideMensuelPdfBuilder {
         doc.add(titre);
         Paragraph note = new Paragraph(
                 "Fond prévu par membre : " + fcfaUnite(r.objectifFond())
-                        + "   ·   Les aides versées sur le fonds sont retranchées du fond de chaque membre ;"
-                        + " il rattrape en fin de session de quoi retrouver le fond prévu.", fNote);
+                        + "   ·   Fond restant dû : part du fond prévu pas encore versée (au mois ou au bénéfice)."
+                        + "   ·   À rattraper : parts des aides versées sur le fonds, à régler en fin de session.", fNote);
         note.setSpacingAfter(6f);
         doc.add(note);
 
@@ -168,7 +168,7 @@ public class FondsAideMensuelPdfBuilder {
         Font fNeg  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, new Color(192, 57, 43));
         Font fRatt = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, new Color(180, 83, 9));
 
-        int nbCol = 1 + 1 + (avecAnterieur ? 1 : 0) + nbAides + 2;
+        int nbCol = 1 + 1 + (avecAnterieur ? 1 : 0) + nbAides + 3;
         PdfPTable t = new PdfPTable(nbCol);
         t.setWidthPercentage(100f);
         t.setHeaderRows(1);
@@ -185,7 +185,8 @@ public class FondsAideMensuelPdfBuilder {
             t.addCell(cellEntete("− " + a.libelle() + date, fEnt, Element.ALIGN_RIGHT));
         }
         t.addCell(cellEntete("Solde", fEnt, Element.ALIGN_RIGHT));
-        t.addCell(cellEntete("À rattraper", fEnt, Element.ALIGN_RIGHT));
+        t.addCell(cellEntete("Fond restant dû", fEnt, Element.ALIGN_RIGHT));
+        t.addCell(cellEntete("À rattraper (aides)", fEnt, Element.ALIGN_RIGHT));
 
         boolean pair = false;
         BigDecimal totalSolde = BigDecimal.ZERO;
@@ -205,8 +206,10 @@ public class FondsAideMensuelPdfBuilder {
                 t.addCell(cell(vide ? "—" : montant(p), vide ? fVide : fData, bg, Element.ALIGN_RIGHT));
             }
             t.addCell(cell(montant(l.solde()), l.solde().signum() < 0 ? fNeg : fData, bg, Element.ALIGN_RIGHT));
+            boolean fondAJour = l.fondRestantDu().signum() == 0;
+            t.addCell(cell(fondAJour ? "à jour" : montant(l.fondRestantDu()), fondAJour ? fVide : fData, bg, Element.ALIGN_RIGHT));
             boolean aJour = l.aRattraper().signum() == 0;
-            t.addCell(cell(aJour ? "à jour" : montant(l.aRattraper()), aJour ? fVide : fRatt, bg, Element.ALIGN_RIGHT));
+            t.addCell(cell(aJour ? "—" : montant(l.aRattraper()), aJour ? fVide : fRatt, bg, Element.ALIGN_RIGHT));
             totalSolde = totalSolde.add(l.solde());
         }
 
@@ -218,6 +221,7 @@ public class FondsAideMensuelPdfBuilder {
             t.addCell(cell(montant(a.totalImpute()), fTot, BLEU_FONCE, Element.ALIGN_RIGHT));
         }
         t.addCell(cell(montant(totalSolde), fTot, BLEU_FONCE, Element.ALIGN_RIGHT));
+        t.addCell(cell(montant(r.totalFondRestantDu()), fTot, BLEU_FONCE, Element.ALIGN_RIGHT));
         t.addCell(cell(montant(r.totalARattraper()), fTot, INDIGO, Element.ALIGN_RIGHT));
 
         doc.add(t);

@@ -115,11 +115,11 @@
             <p class="text-sm font-bold text-gray-900 tabular-nums">{{ d.objectifFond ? fcfa(d.objectifFond) : 'non configuré' }}</p>
           </div>
           <div class="bg-white rounded-xl border border-gray-100 px-3 py-2.5">
-            <p class="text-[11px] text-gray-500">Aides imputées</p>
-            <p class="text-sm font-bold text-red-600 tabular-nums">{{ fcfa(d.totalImpute) }}</p>
+            <p class="text-[11px] text-gray-500">Fond restant dû</p>
+            <p class="text-sm font-bold text-gray-900 tabular-nums">{{ fcfa(d.totalFondRestantDu) }}</p>
           </div>
           <div class="bg-amber-50 rounded-xl border border-amber-200 px-3 py-2.5">
-            <p class="text-[11px] text-amber-700">À rattraper</p>
+            <p class="text-[11px] text-amber-700">À rattraper (aides)</p>
             <p class="text-sm font-bold text-amber-800 tabular-nums">{{ fcfa(d.totalARattraper) }}</p>
           </div>
         </div>
@@ -128,8 +128,10 @@
           <div class="px-4 pt-4 pb-2">
             <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Situation du fond par membre</h2>
             <p class="text-[11px] text-gray-400 mt-0.5">
-              Les aides versées sur le fonds sont retranchées du fond de chaque membre (sa part non payée à la collecte).
-              En fin de session, il rattrape de quoi retrouver le fond prévu.
+              <span class="font-medium text-gray-500">Fond restant dû</span> : part du fond prévu pas encore versée
+              (payée au mois ou retenue au bénéfice).
+              <span class="font-medium text-gray-500">À rattraper</span> : parts des aides versées sur le fonds
+              (non payées à la collecte), à régler en fin de session.
             </p>
           </div>
           @if (d.aides.length === 0) {
@@ -153,7 +155,8 @@
                     </th>
                   }
                   <th class="px-2 py-2 text-right font-semibold">Solde</th>
-                  <th class="px-3 py-2 text-right font-semibold bg-amber-700 whitespace-nowrap">À rattraper</th>
+                  <th class="px-2 py-2 text-right font-semibold whitespace-nowrap">Fond restant dû</th>
+                  <th class="px-3 py-2 text-right font-semibold bg-amber-700 whitespace-nowrap">À rattraper (aides)</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
@@ -174,9 +177,13 @@
                     }
                     <td class="px-2 py-2 text-right tabular-nums font-semibold"
                         [class]="l.solde < 0 ? 'text-red-600' : 'text-gray-800'">{{ l.solde | number:'1.0-0' }}</td>
+                    <td class="px-2 py-2 text-right tabular-nums font-semibold"
+                        [class]="l.fondRestantDu > 0 ? 'text-gray-800' : 'text-green-600'">
+                      {{ l.fondRestantDu > 0 ? (l.fondRestantDu | number:'1.0-0') : 'à jour' }}
+                    </td>
                     <td class="px-3 py-2 text-right tabular-nums font-bold bg-amber-50/70"
-                        [class]="l.aRattraper > 0 ? 'text-amber-800' : 'text-green-600'">
-                      {{ l.aRattraper > 0 ? (l.aRattraper | number:'1.0-0') : 'à jour' }}
+                        [class]="l.aRattraper > 0 ? 'text-amber-800' : 'text-gray-300'">
+                      {{ l.aRattraper > 0 ? (l.aRattraper | number:'1.0-0') : '—' }}
                     </td>
                   </tr>
                 }
@@ -192,6 +199,7 @@
                     <td class="px-2 py-2 text-right font-bold tabular-nums">{{ a.totalImpute | number:'1.0-0' }}</td>
                   }
                   <td class="px-2 py-2 text-right font-bold tabular-nums">{{ totalSolde() | number:'1.0-0' }}</td>
+                  <td class="px-2 py-2 text-right font-bold tabular-nums">{{ d.totalFondRestantDu | number:'1.0-0' }}</td>
                   <td class="px-3 py-2 text-right font-black tabular-nums bg-amber-800">{{ d.totalARattraper | number:'1.0-0' }}</td>
                 </tr>
               </tfoot>

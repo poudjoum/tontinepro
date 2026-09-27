@@ -36,6 +36,7 @@ public record FondsAideMensuelResponse(
 
         BigDecimal totalAnterieur,
         BigDecimal totalImpute,
+        BigDecimal totalFondRestantDu,
         BigDecimal totalARattraper
 
 ) {
@@ -70,7 +71,10 @@ public record FondsAideMensuelResponse(
             BigDecimal totalImpute,
             // Fond restant = versé (mois + antérieur) − parts imputées ; peut être négatif
             BigDecimal solde,
-            // À verser en fin de session pour retrouver l'objectif : max(0, objectif − solde)
+            // Fond prévu pas encore versé : max(0, objectif − versé − antérieur),
+            // payé au fil des mois ou retenu au bénéfice
+            BigDecimal fondRestantDu,
+            // Parts d'aides imputées, à rattraper en fin de session
             BigDecimal aRattraper
     ) {}
 }
