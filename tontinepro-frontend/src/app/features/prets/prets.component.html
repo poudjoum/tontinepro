@@ -276,7 +276,7 @@
           }
 
           <!-- Actions -->
-          @if (auth.isAdmin() && p.statut === 'DEMANDE' && rejetId() !== p.id) {
+          @if (auth.isGestionnaire() && p.statut === 'DEMANDE' && rejetId() !== p.id) {
             <div class="flex gap-2 border-t pt-3">
               <button (click)="valider(p.id)" [disabled]="submitting()"
                       class="btn-primary text-sm py-2 flex-1">

@@ -43,11 +43,12 @@ export class AuthService {
   readonly isSecretaire  = computed(() => this.fonctionCourante() === 'SECRETAIRE');
   /**
    * Vue bureau des écrans Prêts et Épargne : encaisser les échéances, saisir
-   * dépôts et retraits. Le Trésorier y a accès avec le Président ; les actions
-   * de gestion (valider un prêt, distribuer les intérêts) restent à isAdmin().
+   * dépôts et retraits. Ouverte au Président, au Secrétaire et au Trésorier ;
+   * les actions de gestion (valider un prêt, distribuer les intérêts) restent
+   * aux gestionnaires (isGestionnaire), comme côté serveur.
    */
   readonly gereFinances  = computed(() =>
-    this.isAdmin() || this.fonctionCourante() === 'TRESORIER');
+    this.isAdmin() || this.isSecretaire() || this.fonctionCourante() === 'TRESORIER');
   readonly isGestionnaire = computed(() =>
     this.isSuperAdmin()
     || this.fonctionCourante() === 'PRESIDENT' || this.fonctionCourante() === 'SECRETAIRE');
