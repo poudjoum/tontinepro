@@ -65,9 +65,7 @@ public class FondsAideService {
 
     @Transactional(readOnly = true)
     public List<ContributionFondsAideResponse> getMesContributions(String email, java.util.UUID tontineId) {
-        var membre = tontineId != null
-                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
-                : membreRepository.findByUserEmail(email);
+        var membre = membreRepository.profil(email, tontineId);
         return membre
                 .map(m -> contributionRepository.findAllByMembreId(m.getId())
                         .stream().map(ContributionFondsAideResponse::from).toList())

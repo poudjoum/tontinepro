@@ -31,9 +31,10 @@ public class PretController {
     @Operation(summary = "Soumettre une demande de prÃªt")
     public PretResponse soumettreDemande(
             @AuthenticationPrincipal UserDetails principal,
-            @Valid @RequestBody DemandePretRequest request
+            @Valid @RequestBody DemandePretRequest request,
+            @RequestParam(required = false) UUID tontineId
     ) {
-        return pretService.soumettreDemande(principal.getUsername(), request);
+        return pretService.soumettreDemande(principal.getUsername(), tontineId, request);
     }
 
     @GetMapping("/mes-prets")

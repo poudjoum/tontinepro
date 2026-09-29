@@ -160,8 +160,8 @@ public class AbsenceService {
     }
 
     @Transactional(readOnly = true)
-    public List<AbsenceResponse> mesSAbsences(String email) {
-        Membre membre = membreRepository.findByUserEmail(email)
+    public List<AbsenceResponse> mesSAbsences(String email, UUID tontineId) {
+        Membre membre = membreRepository.profil(email, tontineId)
                 .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
         return absenceRepository.findAllByMembreId(membre.getId())
                 .stream().map(AbsenceResponse::from).toList();

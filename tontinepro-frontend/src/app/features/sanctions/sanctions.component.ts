@@ -1,6 +1,7 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, effect, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SanctionService } from '../../core/services/sanction.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import { SanctionResponse, TypeSanction } from '../../core/models/sanction.model';
 
 @Component({
@@ -10,6 +11,15 @@ import { SanctionResponse, TypeSanction } from '../../core/models/sanction.model
 })
 export class SanctionsComponent implements OnInit {
   private svc = inject(SanctionService);
+  private ctx = inject(TontineContextService);
+
+  constructor() {
+    // Mes sanctions dans la tontine affichée, rechargées quand on en change.
+    effect(() => {
+      const id = this.ctx.tontineCouranteId();
+      if (id) untracked(() => this.charger(id));
+    });
+  }
 
   sanctions    = signal<SanctionResponse[]>([]);
   loading      = signal(true);
@@ -21,7 +31,13 @@ export class SanctionsComponent implements OnInit {
     this.nonReglees().reduce((s, x) => s + x.montant, 0));
 
   ngOnInit(): void {
-    this.svc.mesSanctions().subscribe({
+    this.ctx.init();
+    if (!this.ctx.tontineCouranteId()) this.loading.set(false);
+  }
+
+  private charger(tontineId: string): void {
+    this.loading.set(true);
+    this.svc.mesSanctions(tontineId).subscribe({
       next: s => { this.sanctions.set(s); this.loading.set(false); },
       error: () => { this.error.set('Impossible de charger vos sanctions'); this.loading.set(false); },
     });

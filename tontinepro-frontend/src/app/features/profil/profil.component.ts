@@ -76,7 +76,7 @@ export class ProfilComponent implements OnInit {
       nom: this.editForm.nom || undefined,
       prenom: this.editForm.prenom || undefined,
       telephone: this.editForm.telephone || undefined,
-    }).subscribe({
+    }, this.ctx.tontineCouranteId() ?? undefined).subscribe({
       next: m => {
         this.membre.set(m);
         this.success.set('Profil mis à jour.');

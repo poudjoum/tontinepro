@@ -110,7 +110,7 @@ export class PretsComponent implements OnInit {
   soumettreDemande(): void {
     if (this.demMontant() <= 0 || this.demDuree() <= 0 || this.submitting()) return;
     this.submitting.set(true);
-    this.svc.demande(this.demMontant(), this.demDuree()).subscribe({
+    this.svc.demande(this.demMontant(), this.demDuree(), this.tontineId()).subscribe({
       next: () => { this.submitting.set(false); this.vue.set('liste'); this.charger(); },
       error: e => { this.error.set(e.message ?? 'Erreur'); this.submitting.set(false); },
     });

@@ -46,11 +46,8 @@ public class DemandeService {
         if (demandeRepository.existsByEmailAndTontineId(request.email(), tontineId)) {
             throw new IllegalArgumentException("Une demande a déjà été soumise avec cet email pour cette tontine");
         }
-        if (userRepository.existsByEmail(request.email())) {
-            Membre membreExistant = membreRepository.findByUserEmail(request.email()).orElse(null);
-            if (membreExistant != null && membreExistant.getTontine().getId().equals(tontineId)) {
-                throw new IllegalArgumentException("Vous êtes déjà membre de cette tontine");
-            }
+        if (membreRepository.findByUserEmailAndTontineId(request.email(), tontineId).isPresent()) {
+            throw new IllegalArgumentException("Vous êtes déjà membre de cette tontine");
         }
 
         DemandeAdhesion demande = DemandeAdhesion.builder()

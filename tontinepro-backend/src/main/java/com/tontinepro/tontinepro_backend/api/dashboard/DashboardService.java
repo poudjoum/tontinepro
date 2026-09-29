@@ -55,7 +55,7 @@ public class DashboardService {
         if (tontineId != null) {
             return membreRepository.findByUserEmailAndTontineId(email, tontineId);
         }
-        return membreRepository.findByUserEmail(email);
+        return membreRepository.profil(email, null);
     }
 
     // ── Tableau de bord Membre ────────────────────────────────────────

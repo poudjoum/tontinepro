@@ -25,8 +25,9 @@ export class PretService {
     return this.http.get<EcheancePretResponse[]>(`${this.api}/${pretId}/echeances`);
   }
 
-  demande(montantPrincipal: number, dureeMois: number) {
-    return this.http.post<PretResponse>(`${this.api}/demande`, { montantPrincipal, dureeMois });
+  demande(montantPrincipal: number, dureeMois: number, tontineId: string) {
+    return this.http.post<PretResponse>(`${this.api}/demande`, { montantPrincipal, dureeMois },
+      { params: new HttpParams().set('tontineId', tontineId) });
   }
 
   simuler(montant: number, duree: number, tontineId: string) {

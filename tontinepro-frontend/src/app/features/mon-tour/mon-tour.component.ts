@@ -68,7 +68,7 @@ export class MonTourComponent implements OnInit {
       error: () => { done(); },
     });
 
-    this.svc.mesBenefices().subscribe({
+    this.svc.mesBenefices(id).subscribe({
       next: b => { this.benefices.set(b); done(); },
       error: () => { done(); },
     });

@@ -125,8 +125,10 @@ export class SessionService {
     });
   }
 
-  mesBenefices() {
-    return this.http.get<MonBeneficeResponse[]>(`${this.api}/mes-benefices`);
+  mesBenefices(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<MonBeneficeResponse[]>(`${this.api}/mes-benefices`, { params });
   }
 
   genererCotisations(sessionId: string, mois?: number, annee?: number) {

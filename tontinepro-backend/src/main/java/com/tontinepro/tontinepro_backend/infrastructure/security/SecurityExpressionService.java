@@ -95,19 +95,7 @@ public class SecurityExpressionService {
                 .map(Membre::getFonction);
     }
 
-    /** Vrai si l'utilisateur est Censeur, Secrétaire ou Président. */
-    public boolean isBureauOuAdmin(String email) {
-        return membreRepository.findByUserEmail(email)
-                .map(m -> m.getFonction() != Membre.Fonction.MEMBRE_ORDINAIRE)
-                .orElse(false);
-    }
 
-    /** Vrai si l'utilisateur est Trésorier dans au moins une de ses tontines. */
-    public boolean isTresorier(String email) {
-        return membreRepository.findAllByUserEmail(email).stream()
-                .anyMatch(m -> m.getStatut() == Membre.Statut.ACTIF
-                        && m.getFonction() == Membre.Fonction.TRESORIER);
-    }
 
     /**
      * Vrai si l'utilisateur peut encaisser dans cette tontine : parts d'aide,

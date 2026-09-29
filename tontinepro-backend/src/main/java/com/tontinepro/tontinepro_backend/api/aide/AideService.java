@@ -60,7 +60,7 @@ public class AideService {
     private String frontendUrl;
 
     @Transactional
-    public AideResponse soumettreDemande(String email, DemandeAideRequest request) {
+    public AideResponse soumettreDemande(String email, UUID tontineId, DemandeAideRequest request) {
         Aide.TypeAide typeAide;
         BigDecimal montant;
         RubriqueAide rubrique = null;
@@ -85,7 +85,7 @@ public class AideService {
             if (request.typeAide() == null || request.montantDemande() == null) {
                 throw new IllegalArgumentException("Le type et le montant sont obligatoires pour une aide libre");
             }
-            membre = membreRepository.findByUserEmail(email)
+            membre = membreRepository.profil(email, tontineId)
                     .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
             typeAide = request.typeAide();
             montant  = request.montantDemande();
@@ -305,9 +305,7 @@ public class AideService {
 
     @Transactional(readOnly = true)
     public List<AideResponse> getMesDemandes(String email, java.util.UUID tontineId) {
-        var membre = tontineId != null
-                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
-                : membreRepository.findByUserEmail(email);
+        var membre = membreRepository.profil(email, tontineId);
         return membre
                 .map(m -> aideRepository.findAllByMembreId(m.getId())
                         .stream().map(AideResponse::from).toList())

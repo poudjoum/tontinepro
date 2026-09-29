@@ -81,8 +81,8 @@ public class SanctionService {
     }
 
     @Transactional(readOnly = true)
-    public List<SanctionResponse> mesSanctions(String email) {
-        return membreRepository.findByUserEmail(email)
+    public List<SanctionResponse> mesSanctions(String email, UUID tontineId) {
+        return membreRepository.profil(email, tontineId)
                 .map(m -> sanctionRepository.findAllByMembreId(m.getId())
                         .stream().map(SanctionResponse::from).toList())
                 .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));

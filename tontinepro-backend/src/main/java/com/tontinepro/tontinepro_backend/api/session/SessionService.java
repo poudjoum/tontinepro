@@ -461,9 +461,7 @@ public class SessionService {
 
     @Transactional(readOnly = true)
     public MonTourResponse monTour(String email, java.util.UUID tontineId) {
-        Membre membre = (tontineId != null
-                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
-                : membreRepository.findByUserEmail(email))
+        Membre membre = membreRepository.profil(email, tontineId)
                 .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
 
         // Chercher la session en cours de la tontine du membre
@@ -932,8 +930,8 @@ public class SessionService {
      * Historique des bénéfices reçus par le membre connecté (toutes sessions confondues).
      */
     @Transactional(readOnly = true)
-    public List<MonBeneficeResponse> mesBenefices(String email) {
-        Membre membre = membreRepository.findByUserEmail(email)
+    public List<MonBeneficeResponse> mesBenefices(String email, UUID tontineId) {
+        Membre membre = membreRepository.profil(email, tontineId)
                 .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
 
         return ordreBeneficiaireRepository

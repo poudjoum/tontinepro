@@ -43,8 +43,9 @@ public class SanctionController {
 
     @GetMapping("/mes-sanctions")
     @Operation(summary = "Mes sanctions")
-    public List<SanctionResponse> mesSanctions(@AuthenticationPrincipal UserDetails principal) {
-        return sanctionService.mesSanctions(principal.getUsername());
+    public List<SanctionResponse> mesSanctions(@AuthenticationPrincipal UserDetails principal,
+                                               @RequestParam(required = false) UUID tontineId) {
+        return sanctionService.mesSanctions(principal.getUsername(), tontineId);
     }
 
     @PatchMapping("/{id}/payer")

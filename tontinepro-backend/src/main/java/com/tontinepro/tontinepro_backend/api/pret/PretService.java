@@ -45,8 +45,8 @@ public class PretService {
     // ── Membre ───────────────────────────────────────────────────────────
 
     @Transactional
-    public PretResponse soumettreDemande(String email, DemandePretRequest request) {
-        Membre membre = membreRepository.findByUserEmail(email)
+    public PretResponse soumettreDemande(String email, UUID tontineId, DemandePretRequest request) {
+        Membre membre = membreRepository.profil(email, tontineId)
                 .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
 
         if (membre.getStatut() != Membre.Statut.ACTIF) {
@@ -87,9 +87,7 @@ public class PretService {
 
     @Transactional(readOnly = true)
     public List<PretResponse> getMesPrets(String email, java.util.UUID tontineId) {
-        var membre = tontineId != null
-                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
-                : membreRepository.findByUserEmail(email);
+        var membre = membreRepository.profil(email, tontineId);
         return membre
                 .map(m -> pretRepository.findAllByMembreIdOrderByCreatedAtDesc(m.getId())
                         .stream().map(PretResponse::from).toList())

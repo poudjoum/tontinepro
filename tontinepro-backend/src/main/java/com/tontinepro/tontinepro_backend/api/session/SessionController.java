@@ -133,8 +133,9 @@ public class SessionController {
 
     @GetMapping("/mes-benefices")
     @Operation(summary = "Historique des bénéfices reçus par le membre connecté")
-    public List<MonBeneficeResponse> mesBenefices(@AuthenticationPrincipal UserDetails principal) {
-        return sessionService.mesBenefices(principal.getUsername());
+    public List<MonBeneficeResponse> mesBenefices(@AuthenticationPrincipal UserDetails principal,
+                                                  @RequestParam(required = false) UUID tontineId) {
+        return sessionService.mesBenefices(principal.getUsername(), tontineId);
     }
 
     @PostMapping("/{id}/generer-cotisations")

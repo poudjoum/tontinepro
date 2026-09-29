@@ -12,6 +12,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class ProfilService {
@@ -21,7 +24,7 @@ public class ProfilService {
     private final PasswordEncoder  passwordEncoder;
 
     @Transactional
-    public MembreResponse mettreAJourProfil(String email, UpdateProfilRequest request) {
+    public MembreResponse mettreAJourProfil(String email, UUID tontineId, UpdateProfilRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
@@ -36,18 +39,27 @@ public class ProfilService {
         }
         userRepository.save(user);
 
-        // Mettre à jour nom/prénom sur le profil membre (premier profil actif)
-        Membre membre = membreRepository.findByUserEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte"));
-
-        if (request.nom() != null && !request.nom().isBlank()) {
-            membre.setNom(request.nom().trim());
+        // Nom et prénom désignent la personne : on les reporte sur chacun de ses
+        // profils, sinon elle porterait un nom différent d'une tontine à l'autre.
+        List<Membre> profils = membreRepository.findAllByUserEmail(email);
+        if (profils.isEmpty()) {
+            throw new IllegalArgumentException("Aucun profil membre associé à ce compte");
         }
-        if (request.prenom() != null && !request.prenom().isBlank()) {
-            membre.setPrenom(request.prenom().trim());
+        for (Membre m : profils) {
+            if (request.nom() != null && !request.nom().isBlank()) {
+                m.setNom(request.nom().trim());
+            }
+            if (request.prenom() != null && !request.prenom().isBlank()) {
+                m.setPrenom(request.prenom().trim());
+            }
         }
+        membreRepository.saveAll(profils);
 
-        return MembreResponse.from(membreRepository.save(membre));
+        Membre affiche = profils.stream()
+                .filter(m -> m.getTontine().getId().equals(tontineId))
+                .findFirst()
+                .orElse(profils.get(0));
+        return MembreResponse.from(affiche);
     }
 
     @Transactional

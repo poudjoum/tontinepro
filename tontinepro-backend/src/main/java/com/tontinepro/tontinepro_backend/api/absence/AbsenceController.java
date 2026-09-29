@@ -56,7 +56,8 @@ public class AbsenceController {
 
     @GetMapping("/mes-absences")
     @Operation(summary = "Mes absences")
-    public List<AbsenceResponse> mesAbsences(@AuthenticationPrincipal UserDetails principal) {
-        return absenceService.mesSAbsences(principal.getUsername());
+    public List<AbsenceResponse> mesAbsences(@AuthenticationPrincipal UserDetails principal,
+                                             @RequestParam(required = false) UUID tontineId) {
+        return absenceService.mesSAbsences(principal.getUsername(), tontineId);
     }
 }

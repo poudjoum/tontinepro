@@ -20,8 +20,9 @@ export class ProfilService {
 
   constructor(private http: HttpClient) {}
 
-  mettreAJour(request: UpdateProfilRequest) {
-    return this.http.patch<MembreResponse>(`${this.api}/me`, request);
+  mettreAJour(request: UpdateProfilRequest, tontineId?: string) {
+    const params: Record<string, string> = tontineId ? { tontineId } : {};
+    return this.http.patch<MembreResponse>(`${this.api}/me`, request, { params });
   }
 
   changerMotDePasse(request: ChangerMotDePasseRequest) {

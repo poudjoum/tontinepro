@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from './core/services/auth.service';
-import { MembreService } from './core/services/membre.service';
+import { TontineService } from './core/services/tontine.service';
 
 @Component({
   selector: 'app-root',
@@ -12,7 +12,7 @@ import { MembreService } from './core/services/membre.service';
 })
 export class AppComponent implements OnInit {
   private auth    = inject(AuthService);
-  private mbrSvc  = inject(MembreService);
+  private tontineSvc = inject(TontineService);
   private router  = inject(Router);
 
   // Routes publiques où la vérification ne s'applique pas
@@ -31,9 +31,11 @@ export class AppComponent implements OnInit {
 
       // MEMBRE connecté → vérifier profil une seule fois
       this.checked = true;
-      this.mbrSvc.getMonProfil().subscribe({
-        next:  () => {},  // profil OK → pas de redirection
-        error: () => this.router.navigate(['/tontines']),
+      // Sans tontine précisée, « mon profil » est ambigu pour un compte présent
+      // dans plusieurs tontines : on vérifie seulement qu'il en a au moins une.
+      this.tontineSvc.getAll().subscribe({
+        next:  list => { if (list.length === 0) this.router.navigate(['/tontines']); },
+        error: () => {},
       });
     });
   }

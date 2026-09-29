@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AbsenceResponse, AppelPresenceRequest, AppelPresenceResult, EnregistrerAbsenceRequest } from '../models/absence.model';
 
@@ -21,7 +21,9 @@ export class AbsenceService {
     return this.http.get<AbsenceResponse[]>(this.api, { params: { tontineId } });
   }
 
-  mesAbsences() {
-    return this.http.get<AbsenceResponse[]>(`${this.api}/mes-absences`);
+  mesAbsences(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<AbsenceResponse[]>(`${this.api}/mes-absences`, { params });
   }
 }

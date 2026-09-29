@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { CreerSanctionRequest, SanctionResponse } from '../models/sanction.model';
 
@@ -19,8 +19,10 @@ export class SanctionService {
     return this.http.get<SanctionResponse[]>(this.api, { params });
   }
 
-  mesSanctions() {
-    return this.http.get<SanctionResponse[]>(`${this.api}/mes-sanctions`);
+  mesSanctions(tontineId?: string) {
+    let params = new HttpParams();
+    if (tontineId) params = params.set('tontineId', tontineId);
+    return this.http.get<SanctionResponse[]>(`${this.api}/mes-sanctions`, { params });
   }
 
   marquerPayee(id: string) {

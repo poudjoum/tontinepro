@@ -88,9 +88,7 @@ public class MembreService {
     /** Profil du compte dans la tontine donnée (ou 1ᵉʳ profil si tontineId null). */
     @Transactional(readOnly = true)
     public MembreResponse getMe(String email, UUID tontineId) {
-        var membre = tontineId != null
-                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
-                : membreRepository.findByUserEmail(email);
+        var membre = membreRepository.profil(email, tontineId);
         return membre
                 .map(MembreResponse::from)
                 .orElseThrow(() -> new IllegalArgumentException("Aucun profil membre associé à ce compte pour cette tontine"));

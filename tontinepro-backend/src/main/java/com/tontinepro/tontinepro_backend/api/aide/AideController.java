@@ -35,9 +35,10 @@ public class AideController {
     @Operation(summary = "Soumettre une demande d'aide")
     public AideResponse soumettreDemande(
             @AuthenticationPrincipal UserDetails principal,
-            @Valid @RequestBody DemandeAideRequest request
+            @Valid @RequestBody DemandeAideRequest request,
+            @RequestParam(required = false) UUID tontineId
     ) {
-        return aideService.soumettreDemande(principal.getUsername(), request);
+        return aideService.soumettreDemande(principal.getUsername(), tontineId, request);
     }
 
     @GetMapping("/mes-demandes")

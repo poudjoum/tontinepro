@@ -70,12 +70,9 @@ public class CotisationService {
     @Transactional(readOnly = true)
     public List<CotisationResponse> list(UUID membreId, UUID tontineId, Short mois, Short annee,
                                          Cotisation.Statut statut, String emailConnecte) {
-        // Cloisonnement : si aucune tontine n'est fournie (et pas de filtre membre précis),
-        // se rabattre sur la tontine du compte connecté — JAMAIS sur toutes les tontines.
-        if (tontineId == null && membreId == null && emailConnecte != null) {
-            tontineId = membreRepository.findByUserEmail(emailConnecte)
-                    .map(m -> m.getTontine().getId())
-                    .orElse(null);
+        // Cloisonnement : jamais toutes les tontines, et jamais une tontine devinée.
+        if (tontineId == null && membreId == null) {
+            throw new IllegalArgumentException("Une tontine doit être précisée");
         }
 
         List<Cotisation> cotisations;
@@ -99,9 +96,7 @@ public class CotisationService {
     @Transactional(readOnly = true)
     public List<CotisationResponse> getMe(String email, UUID tontineId) {
         // Cible le profil de la tontine courante si fournie, sinon le 1ᵉʳ profil (compat).
-        var membre = tontineId != null
-                ? membreRepository.findByUserEmailAndTontineId(email, tontineId)
-                : membreRepository.findByUserEmail(email);
+        var membre = membreRepository.profil(email, tontineId);
         return membre
                 .map(m -> cotisationRepository.findAllByMembreId(m.getId())
                         .stream().map(CotisationResponse::from).toList())
