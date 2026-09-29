@@ -15,12 +15,16 @@ export class EpargneService {
     return this.http.get<CompteEpargneResponse>(`${this.api}/mon-compte`, { params });
   }
 
-  depot(montant: number, reference?: string) {
-    return this.http.post<CompteEpargneResponse>(`${this.api}/depot`, { montant, reference });
+  /** Dépôt saisi par le bureau sur le compte d'un membre. */
+  depot(membreId: string, montant: number, reference?: string) {
+    return this.http.post<CompteEpargneResponse>(
+      `${this.api}/comptes/${membreId}/depot`, { montant, reference });
   }
 
-  retrait(montant: number, reference?: string) {
-    return this.http.post<CompteEpargneResponse>(`${this.api}/retrait`, { montant, reference });
+  /** Retrait saisi par le bureau sur le compte d'un membre. */
+  retrait(membreId: string, montant: number, reference?: string) {
+    return this.http.post<CompteEpargneResponse>(
+      `${this.api}/comptes/${membreId}/retrait`, { montant, reference });
   }
 
   getHistorique(tontineId?: string) {

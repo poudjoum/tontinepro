@@ -31,62 +31,9 @@
         </div>
       }
 
-      <!-- Formulaire dépôt / retrait -->
-      <div class="card space-y-4">
-        <!-- Onglets -->
-        <div class="flex bg-gray-100 rounded-xl p-1">
-          <button (click)="mode.set('depot')"
-                  [class]="mode() === 'depot'
-                    ? 'flex-1 py-2 rounded-lg bg-white text-primary-600 font-semibold text-sm shadow-sm'
-                    : 'flex-1 py-2 rounded-lg text-gray-500 text-sm'">
-            ↑ Dépôt
-          </button>
-          <button (click)="mode.set('retrait')"
-                  [class]="mode() === 'retrait'
-                    ? 'flex-1 py-2 rounded-lg bg-white text-red-600 font-semibold text-sm shadow-sm'
-                    : 'flex-1 py-2 rounded-lg text-gray-500 text-sm'">
-            ↓ Retrait
-          </button>
-        </div>
-
-        <!-- Montant -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1.5">
-            Montant (FCFA) *
-          </label>
-          <input type="number" min="1"
-                 [value]="montant()"
-                 (input)="montant.set(+$any($event.target).value)"
-                 placeholder="0"
-                 class="input-field text-lg font-semibold">
-        </div>
-
-        <!-- Référence -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1.5">
-            Référence <span class="text-gray-400 font-normal">(optionnel)</span>
-          </label>
-          <input type="text"
-                 [value]="reference()"
-                 (input)="reference.set($any($event.target).value)"
-                 placeholder="Ex : virement bancaire…"
-                 class="input-field text-sm">
-        </div>
-
-        <!-- Bouton -->
-        <button (click)="soumettre()" [disabled]="montant() <= 0 || submitting()"
-                [class]="mode() === 'depot'
-                  ? 'btn-primary'
-                  : 'w-full min-h-[44px] flex items-center justify-center px-4 py-3 rounded-xl bg-red-600 text-white font-semibold disabled:opacity-50'">
-          @if (submitting()) {
-            <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-          }
-          {{ submitting() ? 'Traitement…' : mode() === 'depot' ? '↑ Effectuer le dépôt' : '↓ Effectuer le retrait' }}
-        </button>
-      </div>
+      <p class="text-xs text-gray-500 text-center">
+        Les dépôts et retraits sont enregistrés par le bureau de la tontine, à la remise des fonds.
+      </p>
 
       <!-- Historique -->
       <div class="space-y-2">
@@ -195,8 +142,38 @@
             </div>
           </button>
 
-          <!-- Historique inline -->
+          <!-- Historique inline + saisie d'un mouvement -->
           @if (selectedMembreId() === c.membreId) {
+            <div class="mt-3 pt-3 border-t border-gray-100 space-y-3">
+              <div class="flex bg-gray-100 rounded-xl p-1">
+                <button (click)="mode.set('depot')"
+                        [class]="mode() === 'depot'
+                          ? 'flex-1 py-2 rounded-lg bg-white text-primary-600 font-semibold text-sm shadow-sm'
+                          : 'flex-1 py-2 rounded-lg text-gray-500 text-sm'">
+                  ↑ Dépôt
+                </button>
+                <button (click)="mode.set('retrait')"
+                        [class]="mode() === 'retrait'
+                          ? 'flex-1 py-2 rounded-lg bg-white text-red-600 font-semibold text-sm shadow-sm'
+                          : 'flex-1 py-2 rounded-lg text-gray-500 text-sm'">
+                  ↓ Retrait
+                </button>
+              </div>
+              <div class="flex gap-2">
+                <input type="number" min="1" [value]="montant()"
+                       (input)="montant.set(+$any($event.target).value)"
+                       placeholder="Montant (FCFA)" class="input-field text-sm flex-1 min-w-0">
+                <input type="text" [value]="reference()"
+                       (input)="reference.set($any($event.target).value)"
+                       placeholder="Référence" class="input-field text-sm flex-1 min-w-0">
+              </div>
+              <button (click)="soumettre()" [disabled]="montant() <= 0 || submitting()"
+                      [class]="mode() === 'depot'
+                        ? 'btn-primary text-sm py-2'
+                        : 'w-full min-h-[44px] flex items-center justify-center px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-semibold disabled:opacity-50'">
+                {{ submitting() ? 'Traitement…' : mode() === 'depot' ? '↑ Enregistrer le dépôt' : '↓ Enregistrer le retrait' }}
+              </button>
+            </div>
             <div class="mt-3 pt-3 border-t border-gray-100 space-y-2">
               @if (selectedHistorique().length === 0) {
                 <p class="text-xs text-center text-gray-400 py-2">Aucune transaction</p>

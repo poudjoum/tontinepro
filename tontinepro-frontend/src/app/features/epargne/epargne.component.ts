@@ -35,6 +35,8 @@ export class EpargneComponent implements OnInit {
   // Membre
   compte      = signal<CompteEpargneResponse | null>(null);
   mouvements  = signal<MouvementEpargneResponse[]>([]);
+
+  // Saisie d'un mouvement par le bureau, sur le compte déplié
   mode        = signal<'depot' | 'retrait'>('depot');
   montant     = signal(0);
   reference   = signal('');
@@ -70,21 +72,24 @@ export class EpargneComponent implements OnInit {
     });
   }
 
+  /** Enregistre un dépôt ou un retrait sur le compte déplié (bureau). */
   soumettre(): void {
-    if (this.montant() <= 0 || this.submitting()) return;
+    const membreId = this.selectedMembreId();
+    if (!membreId || this.montant() <= 0 || this.submitting()) return;
     this.submitting.set(true);
     this.error.set('');
+    const ref = this.reference() || undefined;
     const obs = this.mode() === 'depot'
-      ? this.svc.depot(this.montant(), this.reference() || undefined)
-      : this.svc.retrait(this.montant(), this.reference() || undefined);
+      ? this.svc.depot(membreId, this.montant(), ref)
+      : this.svc.retrait(membreId, this.montant(), ref);
 
     obs.subscribe({
       next: c => {
-        this.compte.set(c);
+        this.comptes.update(list => list.map(x => x.membreId === membreId ? c : x));
         this.montant.set(0);
         this.reference.set('');
         this.submitting.set(false);
-        this.svc.getHistorique(this.ctx.tontineCouranteId() ?? undefined).subscribe(h => this.mouvements.set(h));
+        this.svc.getHistoriqueParMembre(membreId).subscribe(h => this.selectedHistorique.set(h));
       },
       error: e => { this.error.set(e.message ?? 'Erreur'); this.submitting.set(false); },
     });
@@ -97,6 +102,9 @@ export class EpargneComponent implements OnInit {
       return;
     }
     this.selectedMembreId.set(membreId);
+    this.mode.set('depot');
+    this.montant.set(0);
+    this.reference.set('');
     this.svc.getHistoriqueParMembre(membreId).subscribe(h => this.selectedHistorique.set(h));
   }
 

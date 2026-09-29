@@ -75,12 +75,6 @@
                       class="btn-secondary text-sm py-2 flex-1">
                 {{ echeanceId() === p.id ? '▲ Masquer' : '▼ Échéancier' }}
               </button>
-              @if (p.statut === 'EN_COURS') {
-                <button (click)="rembourser(p.id)" [disabled]="submitting()"
-                        class="btn-primary text-sm py-2 flex-1">
-                  Rembourser
-                </button>
-              }
             </div>
 
             <!-- Échéancier inline -->
@@ -269,6 +263,16 @@
 
           @if (p.statut === 'REJETE' && p.motifRejet) {
             <p class="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">Motif : {{ p.motifRejet }}</p>
+          }
+
+          <!-- Remboursement constaté par le bureau, à l'encaissement -->
+          @if (p.statut === 'EN_COURS') {
+            <div class="border-t pt-3">
+              <button (click)="rembourser(p.id)" [disabled]="submitting()"
+                      class="btn-primary text-sm py-2 w-full">
+                ✓ Encaisser la prochaine échéance
+              </button>
+            </div>
           }
 
           <!-- Actions -->

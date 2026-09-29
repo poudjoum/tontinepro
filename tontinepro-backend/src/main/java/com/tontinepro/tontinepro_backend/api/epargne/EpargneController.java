@@ -34,22 +34,26 @@ public class EpargneController {
         return epargneService.getMonCompte(principal.getUsername(), tontineId);
     }
 
-    @PostMapping("/depot")
-    @Operation(summary = "Effectuer un dÃ©pÃ´t sur mon compte Ã©pargne")
+    // Dépôts et retraits sont saisis par le bureau, à l'encaissement ou au
+    // décaissement réel : le membre ne crédite pas lui-même son épargne.
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, @tontineDe.membre(#membreId))")
+    @PostMapping("/comptes/{membreId}/depot")
+    @Operation(summary = "Enregistrer un dépôt sur le compte épargne d'un membre (bureau)")
     public CompteEpargneResponse depot(
-            @AuthenticationPrincipal UserDetails principal,
+            @PathVariable UUID membreId,
             @Valid @RequestBody DepotRequest request
     ) {
-        return epargneService.depot(principal.getUsername(), request);
+        return epargneService.depot(membreId, request);
     }
 
-    @PostMapping("/retrait")
-    @Operation(summary = "Effectuer un retrait de mon compte Ã©pargne")
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, @tontineDe.membre(#membreId))")
+    @PostMapping("/comptes/{membreId}/retrait")
+    @Operation(summary = "Enregistrer un retrait sur le compte épargne d'un membre (bureau)")
     public CompteEpargneResponse retrait(
-            @AuthenticationPrincipal UserDetails principal,
+            @PathVariable UUID membreId,
             @Valid @RequestBody RetraitRequest request
     ) {
-        return epargneService.retrait(principal.getUsername(), request);
+        return epargneService.retrait(membreId, request);
     }
 
     @GetMapping("/historique")

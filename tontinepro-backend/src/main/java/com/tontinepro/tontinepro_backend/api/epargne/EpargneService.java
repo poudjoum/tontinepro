@@ -87,8 +87,8 @@ public class EpargneService {
     }
 
     @Transactional
-    public CompteEpargneResponse depot(String email, DepotRequest request) {
-        CompteEpargne compte = compteRepository.findByMembreUserEmail(email)
+    public CompteEpargneResponse depot(UUID membreId, DepotRequest request) {
+        CompteEpargne compte = compteRepository.findByMembreId(membreId)
                 .orElseThrow(() -> new IllegalArgumentException("Aucun compte épargne associé à ce membre"));
 
         if (compte.getMembre().getStatut() != Membre.Statut.ACTIF) {
@@ -117,8 +117,8 @@ public class EpargneService {
     }
 
     @Transactional
-    public CompteEpargneResponse retrait(String email, RetraitRequest request) {
-        CompteEpargne compte = compteRepository.findByMembreUserEmail(email)
+    public CompteEpargneResponse retrait(UUID membreId, RetraitRequest request) {
+        CompteEpargne compte = compteRepository.findByMembreId(membreId)
                 .orElseThrow(() -> new IllegalArgumentException("Aucun compte épargne associé à ce membre"));
 
         if (compte.getMembre().getStatut() != Membre.Statut.ACTIF) {

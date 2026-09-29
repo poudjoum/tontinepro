@@ -54,6 +54,16 @@ public class SecurityExpressionService {
         return gere(email, tontineId) || fonctionDans(email, tontineId).isPresent();
     }
 
+    /**
+     * Mouvements d'argent au nom d'un membre (remboursement de prêt, dépôt ou
+     * retrait d'épargne) : gestionnaire, ou membre du bureau qui encaisse
+     * ({@link #peutEncaisser}). Jamais le membre lui-même — il se déclarerait
+     * remboursé ou créditerait son épargne sans rien verser.
+     */
+    public boolean bureauEncaisse(String email, UUID tontineId) {
+        return gere(email, tontineId) || peutEncaisser(email, tontineId);
+    }
+
     /** {@link #gere} ou Censeur actif de cette tontine (absences, sanctions). */
     public boolean gereOuCenseur(String email, UUID tontineId) {
         return gere(email, tontineId)

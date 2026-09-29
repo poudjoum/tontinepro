@@ -15,6 +15,7 @@ import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import com.tontinepro.tontinepro_backend.domain.tontine.TontineRepository;
 import com.tontinepro.tontinepro_backend.domain.user.User;
 import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
+import com.tontinepro.tontinepro_backend.infrastructure.security.SecurityExpressionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +40,7 @@ public class PretService {
     private final TontineRepository tontineRepository;
     private final NotificationService notificationService;
     private final DocumentRepository documentRepository;
+    private final SecurityExpressionService sec;
 
     // ── Membre ───────────────────────────────────────────────────────────
 
@@ -103,9 +105,9 @@ public class PretService {
     }
 
     @Transactional
-    public EcheancePretResponse rembourserProchaineEcheance(UUID pretId, String email) {
+    public EcheancePretResponse rembourserProchaineEcheance(UUID pretId) {
+        // Réservé au bureau (contrôleur) : le remboursement se constate à l'encaissement.
         Pret pret = loadPret(pretId);
-        verifierAccesPret(pret, email);
 
         if (pret.getStatut() != Pret.Statut.EN_COURS) {
             throw new IllegalArgumentException("Seuls les prêts EN_COURS peuvent être remboursés");
@@ -366,8 +368,11 @@ public class PretService {
     }
 
     /** Vérifie qu'un membre ne peut consulter que ses propres prêts (les admins passent null). */
+    /** L'emprunteur, ou un gestionnaire de la tontine du prêt. */
     private void verifierAccesPret(Pret pret, String email) {
-        if (email != null && !pret.getMembre().getUser().getEmail().equals(email)) {
+        boolean emprunteur = pret.getMembre().getUser() != null
+                && pret.getMembre().getUser().getEmail().equals(email);
+        if (!emprunteur && !sec.gere(email, pret.getMembre().getTontine().getId())) {
             throw new IllegalArgumentException("Accès non autorisé à ce prêt");
         }
     }

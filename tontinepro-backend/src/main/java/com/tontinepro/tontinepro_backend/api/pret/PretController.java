@@ -49,18 +49,15 @@ public class PretController {
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetails principal
     ) {
-        boolean isAdmin = principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        return pretService.getEcheances(id, isAdmin ? null : principal.getUsername());
+        // L'emprunteur ou un gestionnaire de la tontine du prêt (vérifié par le service)
+        return pretService.getEcheances(id, principal.getUsername());
     }
 
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, @tontineDe.pret(#id))")
     @PostMapping("/{id}/rembourser")
     @Operation(summary = "Rembourser la prochaine Ã©chÃ©ance")
-    public EcheancePretResponse rembourser(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal UserDetails principal
-    ) {
-        return pretService.rembourserProchaineEcheance(id, principal.getUsername());
+    public EcheancePretResponse rembourser(@PathVariable UUID id) {
+        return pretService.rembourserProchaineEcheance(id);
     }
 
     @PreAuthorize("@sec.membreOuGere(authentication.name, #tontineId)")
