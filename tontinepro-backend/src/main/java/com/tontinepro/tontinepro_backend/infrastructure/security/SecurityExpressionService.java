@@ -46,6 +46,14 @@ public class SecurityExpressionService {
                 .orElse(false);
     }
 
+    /**
+     * Membre actif de cette tontine, ou {@link #gere gestionnaire} : lectures
+     * réservées aux participants (sessions, échéancier, rapports, barème).
+     */
+    public boolean membreOuGere(String email, UUID tontineId) {
+        return gere(email, tontineId) || fonctionDans(email, tontineId).isPresent();
+    }
+
     /** {@link #gere} ou Censeur actif de cette tontine (absences, sanctions). */
     public boolean gereOuCenseur(String email, UUID tontineId) {
         return gere(email, tontineId)

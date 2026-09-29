@@ -267,6 +267,10 @@ public class MembreService {
                         .hashedPassword(passwordEncoder.encode(request.password()))
                         .telephone(request.telephone())
                         .role(role)
+                        // Mot de passe choisi par le gestionnaire : provisoire. Le
+                        // membre le remplace à sa première connexion, ou réclame son
+                        // compte par téléphone (voir User#enAttenteActivation).
+                        .mustChangePassword(true)
                         .build())
         );
 

@@ -38,12 +38,14 @@ public class SessionController {
         return sessionService.creerSession(request);
     }
 
+    @PreAuthorize("@sec.membreOuGere(authentication.name, #tontineId)")
     @GetMapping
     @Operation(summary = "Lister les sessions d'une tontine")
     public List<SessionResponse> listerSessions(@RequestParam UUID tontineId) {
         return sessionService.listerSessions(tontineId);
     }
 
+    @PreAuthorize("@sec.membreOuGere(authentication.name, @tontineDe.session(#id))")
     @GetMapping("/{id}")
     @Operation(summary = "Details d'une session avec la liste ordonnee des beneficiaires")
     public SessionResponse getById(@PathVariable UUID id) {
@@ -51,6 +53,7 @@ public class SessionController {
     }
 
     /** Calendrier d'echéances complet d'une session */
+    @PreAuthorize("@sec.membreOuGere(authentication.name, @tontineDe.session(#id))")
     @GetMapping("/{id}/echeancier")
     @Operation(summary = "Calendrier d'echeances de la session (tous les beneficiaires avec dates)")
     public List<OrdreBeneficiaireResponse> echeancier(@PathVariable UUID id) {
@@ -167,6 +170,7 @@ public class SessionController {
         return sessionService.validerBenefice(id, ordreBeneficiaireId, request);
     }
 
+    @PreAuthorize("@sec.membreOuGere(authentication.name, @tontineDe.session(#id))")
     @GetMapping("/{id}/rapport-tour/{ordreBeneficiaireId}")
     @Operation(summary = "Rapport de tour : cotisations, fond, repas, sanctions et bilan du bénéficiaire")
     public RapportTourResponse getRapportTour(
@@ -175,6 +179,7 @@ public class SessionController {
         return sessionService.getRapportTour(id, ordreBeneficiaireId);
     }
 
+    @PreAuthorize("@sec.membreOuGere(authentication.name, @tontineDe.session(#id))")
     @GetMapping("/{id}/rapport-fin-session")
     @Operation(summary = "Rapport de fin de session : bilan financier complet + fiche par membre")
     public RapportFinSessionResponse getRapportFinSession(@PathVariable UUID id) {
@@ -202,6 +207,7 @@ public class SessionController {
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
+    @PreAuthorize("@sec.membreOuGere(authentication.name, @tontineDe.session(#id))")
     @GetMapping("/{id}/rapport-fin-session/pdf")
     @Operation(summary = "Rapport de fin de session au format PDF (prêt à partager)")
     public ResponseEntity<byte[]> getRapportFinSessionPdf(@PathVariable UUID id) {

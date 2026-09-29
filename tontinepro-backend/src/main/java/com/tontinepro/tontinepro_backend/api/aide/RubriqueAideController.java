@@ -22,6 +22,7 @@ public class RubriqueAideController {
 
     private final RubriqueAideService rubriqueAideService;
 
+    @PreAuthorize("@sec.membreOuGere(authentication.name, #tontineId)")
     @GetMapping("/{tontineId}")
     @Operation(summary = "Barème d'aide d'une tontine (actifSeulement=true pour la sélection membre)")
     public List<RubriqueAideResponse> lister(
@@ -31,6 +32,7 @@ public class RubriqueAideController {
         return rubriqueAideService.lister(tontineId, actifSeulement);
     }
 
+    @PreAuthorize("@sec.membreOuGere(authentication.name, @tontineDe.rubrique(#rubriqueId))")
     @GetMapping("/simulation/{rubriqueId}")
     @Operation(summary = "Simule part par membre et total d'une rubrique (N = membres actifs courant)")
     public SimulationAideResponse simuler(@PathVariable UUID rubriqueId) {

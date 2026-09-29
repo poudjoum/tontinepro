@@ -139,6 +139,13 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Aucun compte trouvé pour ce numéro de téléphone"));
 
+        // Le téléphone n'est pas un secret : sans cette garde, quiconque le connaît
+        // remplaçait l'email et le mot de passe d'un compte en service.
+        if (!user.enAttenteActivation()) {
+            throw new IllegalArgumentException(
+                    "Ce compte est déjà activé. Connectez-vous, ou utilisez « Mot de passe oublié ».");
+        }
+
         // Si le nouvel email est différent, vérifier qu'il n'est pas déjà pris par un autre compte
         if (!request.email().equalsIgnoreCase(user.getEmail())) {
             if (userRepository.existsByEmail(request.email())) {
@@ -148,6 +155,7 @@ public class AuthService {
         }
 
         user.setHashedPassword(passwordEncoder.encode(request.motDePasse()));
+        user.setMustChangePassword(false);
         userRepository.save(user);
 
         refreshTokenRepository.revokeAllByUserId(user.getId());

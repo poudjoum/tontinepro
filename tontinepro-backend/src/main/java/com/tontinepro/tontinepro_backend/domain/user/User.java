@@ -61,6 +61,23 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    /** Domaine des emails techniques attribués aux membres importés sans adresse. */
+    public static final String DOMAINE_EMAIL_TECHNIQUE = "@membre.tontinepro.local";
+
+    /**
+     * Vrai si le compte n'a pas encore été pris en main par son titulaire : créé
+     * par un gestionnaire avec un email technique ou un mot de passe provisoire.
+     *
+     * <p>Seul un tel compte peut être réclamé par son numéro de téléphone
+     * (activation, adhésion par invitation) — le numéro n'est pas un secret : il
+     * s'affiche dans l'application. Un compte déjà activé ne se récupère que par
+     * « mot de passe oublié ».</p>
+     */
+    public boolean enAttenteActivation() {
+        return role != Role.SUPER_ADMIN
+                && (mustChangePassword || (email != null && email.endsWith(DOMAINE_EMAIL_TECHNIQUE)));
+    }
+
     public enum Role {
         SUPER_ADMIN, // Opérateur plateforme — gère toutes les tontines
         ADMIN,       // Président — accès total

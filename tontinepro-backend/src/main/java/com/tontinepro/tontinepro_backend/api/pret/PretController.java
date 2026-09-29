@@ -63,6 +63,7 @@ public class PretController {
         return pretService.rembourserProchaineEcheance(id, principal.getUsername());
     }
 
+    @PreAuthorize("@sec.membreOuGere(authentication.name, #tontineId)")
     @GetMapping("/simulation")
     @Operation(summary = "Simuler un prÃªt (mensualitÃ©, tableau d'amortissement, coÃ»t total)")
     public SimulationPretResponse simuler(

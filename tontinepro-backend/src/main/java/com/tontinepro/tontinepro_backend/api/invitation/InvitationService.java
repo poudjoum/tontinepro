@@ -108,10 +108,22 @@ public class InvitationService {
 
         // Permettre à un utilisateur existant de rejoindre via invitation
         // (il peut déjà être membre d'une autre tontine)
+        // Cette action est publique et ouvre une session : elle ne doit jamais donner
+        // accès à un compte existant sans en prouver la possession. Le lien
+        // d'invitation, lui, circule librement (groupes de discussion).
         User user;
         if (userRepository.existsByEmail(request.email())) {
-            // Compte trouvé par email — on le réutilise
+            // Compte trouvé par email — on le réutilise, s'il est bien le sien
             user = userRepository.findByEmail(request.email()).orElseThrow();
+            if (!passwordEncoder.matches(request.password(), user.getHashedPassword())) {
+                throw new IllegalArgumentException(
+                        "Un compte existe déjà avec cet email : saisissez son mot de passe actuel.");
+            }
+            if (user.isTwoFaEnabled()) {
+                throw new IllegalArgumentException(
+                        "Ce compte est protégé par la double authentification : connectez-vous "
+                        + "d'abord, puis demandez au gestionnaire de vous inscrire.");
+            }
             if (membreRepository.existsByUserIdAndTontineId(user.getId(), tontine.getId())) {
                 throw new IllegalArgumentException("Vous êtes déjà membre de cette tontine");
             }
@@ -120,11 +132,17 @@ public class InvitationService {
             // Compte pré-créé par l'admin avec ce numéro de téléphone mais un email placeholder :
             // on met à jour les credentials avec ceux fournis par le membre lui-même
             user = userRepository.findByTelephone(request.telephone()).orElseThrow();
+            if (!user.enAttenteActivation()) {
+                throw new IllegalArgumentException(
+                        "Ce numéro est déjà associé à un compte actif : indiquez l'email "
+                        + "et le mot de passe de ce compte.");
+            }
             if (membreRepository.existsByUserIdAndTontineId(user.getId(), tontine.getId())) {
                 throw new IllegalArgumentException("Vous êtes déjà membre de cette tontine");
             }
             user.setEmail(request.email());
             user.setHashedPassword(passwordEncoder.encode(request.password()));
+            user.setMustChangePassword(false);
             userRepository.save(user);
         } else {
             user = userRepository.save(User.builder()

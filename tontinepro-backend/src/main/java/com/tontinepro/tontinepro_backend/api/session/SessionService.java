@@ -959,7 +959,9 @@ public class SessionService {
         SessionTontine session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable"));
 
+        // L'accès est vérifié sur la session de l'URL : le tour doit en faire partie.
         OrdreBeneficiaire ob = ordreBeneficiaireRepository.findById(ordreBeneficiaireId)
+                .filter(o -> o.getSession().getId().equals(sessionId))
                 .orElseThrow(() -> new IllegalArgumentException("Tour introuvable"));
 
         Tontine tontine = session.getTontine();

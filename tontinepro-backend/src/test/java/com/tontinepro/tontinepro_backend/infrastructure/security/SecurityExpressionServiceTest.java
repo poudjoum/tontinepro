@@ -101,6 +101,34 @@ class SecurityExpressionServiceTest {
         assertThat(sec.gereFiltre(SECRETAIRE_A, A, membreDeB)).isFalse();
     }
 
+    @Test
+    void lesLecturesSontOuvertesAuxSeulsMembresDeLaTontine() {
+        String membreDeB = "membre@b";
+        when(membres.findByUserEmailAndTontineId(membreDeB, B))
+                .thenReturn(Optional.of(membre(Membre.Fonction.MEMBRE_ORDINAIRE, Membre.Statut.ACTIF)));
+        assertThat(sec.membreOuGere(membreDeB, B)).isTrue();
+        assertThat(sec.membreOuGere(membreDeB, A)).isFalse();
+        assertThat(sec.membreOuGere(SECRETAIRE_A, A)).isTrue();
+        assertThat(sec.membreOuGere(OPERATEUR, B)).isTrue();
+
+        when(membres.findByUserEmailAndTontineId(membreDeB, B))
+                .thenReturn(Optional.of(membre(Membre.Fonction.MEMBRE_ORDINAIRE, Membre.Statut.RETIRE)));
+        assertThat(sec.membreOuGere(membreDeB, B)).isFalse();
+    }
+
+    @Test
+    void seulUnCompteJamaisActivePeutEtreReclameParTelephone() {
+        assertThat(User.builder().email("tel-690000000" + User.DOMAINE_EMAIL_TECHNIQUE).build()
+                .enAttenteActivation()).isTrue();
+        assertThat(User.builder().email("vrai@mail.com").mustChangePassword(true).build()
+                .enAttenteActivation()).isTrue();
+        assertThat(User.builder().email("vrai@mail.com").build()
+                .enAttenteActivation()).isFalse();
+        assertThat(User.builder().email("tel-1" + User.DOMAINE_EMAIL_TECHNIQUE)
+                .role(User.Role.SUPER_ADMIN).mustChangePassword(true).build()
+                .enAttenteActivation()).isFalse();
+    }
+
     private static Membre membre(Membre.Fonction fonction, Membre.Statut statut) {
         return Membre.builder().fonction(fonction).statut(statut).build();
     }
