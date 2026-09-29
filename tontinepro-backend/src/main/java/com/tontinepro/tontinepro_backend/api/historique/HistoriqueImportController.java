@@ -23,7 +23,7 @@ public class HistoriqueImportController {
 
     @PostMapping("/importer")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Importer l'historique d'une session existante (rattrapage)")
     public ImporterHistoriqueResponse importer(
             @PathVariable UUID sessionId,

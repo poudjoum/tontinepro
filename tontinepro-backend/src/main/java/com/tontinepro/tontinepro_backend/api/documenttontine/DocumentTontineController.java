@@ -58,7 +58,7 @@ public class DocumentTontineController {
 
     @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Publier un document officiel dans MinIO (PDF uniquement)")
     public DocumentTontineResponse upload(
             @PathVariable UUID tontineId,
@@ -96,7 +96,7 @@ public class DocumentTontineController {
 
     @DeleteMapping("/{docId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Supprimer un document officiel")
     public void supprimer(@PathVariable UUID tontineId, @PathVariable UUID docId) {
         DocumentTontine doc = docRepo.findById(docId)

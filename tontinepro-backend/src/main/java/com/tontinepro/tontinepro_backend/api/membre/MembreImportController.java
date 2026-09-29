@@ -25,7 +25,7 @@ public class MembreImportController {
     private final MembreImportTemplateBuilder templateBuilder;
 
     @GetMapping("/modele")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Télécharger le modèle Excel d'importation des membres")
     public ResponseEntity<byte[]> modele(@RequestParam(required = false) UUID tontineId) {
         String nom = tontineId != null ? importService.nomTontine(tontineId) : null;
@@ -39,7 +39,7 @@ public class MembreImportController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Importer des membres depuis un fichier Excel")
     public MembreImportResponse importer(
             @RequestParam UUID tontineId,

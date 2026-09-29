@@ -30,7 +30,7 @@ public class FondsAideController {
     private final FondsAideService fondsAideService;
 
     @GetMapping("/{tontineId}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') "
             + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Ã‰tat du fonds d'aide d'une tontine (solde, mode, montant par membre)")
     public FondsAideResponse getByTontineId(@PathVariable UUID tontineId) {
@@ -38,7 +38,7 @@ public class FondsAideController {
     }
 
     @GetMapping("/{tontineId}/mouvements")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') "
             + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Historique des mouvements du fonds d'aide")
     public List<MouvementFondsAideResponse> getMouvements(@PathVariable UUID tontineId) {
@@ -46,7 +46,7 @@ public class FondsAideController {
     }
 
     @GetMapping("/{tontineId}/contributions")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') "
             + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Contributions des membres au fonds (filtrables par statut)")
     public List<ContributionFondsAideResponse> getContributions(
@@ -57,7 +57,7 @@ public class FondsAideController {
     }
 
     @PostMapping("/{tontineId}/contributions/generer")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') "
             + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "GÃ©nÃ©rer les contributions mensuelles pour tous les membres actifs (mode MENSUEL)")
     public List<ContributionFondsAideResponse> genererContributionsMensuelles(
@@ -69,7 +69,7 @@ public class FondsAideController {
     }
 
     @GetMapping("/{tontineId}/versements-anterieurs")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') "
             + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Fond de caisse versé avant l'application, par membre, pour une année")
     public VersementsAnterieursResponse getVersementsAnterieurs(
@@ -80,7 +80,7 @@ public class FondsAideController {
     }
 
     @PutMapping("/{tontineId}/versements-anterieurs")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE') "
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') "
             + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Déclarer le fond de caisse versé avant l'application (crédite le fonds, "
             + "réduit la retenue au bénéfice)")

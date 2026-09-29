@@ -33,14 +33,14 @@ public class MembreController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Inscrire un membre")
     public MembreResponse create(@Valid @RequestBody CreateMembreRequest request) {
         return membreService.create(request);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Lister les membres (filtrables par tontine et statut)")
     public List<MembreResponse> list(
             @RequestParam(required = false) UUID tontineId,
@@ -58,14 +58,14 @@ public class MembreController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "DÃ©tails d'un membre")
     public MembreResponse getById(@PathVariable UUID id) {
         return membreService.getById(id);
     }
 
     @PatchMapping("/{id}/statut")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Modifier le statut d'un membre")
     public MembreResponse updateStatut(
             @PathVariable UUID id,
@@ -76,14 +76,14 @@ public class MembreController {
 
     @PostMapping("/inscription-directe")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Inscrire directement un nouveau membre (crÃ©e le compte utilisateur + le profil membre)")
     public MembreResponse inscrireDirectement(@Valid @RequestBody InscriptionDirecteRequest request) {
         return membreService.inscrireDirectement(request);
     }
 
     @PatchMapping("/{id}/fonction")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Modifier la fonction d'un membre dans le bureau")
     public MembreResponse updateFonction(
             @PathVariable UUID id,
@@ -94,7 +94,7 @@ public class MembreController {
     }
 
     @DeleteMapping("/tontine/{tontineId}/reinitialiser")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     @Operation(summary = "Réinitialiser les membres d'une tontine sans activité financière (pour réinscription via invitation)")
     public ReinitialiserMembresResponse reinitialiser(@PathVariable UUID tontineId) {
         return membreService.reinitialiserPourInvitation(tontineId);

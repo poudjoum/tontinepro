@@ -28,7 +28,7 @@ public class TontineController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     @Operation(summary = "Créer une tontine")
     public TontineResponse create(@Valid @RequestBody CreateTontineRequest request) {
         return tontineService.create(request);
@@ -68,7 +68,7 @@ public class TontineController {
     }
 
     @PatchMapping("/{id}/config")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Modifier la configuration d'une tontine")
     public TontineResponse updateConfig(
             @PathVariable UUID id,

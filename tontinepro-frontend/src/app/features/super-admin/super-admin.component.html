@@ -203,6 +203,13 @@
 
           <!-- Actions -->
           <div class="border-t border-gray-50 px-4 py-2.5 flex gap-2 flex-wrap">
+            <button (click)="gerer(t)" [disabled]="!t.actif"
+                    [title]="t.actif ? 'Ouvrir l’administration de cette tontine' : 'Activez la tontine pour la gérer'"
+                    class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary-600 text-white
+                           hover:bg-primary-700 disabled:opacity-50">
+              ⚙️ Gérer
+            </button>
+
             <button (click)="toggleActif(t)" [disabled]="saving()"
                     class="text-xs font-medium px-3 py-1.5 rounded-lg border disabled:opacity-50"
                     [class]="t.actif

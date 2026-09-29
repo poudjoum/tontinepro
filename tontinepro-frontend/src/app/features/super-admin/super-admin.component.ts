@@ -1,7 +1,9 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 import {
   SuperAdminService,
   TontinePlatformeResponse,
@@ -18,6 +20,8 @@ import {
 export class SuperAdminComponent implements OnInit {
   auth    = inject(AuthService);
   private svc = inject(SuperAdminService);
+  private ctx = inject(TontineContextService);
+  private router = inject(Router);
 
   tontines   = signal<TontinePlatformeResponse[]>([]);
   loading    = signal(true);
@@ -170,6 +174,12 @@ export class SuperAdminComponent implements OnInit {
       next: r => { this.success.set(r.message); this.saving.set(false); },
       error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur'); this.saving.set(false); },
     });
+  }
+
+  /** Entre dans l'administration de la tontine, sans en être membre. */
+  gerer(t: TontinePlatformeResponse): void {
+    this.ctx.selectionner(t.id);
+    this.router.navigate(['/admin']);
   }
 
   logout(): void { this.auth.logout(); }

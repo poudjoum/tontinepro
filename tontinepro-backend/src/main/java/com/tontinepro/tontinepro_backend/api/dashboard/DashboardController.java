@@ -32,7 +32,7 @@ public class DashboardController {
     }
 
     @GetMapping("/admin")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Tableau de bord administrateur")
     public AdminDashboardResponse getAdminDashboard(
             @AuthenticationPrincipal UserDetails principal,

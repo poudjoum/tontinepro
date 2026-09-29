@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/rapports")
-@PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+@PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
 @RequiredArgsConstructor
 @Tag(name = "Rapports")
 public class RapportController {

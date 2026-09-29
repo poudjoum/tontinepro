@@ -22,8 +22,9 @@
     <!-- Actions -->
     <div class="flex items-center gap-3">
 
-      <!-- Retour à l'écran de choix des tontines -->
-      <a routerLink="/mes-tontines" title="Mes tontines"
+      <!-- Retour à l'écran de choix des tontines (plateforme pour le super admin) -->
+      <a [routerLink]="auth.isSuperAdmin() ? '/super-admin' : '/mes-tontines'"
+         [title]="auth.isSuperAdmin() ? 'Super Admin' : 'Mes tontines'"
          class="min-h-tap min-w-[44px] flex items-center justify-center">
         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

@@ -45,7 +45,8 @@ public class DocumentService {
         User upUser = userRepository.findByEmail(uploader)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
         boolean isGestionnaire = upUser.getRole() == User.Role.ADMIN
-                || upUser.getRole() == User.Role.SECRETAIRE;
+                || upUser.getRole() == User.Role.SECRETAIRE
+                || upUser.getRole() == User.Role.SUPER_ADMIN;
         if (!isGestionnaire) {
             boolean isOwner = membreRepository.findAllByUserEmail(uploader).stream()
                     .anyMatch(m -> m.getId().equals(membreId));
@@ -115,7 +116,8 @@ public class DocumentService {
         User requester = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
         boolean isGestionnaire = requester.getRole() == User.Role.ADMIN
-                || requester.getRole() == User.Role.SECRETAIRE;
+                || requester.getRole() == User.Role.SECRETAIRE
+                || requester.getRole() == User.Role.SUPER_ADMIN;
         if (!isGestionnaire) {
             boolean isOwner = membreRepository.findAllByUserEmail(email).stream()
                     .anyMatch(m -> m.getId().equals(doc.getMembre().getId()));
@@ -147,7 +149,8 @@ public class DocumentService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
         boolean isGestionnaire = user.getRole() == User.Role.ADMIN
-                || user.getRole() == User.Role.SECRETAIRE;
+                || user.getRole() == User.Role.SECRETAIRE
+                || user.getRole() == User.Role.SUPER_ADMIN;
         if (!isGestionnaire) {
             boolean isOwner = membreRepository.findAllByUserEmail(email).stream()
                     .anyMatch(m -> m.getId().equals(doc.getMembre().getId()));

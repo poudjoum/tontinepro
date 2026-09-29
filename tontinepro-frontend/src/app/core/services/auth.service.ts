@@ -23,10 +23,14 @@ export class AuthService {
   readonly isLoggedIn    = computed(() => !!this._auth()?.accessToken);
   readonly currentUser   = computed(() => this._auth());
   readonly isSuperAdmin  = computed(() => this._auth()?.role === 'SUPER_ADMIN');
-  readonly isAdmin       = computed(() => this._auth()?.role === 'ADMIN');
+  // Le SUPER_ADMIN configure les tontines sans forcément en être membre ni
+  // siéger au bureau : il a les mêmes écrans de gestion que le Président.
+  readonly isAdmin       = computed(() =>
+    this._auth()?.role === 'ADMIN' || this._auth()?.role === 'SUPER_ADMIN');
   readonly isSecretaire  = computed(() => this._auth()?.role === 'SECRETAIRE');
   readonly isGestionnaire = computed(() =>
-    this._auth()?.role === 'ADMIN' || this._auth()?.role === 'SECRETAIRE');
+    this._auth()?.role === 'ADMIN' || this._auth()?.role === 'SECRETAIRE'
+    || this._auth()?.role === 'SUPER_ADMIN');
   readonly isMembre      = computed(() => this._auth()?.role === 'MEMBRE');
   readonly twoFaEnabled  = computed(() => this._auth()?.twoFaEnabled ?? false);
 

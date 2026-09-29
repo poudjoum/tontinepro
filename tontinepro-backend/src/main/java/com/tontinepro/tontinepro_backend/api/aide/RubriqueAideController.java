@@ -39,7 +39,7 @@ public class RubriqueAideController {
 
     @PostMapping("/{tontineId}")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Créer une rubrique du barème d'aide")
     public RubriqueAideResponse creer(
             @PathVariable UUID tontineId,
@@ -49,7 +49,7 @@ public class RubriqueAideController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Modifier une rubrique du barème d'aide")
     public RubriqueAideResponse modifier(
             @PathVariable UUID id,
@@ -60,7 +60,7 @@ public class RubriqueAideController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE')")
+    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
     @Operation(summary = "Supprimer une rubrique du barème d'aide")
     public void supprimer(@PathVariable UUID id) {
         rubriqueAideService.supprimer(id);
