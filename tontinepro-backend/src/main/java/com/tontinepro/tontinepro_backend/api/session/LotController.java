@@ -21,7 +21,7 @@ public class LotController {
     private final LotService lotService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
     @Operation(summary = "Vue d'une session à lot : adhésions et lots/tours")
     public SessionLotResponse getLot(@PathVariable UUID sessionId) {
         return lotService.getLotView(sessionId);
@@ -29,7 +29,7 @@ public class LotController {
 
     @PostMapping("/adherer")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
     @Operation(summary = "Inscrire/mettre à jour la mise mensuelle d'un membre (avant figeage)")
     public SessionLotResponse adherer(@PathVariable UUID sessionId,
                                       @Valid @RequestBody AdhererLotRequest request) {
@@ -38,7 +38,7 @@ public class LotController {
     }
 
     @PostMapping("/figer")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
     @Operation(summary = "Figer manuellement la session (sinon automatique en fin de période d'adhésion)")
     public SessionLotResponse figer(@PathVariable UUID sessionId) {
         lotService.figer(sessionId);

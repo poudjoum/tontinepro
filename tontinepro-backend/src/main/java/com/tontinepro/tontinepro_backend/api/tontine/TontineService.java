@@ -98,9 +98,10 @@ public class TontineService {
         // Les autres voient uniquement les tontines auxquelles ils appartiennent (statut ACTIF)
         return membreRepository.findAllByUserEmail(email).stream()
                 .filter(m -> m.getStatut() == Membre.Statut.ACTIF)
-                .map(m -> m.getTontine())
-                .filter(Tontine::isActif)
-                .map(TontineResponse::from)
+                .filter(m -> m.getTontine().isActif())
+                // La fonction propre à chaque tontine : l'interface s'en sert pour
+                // n'ouvrir les écrans de gestion que là où le compte siège au bureau.
+                .map(m -> TontineResponse.from(m.getTontine(), m.getFonction()))
                 .distinct()
                 .toList();
     }

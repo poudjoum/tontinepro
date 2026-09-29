@@ -76,7 +76,7 @@ public class PretController {
     // â”€â”€ Endpoints admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
     @Operation(summary = "Lister tous les prÃªts (filtrables par tontine ou statut)")
     public List<PretResponse> list(
             @RequestParam(required = false) UUID tontineId,
@@ -86,14 +86,14 @@ public class PretController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.pret(#id))")
     @Operation(summary = "DÃ©tails d'un prÃªt")
     public PretResponse getById(@PathVariable UUID id) {
         return pretService.getById(id);
     }
 
     @PatchMapping("/{id}/valider")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.pret(#id))")
     @Operation(summary = "Valider et dÃ©caisser un prÃªt â€” gÃ©nÃ¨re l'Ã©chÃ©ancier")
     public PretResponse valider(
             @PathVariable UUID id,
@@ -103,7 +103,7 @@ public class PretController {
     }
 
     @PatchMapping("/{id}/rejeter")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.pret(#id))")
     @Operation(summary = "Rejeter une demande de prÃªt")
     public PretResponse rejeter(
             @PathVariable UUID id,
@@ -114,7 +114,7 @@ public class PretController {
     }
 
     @PatchMapping("/echeances/{echeanceId}/retard")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.echeance(#echeanceId))")
     @Operation(summary = "Marquer une Ã©chÃ©ance en retard")
     public EcheancePretResponse marquerEnRetard(@PathVariable UUID echeanceId) {
         return pretService.marquerEcheanceEnRetard(echeanceId);

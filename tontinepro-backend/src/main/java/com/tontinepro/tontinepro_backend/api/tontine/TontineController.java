@@ -68,7 +68,7 @@ public class TontineController {
     }
 
     @PatchMapping("/{id}/config")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #id)")
     @Operation(summary = "Modifier la configuration d'une tontine")
     public TontineResponse updateConfig(
             @PathVariable UUID id,

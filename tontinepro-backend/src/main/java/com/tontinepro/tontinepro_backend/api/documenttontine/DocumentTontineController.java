@@ -58,7 +58,7 @@ public class DocumentTontineController {
 
     @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
     @Operation(summary = "Publier un document officiel dans MinIO (PDF uniquement)")
     public DocumentTontineResponse upload(
             @PathVariable UUID tontineId,
@@ -96,10 +96,12 @@ public class DocumentTontineController {
 
     @DeleteMapping("/{docId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
     @Operation(summary = "Supprimer un document officiel")
     public void supprimer(@PathVariable UUID tontineId, @PathVariable UUID docId) {
+        // Le contrôle d'accès porte sur la tontine de l'URL : le document doit en être.
         DocumentTontine doc = docRepo.findById(docId)
+                .filter(d -> d.getTontine().getId().equals(tontineId))
                 .orElseThrow(() -> new IllegalArgumentException("Document introuvable"));
         minioStorage.supprimer(MinioConfig.BUCKET_TONTINES, doc.getCheminStockage());
         docRepo.delete(doc);

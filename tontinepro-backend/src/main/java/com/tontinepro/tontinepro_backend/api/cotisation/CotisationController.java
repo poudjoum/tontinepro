@@ -28,14 +28,14 @@ public class CotisationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.membre(#request.membreId()))")
     @Operation(summary = "CrÃ©er une cotisation pour un membre")
     public CotisationResponse create(@Valid @RequestBody CreateCotisationRequest request) {
         return cotisationService.create(request);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gereFiltre(authentication.name, #tontineId, #membreId)")
     @Operation(summary = "Lister les cotisations (filtrables par membre, tontine, pÃ©riode, statut) — cloisonné par tontine du compte")
     public List<CotisationResponse> list(
             @RequestParam(required = false) UUID membreId,
@@ -57,14 +57,14 @@ public class CotisationController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.cotisation(#id))")
     @Operation(summary = "DÃ©tails d'une cotisation")
     public CotisationResponse getById(@PathVariable UUID id) {
         return cotisationService.getById(id);
     }
 
     @PatchMapping("/{id}/paiement")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.cotisation(#id))")
     @Operation(summary = "Enregistrer le paiement d'une cotisation")
     public CotisationResponse enregistrerPaiement(
             @PathVariable UUID id,
@@ -74,14 +74,14 @@ public class CotisationController {
     }
 
     @PatchMapping("/{id}/retard")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.cotisation(#id))")
     @Operation(summary = "Marquer une cotisation en retard")
     public CotisationResponse marquerEnRetard(@PathVariable UUID id) {
         return cotisationService.marquerEnRetard(id);
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.cotisation(#id))")
     @Operation(summary = "Corriger une cotisation (montants, statut, référence, date) — tous les champs sont optionnels")
     public CotisationResponse modifier(
             @PathVariable UUID id,

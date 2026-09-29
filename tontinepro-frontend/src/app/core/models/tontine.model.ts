@@ -48,6 +48,8 @@ export interface TontineResponse {
   actif: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Fonction du compte dans cette tontine (liste « mes tontines » uniquement). */
+  maFonction?: string | null;
 }
 
 export interface UpdateTontineConfigRequest {

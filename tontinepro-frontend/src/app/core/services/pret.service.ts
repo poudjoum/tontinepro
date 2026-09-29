@@ -15,8 +15,8 @@ export class PretService {
     return this.http.get<PretResponse[]>(`${this.api}/mes-prets`, { params });
   }
 
-  getAll(statut?: string) {
-    let params = new HttpParams();
+  getAll(tontineId: string, statut?: string) {
+    let params = new HttpParams().set('tontineId', tontineId);
     if (statut) params = params.set('statut', statut);
     return this.http.get<PretResponse[]>(this.api, { params });
   }

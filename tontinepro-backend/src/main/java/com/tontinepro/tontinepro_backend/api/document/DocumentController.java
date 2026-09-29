@@ -40,7 +40,7 @@ public class DocumentController {
     }
 
     @GetMapping("/membre/{membreId}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.membre(#membreId))")
     @Operation(summary = "Lister les documents d'un membre (Admin / Secrétaire)")
     public List<DocumentResponse> listerParMembre(@PathVariable UUID membreId) {
         return documentService.listerParMembre(membreId);

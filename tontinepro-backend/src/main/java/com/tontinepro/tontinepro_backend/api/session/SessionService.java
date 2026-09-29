@@ -848,7 +848,10 @@ public class SessionService {
         BigDecimal totalRepas    = BigDecimal.ZERO;
 
         for (SaisirPaiementsSeanceRequest.PaiementMembre pm : request.paiements()) {
+            // Une cotisation d'une autre tontine est ignorée comme une introuvable :
+            // le droit de saisie n'a été vérifié que pour la tontine de la session.
             Cotisation cot = cotisationRepository.findById(pm.cotisationId())
+                    .filter(c -> c.getTontine().getId().equals(session.getTontine().getId()))
                     .orElse(null);
             if (cot == null) continue;
 

@@ -114,7 +114,7 @@ export class AidesComponent implements OnInit {
     this.loading.set(true);
     const tontineId = this.ctx.tontineCouranteId() ?? undefined;
     const obs = this.auth.isAdmin()
-      ? this.svc.getAll(this.filtre() || undefined)
+      ? this.svc.getAll(tontineId ?? '', this.filtre() || undefined)
       : this.svc.getMesDemandes(tontineId);
     obs.subscribe({
       next:  data => { this.aides.set(data); this.loading.set(false); },

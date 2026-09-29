@@ -15,8 +15,8 @@ export class AideService {
     return this.http.get<AideResponse[]>(`${this.api}/mes-demandes`, { params });
   }
 
-  getAll(statut?: string) {
-    let params = new HttpParams();
+  getAll(tontineId: string, statut?: string) {
+    let params = new HttpParams().set('tontineId', tontineId);
     if (statut) params = params.set('statut', statut);
     return this.http.get<AideResponse[]>(`${this.api}/demandes`, { params });
   }

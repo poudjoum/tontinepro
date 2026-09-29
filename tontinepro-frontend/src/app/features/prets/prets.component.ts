@@ -83,7 +83,7 @@ export class PretsComponent implements OnInit {
   charger(): void {
     this.loading.set(true);
     const obs = this.auth.isAdmin()
-      ? this.svc.getAll(this.filtre() || undefined)
+      ? this.svc.getAll(this.tontineId(), this.filtre() || undefined)
       : this.svc.getMesPrets(this.tontineId() || undefined);
     obs.subscribe({
       next:  data => { this.prets.set(data); this.loading.set(false); },

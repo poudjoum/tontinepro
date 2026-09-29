@@ -28,6 +28,10 @@ export const mustChangePasswordGuard: CanActivateFn = () => {
 export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
+  // Instancie le contexte : c'est lui qui publie la fonction du compte dans la
+  // tontine courante, dont dépend isGestionnaire(). Sur un accès à froid, rien
+  // d'autre ne l'a encore créé.
+  inject(TontineContextService);
   if (auth.isGestionnaire()) return true;
   return router.createUrlTree(['/dashboard']);
 };

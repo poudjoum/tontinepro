@@ -28,7 +28,7 @@ public class InvitationController {
 
     @PostMapping("/generer")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #request.tontineId())")
     @Operation(summary = "GÃ©nÃ©rer un lien d'invitation Ã  la tontine")
     public InvitationResponse generer(
             @Valid @RequestBody GenererInvitationRequest request,
@@ -54,7 +54,7 @@ public class InvitationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
     @Operation(summary = "Lister les invitations")
     public List<InvitationResponse> lister(@RequestParam(required = false) UUID tontineId) {
         return invitationService.lister(tontineId);

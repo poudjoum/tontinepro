@@ -11,6 +11,19 @@ function storageKey(email: string | null): string {
   return email ? `${STORAGE_PREFIX}:${email}` : STORAGE_PREFIX;
 }
 
+/** Fonction du compte dans chacune de ses tontines, par compte. */
+function fonctionsKey(email: string | null): string {
+  return `fonctionsTontines:${email ?? ''}`;
+}
+
+function lireFonctions(email: string | null): Record<string, string | null> {
+  try {
+    return JSON.parse(localStorage.getItem(fonctionsKey(email)) ?? '{}');
+  } catch {
+    return {};
+  }
+}
+
 /**
  * Contexte de la « tontine courante » partagé par tous les menus.
  * Un compte peut appartenir à plusieurs tontines ; cette tontine sélectionnée
@@ -37,6 +50,19 @@ export class TontineContextService {
   tontineCourante    = computed(() =>
     this.tontines().find(t => t.id === this.tontineCouranteId()) ?? null);
 
+  /**
+   * Fonction du compte dans chaque tontine. Mise en cache comme la tontine
+   * courante : les écrans choisissent leur vue (gestion ou membre) dès leur
+   * création, avant que `init()` n'ait reçu la liste — sans cache, un Président
+   * verrait la vue membre au premier affichage après un F5.
+   */
+  private fonctions: Record<string, string | null> =
+    lireFonctions(this.auth.currentUser()?.email ?? null);
+
+  constructor() {
+    this.publierFonction();
+  }
+
   /** Vrai tant que le chargement de la liste des tontines est en cours. */
   chargement = signal(false);
 
@@ -57,15 +83,20 @@ export class TontineContextService {
     if (this.loadedForEmail === email && email !== null) return;
 
     this.loadedForEmail = email;
+    this.fonctions = lireFonctions(email);
+    this.publierFonction();
     this.chargement.set(true);
     this.erreurChargement.set(false);
     this.tontineSvc.getAll().subscribe({
       next: list => {
         this.tontines.set(list);
+        this.fonctions = Object.fromEntries(list.map(t => [t.id, t.maFonction ?? null]));
+        localStorage.setItem(fonctionsKey(email), JSON.stringify(this.fonctions));
         const stored = localStorage.getItem(storageKey(email));
         const valide = stored && list.some(t => t.id === stored) ? stored : (list[0]?.id ?? null);
         this.tontineCouranteId.set(valide);
         if (valide) localStorage.setItem(storageKey(email), valide);
+        this.publierFonction();
         this.chargement.set(false);
       },
       error: () => {
@@ -79,6 +110,7 @@ export class TontineContextService {
   selectionner(id: string): void {
     this.tontineCouranteId.set(id);
     localStorage.setItem(storageKey(this.auth.currentUser()?.email ?? null), id);
+    this.publierFonction();
   }
 
   /** À appeler à la déconnexion. */
@@ -86,5 +118,13 @@ export class TontineContextService {
     this.loadedForEmail = null;
     this.tontines.set([]);
     this.tontineCouranteId.set(null);
+    this.fonctions = {};
+    this.publierFonction();
+  }
+
+  /** Transmet à AuthService la fonction du compte dans la tontine courante. */
+  private publierFonction(): void {
+    const id = this.tontineCouranteId();
+    this.auth.fonctionCourante.set(id ? this.fonctions[id] ?? null : null);
   }
 }

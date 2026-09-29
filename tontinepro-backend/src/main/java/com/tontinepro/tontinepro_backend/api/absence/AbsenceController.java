@@ -27,7 +27,7 @@ public class AbsenceController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') or @sec.isCenseur(authentication.name)")
+    @PreAuthorize("@sec.gereOuCenseur(authentication.name, @tontineDe.membre(#request.membreId()))")
     @Operation(summary = "Enregistrer une absence (Censeur / Secrétaire / Président)")
     public AbsenceResponse enregistrer(
             @Valid @RequestBody EnregistrerAbsenceRequest request,
@@ -38,7 +38,7 @@ public class AbsenceController {
 
     @PostMapping("/appel-presence")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') or @sec.isCenseur(authentication.name)")
+    @PreAuthorize("@sec.gereOuCenseur(authentication.name, #request.tontineId())")
     @Operation(summary = "Appel de présence groupé — marque automatiquement les absents et génère les sanctions")
     public AppelPresenceResult appelPresence(
             @Valid @RequestBody AppelPresenceRequest request,
@@ -48,7 +48,7 @@ public class AbsenceController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') or @sec.isCenseur(authentication.name)")
+    @PreAuthorize("@sec.gereOuCenseur(authentication.name, #tontineId)")
     @Operation(summary = "Lister les absences d'une tontine")
     public List<AbsenceResponse> lister(@RequestParam UUID tontineId) {
         return absenceService.listerParTontine(tontineId);

@@ -37,7 +37,7 @@ public class DemandeController {
 
     /** Secrétaire/Président — lister les demandes */
     @GetMapping("/api/v1/demandes")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
     @Operation(summary = "Lister les demandes d'adhésion")
     public List<DemandeResponse> lister(
             @RequestParam(required = false) UUID tontineId,
@@ -48,7 +48,7 @@ public class DemandeController {
 
     /** Secrétaire/Président — approuver */
     @PostMapping("/api/v1/demandes/{id}/approuver")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.demande(#id))")
     @Operation(summary = "Approuver une demande (crée le compte + le profil membre)")
     public DemandeResponse approuver(
             @PathVariable UUID id,
@@ -59,7 +59,7 @@ public class DemandeController {
 
     /** Secrétaire/Président — rejeter avec motif */
     @PostMapping("/api/v1/demandes/{id}/rejeter")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.demande(#id))")
     @Operation(summary = "Rejeter une demande avec motif")
     public DemandeResponse rejeter(
             @PathVariable UUID id,

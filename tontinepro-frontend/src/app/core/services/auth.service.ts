@@ -23,14 +23,27 @@ export class AuthService {
   readonly isLoggedIn    = computed(() => !!this._auth()?.accessToken);
   readonly currentUser   = computed(() => this._auth());
   readonly isSuperAdmin  = computed(() => this._auth()?.role === 'SUPER_ADMIN');
+  /**
+   * Fonction du compte dans la tontine courante, publiée par
+   * TontineContextService. Le rôle du jeton est global au compte (fonction la
+   * plus haute toutes tontines confondues) : le Président de la tontine A n'est
+   * que membre dans la tontine B, et le backend lui y refuse la gestion. Les
+   * droits d'interface se lisent donc sur la fonction dans la tontine courante.
+   */
+  readonly fonctionCourante = signal<string | null>(null);
+
+  /** Rôle global de gestionnaire, indépendant de la tontine consultée. */
+  readonly roleGestionnaire = computed(() =>
+    this._auth()?.role === 'ADMIN' || this._auth()?.role === 'SECRETAIRE');
+
   // Le SUPER_ADMIN configure les tontines sans forcément en être membre ni
   // siéger au bureau : il a les mêmes écrans de gestion que le Président.
   readonly isAdmin       = computed(() =>
-    this._auth()?.role === 'ADMIN' || this._auth()?.role === 'SUPER_ADMIN');
-  readonly isSecretaire  = computed(() => this._auth()?.role === 'SECRETAIRE');
+    this.isSuperAdmin() || this.fonctionCourante() === 'PRESIDENT');
+  readonly isSecretaire  = computed(() => this.fonctionCourante() === 'SECRETAIRE');
   readonly isGestionnaire = computed(() =>
-    this._auth()?.role === 'ADMIN' || this._auth()?.role === 'SECRETAIRE'
-    || this._auth()?.role === 'SUPER_ADMIN');
+    this.isSuperAdmin()
+    || this.fonctionCourante() === 'PRESIDENT' || this.fonctionCourante() === 'SECRETAIRE');
   readonly isMembre      = computed(() => this._auth()?.role === 'MEMBRE');
   readonly twoFaEnabled  = computed(() => this._auth()?.twoFaEnabled ?? false);
 

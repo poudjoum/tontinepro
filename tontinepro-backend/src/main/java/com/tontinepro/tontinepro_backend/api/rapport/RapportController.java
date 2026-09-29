@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/rapports")
-@PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+@PreAuthorize("@sec.gere(authentication.name, #tontineId)")
 @RequiredArgsConstructor
 @Tag(name = "Rapports")
 public class RapportController {

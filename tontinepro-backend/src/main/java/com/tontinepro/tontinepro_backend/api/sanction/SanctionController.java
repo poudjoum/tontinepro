@@ -25,14 +25,14 @@ public class SanctionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') or @sec.isCenseur(authentication.name)")
+    @PreAuthorize("@sec.gereOuCenseur(authentication.name, @tontineDe.membre(#request.membreId()))")
     @Operation(summary = "Créer une sanction (Censeur / Secrétaire / Président)")
     public SanctionResponse creer(@Valid @RequestBody CreerSanctionRequest request) {
         return sanctionService.creer(request);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') or @sec.isCenseur(authentication.name)")
+    @PreAuthorize("@sec.gereOuCenseur(authentication.name, #tontineId)")
     @Operation(summary = "Lister les sanctions d'une tontine")
     public List<SanctionResponse> lister(
             @RequestParam UUID tontineId,

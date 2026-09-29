@@ -62,7 +62,7 @@ public class EpargneController {
     // â”€â”€ Endpoints admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @GetMapping("/comptes")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
     @Operation(summary = "Lister tous les comptes Ã©pargne (filtrable par tontine)")
     public List<CompteEpargneResponse> getAllComptes(
             @RequestParam(required = false) UUID tontineId
@@ -71,21 +71,21 @@ public class EpargneController {
     }
 
     @GetMapping("/comptes/{membreId}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.membre(#membreId))")
     @Operation(summary = "Compte Ã©pargne d'un membre")
     public CompteEpargneResponse getCompteByMembre(@PathVariable UUID membreId) {
         return epargneService.getCompteByMembre(membreId);
     }
 
     @GetMapping("/comptes/{membreId}/historique")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.membre(#membreId))")
     @Operation(summary = "Historique Ã©pargne d'un membre")
     public List<MouvementEpargneResponse> getHistoriqueByMembre(@PathVariable UUID membreId) {
         return epargneService.getHistoriqueByMembre(membreId);
     }
 
     @PostMapping("/distribuer-interets")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
     @Operation(summary = "Distribuer les intÃ©rÃªts sur tous les comptes d'une tontine")
     public Map<String, Object> distribuerInterets(@RequestParam UUID tontineId) {
         int nb = epargneService.distribuerInterets(tontineId);

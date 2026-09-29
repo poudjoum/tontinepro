@@ -49,7 +49,7 @@ public class AideController {
 
     @PostMapping("/saisir")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.membre(#request.membreId()))")
     @Operation(summary = "Saisir une aide au nom d'un membre (état PROPOSEE, en attente de son accord)")
     public AideResponse saisirPourMembre(
             @AuthenticationPrincipal UserDetails principal,
@@ -73,7 +73,7 @@ public class AideController {
     }
 
     @GetMapping("/demandes")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gereFiltre(authentication.name, #tontineId, #membreId)")
     @Operation(summary = "Lister les demandes d'aide (filtrables par membre, tontine, statut)")
     public List<AideResponse> list(
             @RequestParam(required = false) UUID membreId,
@@ -84,14 +84,14 @@ public class AideController {
     }
 
     @GetMapping("/demandes/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.aide(#id))")
     @Operation(summary = "DÃ©tails d'une demande d'aide")
     public AideResponse getById(@PathVariable UUID id) {
         return aideService.getById(id);
     }
 
     @PatchMapping("/demandes/{id}/valider")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.aide(#id))")
     @Operation(summary = "Approuver une demande d'aide")
     public AideResponse valider(
             @PathVariable UUID id,
@@ -102,7 +102,7 @@ public class AideController {
     }
 
     @PatchMapping("/demandes/{id}/rejeter")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.aide(#id))")
     @Operation(summary = "Rejeter une demande d'aide")
     public AideResponse rejeter(
             @PathVariable UUID id,
@@ -113,14 +113,14 @@ public class AideController {
     }
 
     @PatchMapping("/demandes/{id}/payer")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.aide(#id))")
     @Operation(summary = "Marquer une aide (libre) comme payée")
     public AideResponse marquerPayee(@PathVariable UUID id) {
         return aideService.marquerPayee(id);
     }
 
     @PostMapping("/demandes/{id}/activer")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.aide(#id))")
     @Operation(summary = "Activer une aide du barème : génère les contributions (+ préfinancement optionnel)")
     public AideResponse activer(
             @PathVariable UUID id,
@@ -131,21 +131,21 @@ public class AideController {
     }
 
     @PostMapping("/demandes/{id}/verser")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.aide(#id))")
     @Operation(summary = "Verser au bénéficiaire une aide du barème approuvée non préfinancée")
     public AideResponse verser(@PathVariable UUID id) {
         return aideService.verserAide(id);
     }
 
     @GetMapping("/demandes/{id}/suivi")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.aide(#id))")
     @Operation(summary = "Suivi d'une aide activée : contributions, avancement de la collecte, solde du fonds")
     public AideSuiviResponse suivi(@PathVariable UUID id) {
         return aideService.getSuivi(id);
     }
 
     @DeleteMapping("/demandes/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    @PreAuthorize("@sec.preside(authentication.name, @tontineDe.aide(#id))")
     @Operation(summary = "Supprimer définitivement une aide et annuler ses effets sur le fonds "
             + "(Président — mesure de correction, hors cycle de vie normal)")
     public SuppressionAideResponse supprimer(@PathVariable UUID id) {
@@ -153,7 +153,7 @@ public class AideController {
     }
 
     @GetMapping("/collecte/{tontineId}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN') "
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId) "
             + "or @sec.peutEncaisser(authentication.name, #tontineId)")
     @Operation(summary = "Tableau de collecte des aides (matrice membres × aides actives)")
     public CollecteAidesResponse collecte(@PathVariable UUID tontineId) {

@@ -5,8 +5,7 @@ import com.tontinepro.tontinepro_backend.domain.document.Document;
 import com.tontinepro.tontinepro_backend.domain.document.DocumentRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
-import com.tontinepro.tontinepro_backend.domain.user.User;
-import com.tontinepro.tontinepro_backend.domain.user.UserRepository;
+import com.tontinepro.tontinepro_backend.infrastructure.security.SecurityExpressionService;
 import com.tontinepro.tontinepro_backend.infrastructure.config.MinioConfig;
 import com.tontinepro.tontinepro_backend.infrastructure.storage.MinioStorageService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final MembreRepository membreRepository;
-    private final UserRepository userRepository;
+    private final SecurityExpressionService sec;
     private final MinioStorageService minioStorage;
 
     @Transactional
@@ -41,13 +40,8 @@ public class DocumentService {
             throw new IllegalArgumentException("Fichier trop volumineux (max 10 Mo)");
         }
 
-        // Vérifier droits : propriétaire ou gestionnaire (ADMIN/SECRETAIRE)
-        User upUser = userRepository.findByEmail(uploader)
-                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
-        boolean isGestionnaire = upUser.getRole() == User.Role.ADMIN
-                || upUser.getRole() == User.Role.SECRETAIRE
-                || upUser.getRole() == User.Role.SUPER_ADMIN;
-        if (!isGestionnaire) {
+        // Vérifier droits : propriétaire ou gestionnaire de la tontine du membre
+        if (!sec.gere(uploader, membre.getTontine().getId())) {
             boolean isOwner = membreRepository.findAllByUserEmail(uploader).stream()
                     .anyMatch(m -> m.getId().equals(membreId));
             if (!isOwner) {
@@ -112,13 +106,8 @@ public class DocumentService {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document introuvable : " + documentId));
 
-        // Vérification d'accès : propriétaire ou gestionnaire (ADMIN/SECRETAIRE)
-        User requester = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
-        boolean isGestionnaire = requester.getRole() == User.Role.ADMIN
-                || requester.getRole() == User.Role.SECRETAIRE
-                || requester.getRole() == User.Role.SUPER_ADMIN;
-        if (!isGestionnaire) {
+        // Vérification d'accès : propriétaire ou gestionnaire de la tontine du membre
+        if (!sec.gere(email, doc.getMembre().getTontine().getId())) {
             boolean isOwner = membreRepository.findAllByUserEmail(email).stream()
                     .anyMatch(m -> m.getId().equals(doc.getMembre().getId()));
             if (!isOwner) {
@@ -146,12 +135,7 @@ public class DocumentService {
         Document doc = documentRepository.findById(documentId)
                 .orElseThrow(() -> new IllegalArgumentException("Document introuvable : " + documentId));
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
-        boolean isGestionnaire = user.getRole() == User.Role.ADMIN
-                || user.getRole() == User.Role.SECRETAIRE
-                || user.getRole() == User.Role.SUPER_ADMIN;
-        if (!isGestionnaire) {
+        if (!sec.gere(email, doc.getMembre().getTontine().getId())) {
             boolean isOwner = membreRepository.findAllByUserEmail(email).stream()
                     .anyMatch(m -> m.getId().equals(doc.getMembre().getId()));
             if (!isOwner) {

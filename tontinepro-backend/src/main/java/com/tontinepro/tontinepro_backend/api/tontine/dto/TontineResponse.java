@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.tontine.dto;
 
+import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 
 import java.math.BigDecimal;
@@ -42,9 +43,15 @@ public record TontineResponse(
         String descriptionAcces,
         boolean actif,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        /** Fonction du compte connecté dans cette tontine ; null hors liste « mes tontines ». */
+        Membre.Fonction maFonction
 ) {
     public static TontineResponse from(Tontine t) {
+        return from(t, null);
+    }
+
+    public static TontineResponse from(Tontine t, Membre.Fonction maFonction) {
         return new TontineResponse(
                 t.getId(), t.getNom(), t.getDescription(),
                 t.getMontantCotisationMin(), t.getMontantCotisationMax(), t.getMontantConsensuel(),
@@ -59,6 +66,7 @@ public record TontineResponse(
                 t.getMontantFondAideAnnuelMembre(),
                 t.getMode(), t.getMontantLot(), t.getMoisClotureAdhesions(),
                 t.getTypeAcces(), t.isVisible(), t.getDescriptionAcces(),
-                t.isActif(), t.getCreatedAt(), t.getUpdatedAt());
+                t.isActif(), t.getCreatedAt(), t.getUpdatedAt(),
+                maFonction);
     }
 }

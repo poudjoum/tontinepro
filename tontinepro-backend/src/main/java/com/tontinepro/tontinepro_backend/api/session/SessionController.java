@@ -32,7 +32,7 @@ public class SessionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, #request.tontineId())")
     @Operation(summary = "Creer une nouvelle session de tontine")
     public SessionResponse creerSession(@Valid @RequestBody CreerSessionRequest request) {
         return sessionService.creerSession(request);
@@ -66,7 +66,7 @@ public class SessionController {
     }
 
     @PatchMapping("/{id}/prochaine-date")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Mettre a jour la prochaine date de tontine (mode DATE_MANUELLE)")
     public SessionResponse mettreAJourProchainDate(
             @PathVariable UUID id,
@@ -76,7 +76,7 @@ public class SessionController {
 
     /** Modifier la date de benefice d'un membre specifique */
     @PatchMapping("/{id}/beneficiaires/{ordreBeneficiaireId}/date")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Modifier la date de passage d'un beneficiaire (avant echeance)")
     public SessionResponse mettreAJourDateBenefice(
             @PathVariable UUID id,
@@ -86,7 +86,7 @@ public class SessionController {
     }
 
     @PatchMapping("/{id}/beneficiaires/reordonner")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Reordonner la liste des beneficiaires d'une session")
     public SessionResponse reordonnerBeneficiaires(
             @PathVariable UUID id,
@@ -95,14 +95,14 @@ public class SessionController {
     }
 
     @GetMapping("/{id}/bilan")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Bilan financier : pot tontine, fonds collecte, deduction beneficiaire")
     public SessionBilanResponse calculerBilan(@PathVariable UUID id) {
         return sessionService.calculerBilan(id);
     }
 
     @PostMapping("/{id}/recalibrer")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Ajouter les nouveaux membres a la session et recalculer dateFin")
     public SessionResponse recalibrerMembres(@PathVariable UUID id) {
         return sessionService.recalibrerMembres(id);
@@ -110,7 +110,7 @@ public class SessionController {
 
     @PostMapping("/{id}/saisir-paiements-seance")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Saisie groupée des paiements d'une séance (cotisation + fonds du mois) par le Secrétaire")
     public SaisieSeanceResult saisirPaiementsSeance(
             @PathVariable UUID id,
@@ -120,7 +120,7 @@ public class SessionController {
     }
 
     @PostMapping("/{id}/cloturer")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Clôturer une session (passe à TERMINEE). forcer=true permet de clôturer même si des membres n'ont pas bénéficié")
     public SessionResponse cloturerSession(
             @PathVariable UUID id,
@@ -136,7 +136,7 @@ public class SessionController {
 
     @PostMapping("/{id}/generer-cotisations")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Générer les cotisations EN_ATTENTE pour tous les membres de la session (idempotent). "
             + "mois/annee optionnels : par défaut le mois de début de session (utilisés par la reprise mois par mois).")
     public List<CotisationResponse> genererCotisations(
@@ -147,7 +147,7 @@ public class SessionController {
     }
 
     @GetMapping("/{id}/cotisations-statut")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Statut des cotisations par membre pour la période de la session "
             + "(mois/annee optionnels : par défaut le mois de début de session)")
     public SessionCotisationsStatutResponse cotisationsStatut(
@@ -158,7 +158,7 @@ public class SessionController {
     }
 
     @PostMapping("/{id}/valider-benefice/{ordreBeneficiaireId}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Valider le benefice d'un membre dans la session")
     public SessionResponse validerBenefice(
             @PathVariable UUID id,
@@ -182,14 +182,14 @@ public class SessionController {
     }
 
     @GetMapping("/{id}/fonds-aide-mensuel")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Fonds d'aide collectés mois par mois depuis le début de la session (matrice membres × mois)")
     public FondsAideMensuelResponse getFondsAideMensuel(@PathVariable UUID id) {
         return sessionService.getFondsAideMensuel(id);
     }
 
     @GetMapping("/{id}/fonds-aide-mensuel/pdf")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Fonds d'aide collectés mois par mois au format PDF (paysage)")
     public ResponseEntity<byte[]> getFondsAideMensuelPdf(@PathVariable UUID id) {
         FondsAideMensuelResponse data = sessionService.getFondsAideMensuel(id);
@@ -216,7 +216,7 @@ public class SessionController {
     }
 
     @PostMapping("/{id}/annuler-benefice/{ordreBeneficiaireId}")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Annuler la validation d'un tour (remet le membre comme non bénéficié pour correction)")
     public SessionResponse annulerBenefice(
             @PathVariable UUID id,
@@ -226,14 +226,14 @@ public class SessionController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Supprimer une session et ses données (ordre des bénéficiaires + cotisations des mois couverts) — table rase pour recommencer")
     public void supprimerSession(@PathVariable UUID id) {
         sessionService.supprimerSession(id);
     }
 
     @GetMapping("/{id}/membres-eligibles-retard")
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Liste les membres actifs non inscrits dans la session avec le détail du rattrapage")
     public List<MembreEligibleRetardResponse> membresEligiblesRetard(@PathVariable UUID id) {
         return sessionService.membresEligiblesRetard(id);
@@ -241,7 +241,7 @@ public class SessionController {
 
     @PostMapping("/{id}/inscrire-en-retard/{membreId}")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','SECRETAIRE','SUPER_ADMIN')")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Inscrit un membre en retard : cotisations rétroactives + complément aux bénéficiaires passés + ajout au calendrier")
     public InscrireEnRetardResult inscrireEnRetard(
             @PathVariable UUID id,
