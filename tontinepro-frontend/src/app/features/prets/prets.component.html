@@ -15,7 +15,7 @@
     }
 
     <!-- ━━━━ VUE MEMBRE ━━━━ -->
-    @if (!auth.isAdmin()) {
+    @if (!auth.gereFinances()) {
 
       <!-- Tabs -->
       <div class="flex bg-gray-100 rounded-xl p-1 gap-1">
@@ -227,7 +227,7 @@
     }
 
     <!-- ━━━━ VUE ADMIN ━━━━ -->
-    @if (auth.isAdmin()) {
+    @if (auth.gereFinances()) {
       <div class="flex items-center justify-between">
         <h1 class="text-xl font-bold text-gray-900">Prêts</h1>
       </div>
@@ -276,7 +276,7 @@
           }
 
           <!-- Actions -->
-          @if (p.statut === 'DEMANDE' && rejetId() !== p.id) {
+          @if (auth.isAdmin() && p.statut === 'DEMANDE' && rejetId() !== p.id) {
             <div class="flex gap-2 border-t pt-3">
               <button (click)="valider(p.id)" [disabled]="submitting()"
                       class="btn-primary text-sm py-2 flex-1">

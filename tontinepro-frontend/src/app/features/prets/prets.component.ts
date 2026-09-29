@@ -39,7 +39,7 @@ export class PretsComponent implements OnInit {
         this.tontineId.set(id);
         untracked(() => {
           this.charger();
-          if (!this.auth.isAdmin()) this.chargerMesDocs();
+          if (!this.auth.gereFinances()) this.chargerMesDocs();
         });
       }
     });
@@ -82,7 +82,7 @@ export class PretsComponent implements OnInit {
 
   charger(): void {
     this.loading.set(true);
-    const obs = this.auth.isAdmin()
+    const obs = this.auth.gereFinances()
       ? this.svc.getAll(this.tontineId(), this.filtre() || undefined)
       : this.svc.getMesPrets(this.tontineId() || undefined);
     obs.subscribe({

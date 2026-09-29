@@ -74,7 +74,7 @@ public class PretController {
     // â”€â”€ Endpoints admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @GetMapping
-    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, #tontineId)")
     @Operation(summary = "Lister tous les prÃªts (filtrables par tontine ou statut)")
     public List<PretResponse> list(
             @RequestParam(required = false) UUID tontineId,
@@ -84,7 +84,7 @@ public class PretController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.pret(#id))")
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, @tontineDe.pret(#id))")
     @Operation(summary = "DÃ©tails d'un prÃªt")
     public PretResponse getById(@PathVariable UUID id) {
         return pretService.getById(id);

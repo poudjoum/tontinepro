@@ -21,7 +21,7 @@ export class EpargneComponent implements OnInit {
   }
 
   private recharger(): void {
-    if (this.auth.isAdmin()) {
+    if (this.auth.gereFinances()) {
       this.loading.set(true);
       this.svc.getAllComptes(this.ctx.tontineCouranteId() ?? undefined).subscribe({
         next:  data => { this.comptes.set(data); this.loading.set(false); },

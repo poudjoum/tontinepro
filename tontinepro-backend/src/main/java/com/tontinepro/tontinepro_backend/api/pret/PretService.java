@@ -368,11 +368,11 @@ public class PretService {
     }
 
     /** Vérifie qu'un membre ne peut consulter que ses propres prêts (les admins passent null). */
-    /** L'emprunteur, ou un gestionnaire de la tontine du prêt. */
+    /** L'emprunteur, ou le bureau de la tontine du prêt (gestionnaire ou encaisseur). */
     private void verifierAccesPret(Pret pret, String email) {
         boolean emprunteur = pret.getMembre().getUser() != null
                 && pret.getMembre().getUser().getEmail().equals(email);
-        if (!emprunteur && !sec.gere(email, pret.getMembre().getTontine().getId())) {
+        if (!emprunteur && !sec.bureauEncaisse(email, pret.getMembre().getTontine().getId())) {
             throw new IllegalArgumentException("Accès non autorisé à ce prêt");
         }
     }

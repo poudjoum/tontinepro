@@ -66,7 +66,7 @@ public class EpargneController {
     // â”€â”€ Endpoints admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @GetMapping("/comptes")
-    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, #tontineId)")
     @Operation(summary = "Lister tous les comptes Ã©pargne (filtrable par tontine)")
     public List<CompteEpargneResponse> getAllComptes(
             @RequestParam(required = false) UUID tontineId
@@ -75,14 +75,14 @@ public class EpargneController {
     }
 
     @GetMapping("/comptes/{membreId}")
-    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.membre(#membreId))")
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, @tontineDe.membre(#membreId))")
     @Operation(summary = "Compte Ã©pargne d'un membre")
     public CompteEpargneResponse getCompteByMembre(@PathVariable UUID membreId) {
         return epargneService.getCompteByMembre(membreId);
     }
 
     @GetMapping("/comptes/{membreId}/historique")
-    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.membre(#membreId))")
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, @tontineDe.membre(#membreId))")
     @Operation(summary = "Historique Ã©pargne d'un membre")
     public List<MouvementEpargneResponse> getHistoriqueByMembre(@PathVariable UUID membreId) {
         return epargneService.getHistoriqueByMembre(membreId);

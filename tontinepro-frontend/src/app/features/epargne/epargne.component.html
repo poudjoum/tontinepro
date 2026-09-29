@@ -12,7 +12,7 @@
   <div class="space-y-4">
 
     <!-- ━━━━ VUE MEMBRE ━━━━ -->
-    @if (!auth.isAdmin()) {
+    @if (!auth.gereFinances()) {
       <h1 class="text-xl font-bold text-gray-900">Mon Épargne</h1>
 
       <!-- Carte solde -->
@@ -74,22 +74,24 @@
     }
 
     <!-- ━━━━ VUE ADMIN ━━━━ -->
-    @if (auth.isAdmin()) {
+    @if (auth.gereFinances()) {
       <!-- En-tête + stats -->
       <div class="flex items-start justify-between">
         <div>
           <h1 class="text-xl font-bold text-gray-900">Épargne</h1>
           <p class="text-sm text-gray-500 mt-0.5">Total : {{ fcfa(totalEpargne()) }}</p>
         </div>
+        @if (auth.isAdmin()) {
         <button (click)="confirmInterets.set(true)"
                 class="text-xs font-semibold text-primary-600 border border-primary-200
                        px-3 py-2 rounded-xl active:bg-primary-50 min-h-[44px]">
           ✦ Distribuer intérêts
         </button>
+        }
       </div>
 
       <!-- Confirmation distribution intérêts -->
-      @if (confirmInterets()) {
+      @if (auth.isAdmin() && confirmInterets()) {
         <div class="card border border-amber-200 bg-amber-50 space-y-3">
           <p class="text-sm font-semibold text-amber-800">
             Distribuer les intérêts sur tous les comptes ?
