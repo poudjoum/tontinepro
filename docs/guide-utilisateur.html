@@ -99,6 +99,11 @@
   .tip-title { font-size: 12px; font-weight: 700; color: #4f46e5; margin-bottom: 4px; }
   .tip p { color: #3730a3; font-size: 12px; margin: 0; }
   .warning { background: #fff7ed; border-left: 4px solid #f97316; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 12px 0; }
+    .roles { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+    .roles th, .roles td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }
+    .roles th { background: #f8fafc; font-weight: 700; }
+    .roles td.ok { color: #16a34a; font-weight: 700; text-align: center; }
+    .roles td.no { color: #94a3b8; text-align: center; }
   .warning-title { font-size: 12px; font-weight: 700; color: #ea580c; margin-bottom: 4px; }
   .warning p { color: #9a3412; font-size: 12px; margin: 0; }
 
@@ -120,7 +125,7 @@
     <div class="cover-logo">T</div>
     <h1>TontinePro</h1>
     <p class="subtitle">Guide Utilisateur Complet</p>
-    <span class="version">Version 1.4 — Septembre 2026</span>
+    <span class="version">Version 1.5 — Septembre 2026</span>
   </div>
 
   <!-- Table des matières -->
@@ -136,7 +141,7 @@
       <li><a href="#aides">Aides — Fond de solidarité</a></li>
       <li><a href="#suivi">Suivi mensuel</a></li>
       <li><a href="#profil">Mon profil et sécurité</a></li>
-      <li><a href="#admin">Administration (Secrétaire / Président)</a></li>
+      <li><a href="#admin">Administration (Secrétaire / Président / Super admin)</a></li>
       <li><a href="#historique">Rattrapage historique — Import Excel</a></li>
       <li><a href="#multi-tontine">Plusieurs tontines — choisir sa tontine courante</a></li>
       <li><a href="#outils-bureau">Outils du bureau — reprise, fond de caisse antérieur, tontine à lot, import des membres</a></li>
@@ -158,6 +163,8 @@
 
         <h3>Activer son compte (membres pré-inscrits)</h3>
         <p>Si ton secrétaire t'a inscrit directement avec ton numéro de téléphone, utilise la page <strong>"Activer mon compte"</strong> pour définir ton propre email et mot de passe.</p>
+        <p>L'activation ne fonctionne qu'<strong>une seule fois</strong>, sur un compte encore jamais utilisé. Une fois ton compte activé, personne ne peut plus le réclamer avec ton numéro : si tu as oublié ton mot de passe, passe par <strong>"Mot de passe oublié"</strong>.</p>
+        <p>Si le secrétaire t'a plutôt communiqué un mot de passe, il est <strong>provisoire</strong> : l'application te demandera d'en choisir un nouveau à ta première connexion.</p>
         <div class="steps">
           <div class="step">
             <div class="step-num">1</div>
@@ -208,6 +215,7 @@
     <div class="tip">
       <div class="tip-title">💡 Rejoindre via un lien d'invitation</div>
       <p>Si tu reçois un lien d'invitation par SMS ou WhatsApp, ouvre-le et crée ton compte directement. Ton profil membre est automatiquement associé à la tontine.</p>
+      <p>Tu as <strong>déjà un compte TontinePro</strong> (dans une autre tontine) ? Saisis son email et son <strong>mot de passe actuel</strong> : la nouvelle tontine s'ajoute à ton compte.</p>
     </div>
   </div>
 
@@ -300,7 +308,7 @@
     <p>Le secrétaire génère un lien unique valable 72h. Lorsque tu cliques dessus :</p>
     <div class="steps">
       <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">La page d'accueil de la tontine s'affiche</div><div class="step-desc">Nom, description, conditions</div></div></div>
-      <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Remplis ton nom, prénom, téléphone, email et mot de passe</div><div class="step-desc">Si tu es déjà inscrit avec ce téléphone, tes credentials sont mis à jour</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Remplis ton nom, prénom, téléphone, email et mot de passe</div><div class="step-desc">Déjà un compte ? Indique son email et son mot de passe actuel. Un compte pré-inscrit par le secrétaire et jamais activé est activé avec l'email et le mot de passe que tu choisis</div></div></div>
       <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Tu es automatiquement connecté</div><div class="step-desc">Matricule généré, compte épargne ouvert</div></div></div>
     </div>
     <div class="warning">
@@ -367,8 +375,12 @@
       <div class="tip-title">💡 Capital prêtable</div>
       <p>Ton épargne constitue le capital disponible pour les prêts entre membres. En fin de session, le capital est reversé dans la caisse + les intérêts sont distribués à tous.</p>
     </div>
+    <h3>Dépôts et retraits</h3>
+    <p>Les dépôts et retraits sont <strong>enregistrés par le bureau</strong> (Président, Secrétaire ou Trésorier) au moment où l'argent est remis ou rendu. Tu ne les saisis pas toi-même : remets tes fonds au Trésorier, il les enregistre sur ton compte et tu reçois une notification.</p>
     <h3>Historique des mouvements</h3>
-    <p>Chaque dépôt, retrait et intérêt est tracé dans l'historique de ton compte épargne.</p>
+    <p>Chaque dépôt, retrait et intérêt est tracé dans l'historique de ton compte épargne, avec le solde après chaque opération.</p>
+    <h3>Côté bureau</h3>
+    <p>Le Président, le Secrétaire et le Trésorier voient dans <strong>Épargne</strong> la liste des comptes de la tontine et le total épargné. En touchant un compte, on déplie son historique et un formulaire <strong>Dépôt / Retrait</strong> (montant, référence). La <strong>distribution des intérêts</strong> est réservée au Président et au Secrétaire.</p>
   </div>
 
   <!-- 6. Prêts -->
@@ -384,7 +396,7 @@
           <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Uploader les documents requis</div><div class="step-desc">Plan de localisation + reconnaissance de dette</div></div></div>
           <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Soumettre la demande</div><div class="step-desc">Montant, durée — le taux est fixé par la tontine</div></div></div>
           <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Attendre la validation</div><div class="step-desc">Le Président ou Secrétaire approuve ou rejette</div></div></div>
-          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Suivre l'échéancier</div><div class="step-desc">Rembourser chaque mensualité dans l'app</div></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Rembourser auprès du bureau</div><div class="step-desc">Remets chaque mensualité au Trésorier : il l'enregistre, et l'échéance passe « payée » dans ton échéancier</div></div></div>
         </div>
       </div>
       <div>
@@ -412,6 +424,19 @@
         </div>
         <div class="phone-label">Échéancier de prêt</div>
       </div>
+    </div>
+
+    <h3>Côté bureau</h3>
+    <p>Dans <strong>Prêts</strong>, le bureau voit tous les prêts de la tontine, filtrables par statut. Chacun n'y fait que ce que sa fonction permet :</p>
+    <table class="roles">
+      <tr><th>Action</th><th>Président / Secrétaire</th><th>Trésorier</th><th>Membre</th></tr>
+      <tr><td>Voir les prêts et échéanciers de la tontine</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">les siens</td></tr>
+      <tr><td>Valider (décaisser) ou rejeter une demande</td><td class="ok">✓</td><td class="no">—</td><td class="no">—</td></tr>
+      <tr><td>« ✓ Encaisser la prochaine échéance »</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">—</td></tr>
+    </table>
+    <div class="warning">
+      <div class="warning-title">⚠️ Un remboursement se constate à l'encaissement</div>
+      <p>Un membre ne peut plus marquer lui-même une échéance comme payée : seul le bureau l'enregistre, quand il a reçu l'argent.</p>
     </div>
   </div>
 
@@ -551,10 +576,12 @@
           <li>Matricule et fonction dans la tontine</li>
           <li>Statut du compte</li>
         </ul>
+        <p>Un changement de <strong>nom ou de prénom</strong> s'applique à toutes les tontines de ton compte.</p>
         <h3>Sécurité — Double authentification (2FA)</h3>
         <p>Active la <strong>2FA</strong> pour protéger ton compte avec Google Authenticator ou Authy.</p>
         <h3>Espace membre (gestionnaires)</h3>
         <p>Les Présidents et Secrétaires accèdent à leurs pages membre (suivi, cotisations, épargne, prêts, aides, sanctions) directement depuis leur profil.</p>
+        <p>Dans <strong>Prêts</strong> et <strong>Épargne</strong>, le Président, le Secrétaire et le Trésorier voient la vue du bureau : leurs propres prêts et leur épargne figurent dans les listes de la tontine.</p>
       </div>
       <div>
         <div class="phone-frame">
@@ -594,6 +621,7 @@
     <div class="two-col">
       <div class="text">
         <p>L'espace Administration est accessible via l'onglet <strong>⚙️ Admin</strong> dans la navigation.</p>
+        <p>Les droits d'administration valent <strong>tontine par tontine</strong> : l'onglet Admin n'apparaît que dans les tontines où tu es <strong>Président ou Secrétaire</strong>. Secrétaire d'une tontine et simple membre d'une autre, tu gères la première et tu vois la seconde en membre.</p>
         <h3>Fonctions disponibles</h3>
         <ul>
           <li>⚙️ <strong>Configuration</strong> — Taux d'intérêt, périodicité, fond d'aide</li>
@@ -610,6 +638,8 @@
           <li>📊 <strong>Rapports</strong> — Export PDF/Excel</li>
           <li>📤 <strong>Rattrapage</strong> — Import historique Excel</li>
         </ul>
+        <h3>Super administrateur</h3>
+        <p>L'opérateur de la plateforme configure n'importe quelle tontine <strong>sans en être membre ni siéger au bureau</strong>. Sur l'écran Super Admin, le bouton <strong>⚙️ Gérer</strong> d'une tontine active ouvre son administration ; le bouton ☰ de l'en-tête ramène à l'écran Super Admin. L'encaissement reste réservé au bureau de la tontine.</p>
         <h3>Gestion des membres RETIRE</h3>
         <p>Un membre retiré <strong>disparaît automatiquement</strong> de toutes les vues (liste, calendrier, absences). Son historique financier est conservé.</p>
       </div>
@@ -815,6 +845,10 @@
 
         <h3>Changer de tontine</h3>
         <p>Un <strong>sélecteur dans l'en-tête</strong> permet de basculer d'une tontine à l'autre à tout moment, sans se déconnecter. L'écran se recharge aussitôt avec les données de la nouvelle tontine.</p>
+
+        <h3>Tes droits suivent la tontine courante</h3>
+        <p>Ta fonction peut différer d'une tontine à l'autre. L'application affiche les écrans de gestion (onglet Admin, vue bureau des prêts et de l'épargne) <strong>seulement dans les tontines où tu fais partie du bureau</strong>.</p>
+        <p>Chaque action (demande de prêt, sanctions, bénéfices…) porte sur la tontine sélectionnée. Si l'application affiche « Vous appartenez à plusieurs tontines : précisez la tontine concernée », sélectionne d'abord la tontine dans l'en-tête.</p>
 
         <h3>Ce qui est cloisonné</h3>
         <ul>
