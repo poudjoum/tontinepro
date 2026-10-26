@@ -248,6 +248,18 @@ export class TontineLotComponent implements OnInit {
 
   partantsPossibles = computed(() => this.lot()?.membresSession ?? []);
   partant = signal<MembreSessionLot | null>(null);
+  /** Dernier tour auquel le membre a cotisé (date d'une séance passée). */
+  departSeance = '';
+
+  /**
+   * Séances déjà tenues, d'après le calendrier de la session : une date = une séance,
+   * même si plusieurs bénéficiaires y ont reçu leur tour.
+   */
+  seancesPassees = computed(() => {
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const dates = [...new Set((this.lot()?.lots ?? []).map(t => t.dateTour).filter((d): d is string => !!d && d <= aujourdhui))];
+    return dates.sort().map((date, i) => ({ numero: i + 1, date }));
+  });
   tousToursVerses = computed(() => {
     const l = this.lot();
     return !!l && l.figee && l.lots.every(t => t.beneficie);
@@ -258,6 +270,15 @@ export class TontineLotComponent implements OnInit {
     const m = this.partantsPossibles().find(x => x.membreId === this.departMembreId) ?? null;
     this.partant.set(m);
     this.departRecu = m ? m.dejaRecu : null;
+    this.recalculerCotise();
+  }
+
+  /** Séance choisie : date du départ et nombre de tours cotisés repris du calendrier. */
+  choisirSeance(): void {
+    const s = this.seancesPassees().find(x => x.date === this.departSeance);
+    if (!s) return;
+    this.departDate = s.date;
+    this.departMois = s.numero;
     this.recalculerCotise();
   }
 
@@ -297,7 +318,7 @@ export class TontineLotComponent implements OnInit {
   fermerDepart(): void {
     this.formDepart.set(false);
     this.departMembreId = ''; this.departMotif = '';
-    this.departMois = null; this.departCotise = null; this.departRecu = null;
+    this.departMois = null; this.departCotise = null; this.departRecu = null; this.departSeance = '';
     this.partant.set(null);
   }
 

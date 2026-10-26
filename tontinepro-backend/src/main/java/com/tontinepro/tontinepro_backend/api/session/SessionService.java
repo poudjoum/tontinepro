@@ -289,7 +289,8 @@ public class SessionService {
 
         // Mode « à lot » : chaque co-bénéficiaire du tour reçoit sa part (mise × nb de tours)
         // moins sa propre retenue du fond de caisse. Valider le tour = verser les parts restantes.
-        if (tontine.getMode() == Tontine.ModeTontine.A_LOT) {
+        // Session pas figée : pas de parts, les tours se tiennent à l'ancienne (calcul ci-dessous).
+        if (tontine.getMode() == Tontine.ModeTontine.A_LOT && ob.getSession().isFigee()) {
             lotService.verserTour(sessionId, ordreBeneficiaireId);
             envoyerRapportTour(sessionId, ordreBeneficiaireId);
             return getById(sessionId);
@@ -374,7 +375,7 @@ public class SessionService {
             throw new IllegalStateException("Ce membre n'a pas encore été validé — rien à annuler");
         }
 
-        if (ob.getSession().getTontine().getMode() == Tontine.ModeTontine.A_LOT) {
+        if (ob.getSession().getTontine().getMode() == Tontine.ModeTontine.A_LOT && ob.getSession().isFigee()) {
             lotService.annulerTour(sessionId, ordreBeneficiaireId);
         } else {
             ob.setBeneficie(false);
