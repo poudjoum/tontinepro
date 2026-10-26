@@ -88,6 +88,26 @@ public class SessionController {
         return sessionService.mettreAJourDateBenefice(id, ordreBeneficiaireId, request);
     }
 
+    @PatchMapping("/{id}/beneficiaires/{ordreBeneficiaireId}/montant-recu")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
+    @Operation(summary = "Corriger le montant reellement remis pour un tour deja paye (sans renvoyer le rapport)")
+    public SessionResponse corrigerMontantRecu(
+            @PathVariable UUID id,
+            @PathVariable UUID ordreBeneficiaireId,
+            @Valid @RequestBody CorrigerMontantRecuRequest request) {
+        return sessionService.corrigerMontantRecu(id, ordreBeneficiaireId, request.montantRecu());
+    }
+
+    @PatchMapping("/{id}/beneficiaires/{ordreBeneficiaireId}/avance")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
+    @Operation(summary = "Enregistrer ou supprimer une avance sur un tour pas encore paye")
+    public SessionResponse enregistrerAvance(
+            @PathVariable UUID id,
+            @PathVariable UUID ordreBeneficiaireId,
+            @Valid @RequestBody AvanceTourRequest request) {
+        return sessionService.enregistrerAvance(id, ordreBeneficiaireId, request.montant(), request.dateAvance());
+    }
+
     @PatchMapping("/{id}/beneficiaires/reordonner")
     @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Reordonner la liste des beneficiaires d'une session")

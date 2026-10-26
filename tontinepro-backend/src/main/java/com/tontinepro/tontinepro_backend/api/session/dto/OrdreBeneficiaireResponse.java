@@ -17,7 +17,9 @@ public record OrdreBeneficiaireResponse(
         int ordre,
         LocalDate dateBenefice,
         BigDecimal montantRecu,
-        boolean beneficie
+        boolean beneficie,
+        BigDecimal montantAvance,
+        LocalDate dateAvance
 ) {
     public static OrdreBeneficiaireResponse from(OrdreBeneficiaire ob) {
         return new OrdreBeneficiaireResponse(
@@ -30,7 +32,9 @@ public record OrdreBeneficiaireResponse(
                 ob.getOrdre(),
                 ob.getDateBenefice(),
                 ob.getMontantRecu(),
-                ob.isBeneficie()
+                ob.isBeneficie(),
+                ob.getMontantAvance(),
+                ob.getDateAvance()
         );
     }
 }

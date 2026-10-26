@@ -45,6 +45,13 @@ public class OrdreBeneficiaire {
     @Builder.Default
     private boolean beneficie = false;
 
+    /** Avance versée sur ce tour avant son échéance ; comprise dans {@code montantRecu} une fois payé. */
+    @Column(name = "montant_avance", precision = 15, scale = 2)
+    private BigDecimal montantAvance;
+
+    @Column(name = "date_avance")
+    private LocalDate dateAvance;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

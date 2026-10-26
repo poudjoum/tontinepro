@@ -137,9 +137,67 @@ export class SessionsComponent implements OnInit {
     });
   }
 
-  validerBenefice(session: SessionResponse, ob: OrdreBeneficiaireResponse): void {
+  // ── Montants saisis par le bureau ─────────────────────────────────────────
+  /** Montant remis saisi à la validation d'un tour (vide = calcul automatique). */
+  montantValidation: { [obId: string]: number | null } = {};
+  /** Tour dont on corrige le montant reçu / saisit une avance. */
+  correctionId = signal<string | null>(null);
+  avanceId = signal<string | null>(null);
+  montantCorrige: number | null = null;
+  avanceMontant: number | null = null;
+  avanceDate = new Date().toISOString().slice(0, 10);
+
+  ouvrirCorrection(ob: OrdreBeneficiaireResponse): void {
+    this.avanceId.set(null);
+    this.montantCorrige = ob.montantRecu;
+    this.correctionId.set(ob.id);
+  }
+
+  corrigerMontant(session: SessionResponse, ob: OrdreBeneficiaireResponse): void {
+    const montant = Number(this.montantCorrige);
+    if (this.montantCorrige == null || isNaN(montant) || montant < 0) {
+      this.error.set('Saisissez le montant réellement remis.'); return;
+    }
+    this.appliquer(this.sessionSvc.corrigerMontantRecu(session.id, ob.id, montant),
+      `Tour de ${ob.membrePrenom} ${ob.membreNom} : ${montant.toLocaleString('fr-FR')} FCFA enregistrés.`,
+      () => this.correctionId.set(null));
+  }
+
+  ouvrirAvance(ob: OrdreBeneficiaireResponse): void {
+    this.correctionId.set(null);
+    this.avanceMontant = ob.montantAvance;
+    this.avanceDate = ob.dateAvance ?? new Date().toISOString().slice(0, 10);
+    this.avanceId.set(ob.id);
+  }
+
+  enregistrerAvance(session: SessionResponse, ob: OrdreBeneficiaireResponse, montant = Number(this.avanceMontant ?? 0)): void {
+    if (isNaN(montant) || montant < 0) { this.error.set('Saisissez le montant de l\'avance.'); return; }
+    this.appliquer(this.sessionSvc.enregistrerAvance(session.id, ob.id, montant, montant > 0 ? this.avanceDate : null),
+      montant > 0 ? `Avance de ${montant.toLocaleString('fr-FR')} FCFA enregistrée pour ${ob.membrePrenom} ${ob.membreNom}.`
+                  : `Avance de ${ob.membrePrenom} ${ob.membreNom} supprimée.`,
+      () => this.avanceId.set(null));
+  }
+
+  private appliquer(appel: ReturnType<SessionService['corrigerMontantRecu']>, message: string, apres: () => void): void {
     this.saving.set(true);
-    this.sessionSvc.validerBenefice(session.id, ob.id, {}).subscribe({
+    this.error.set('');
+    appel.subscribe({
+      next: updated => {
+        this.sessions.update(list => list.map(s => s.id === updated.id ? updated : s));
+        this.sessionOuverte.set(updated);
+        this.success.set(message);
+        this.saving.set(false);
+        apres();
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Opération impossible.'); this.saving.set(false); },
+    });
+  }
+
+  validerBenefice(session: SessionResponse, ob: OrdreBeneficiaireResponse): void {
+    const saisi = this.montantValidation[ob.id];
+    this.saving.set(true);
+    this.sessionSvc.validerBenefice(session.id, ob.id,
+      saisi != null && String(saisi) !== '' ? { montantRecu: Number(saisi) } : {}).subscribe({
       next: updated => {
         this.sessions.update(list => list.map(s => s.id === updated.id ? updated : s));
         this.sessionOuverte.set(updated);

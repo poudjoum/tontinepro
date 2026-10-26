@@ -184,7 +184,9 @@ public class SessionService {
                     ob.getOrdre(),
                     dateEffective,
                     ob.getMontantRecu(),
-                    ob.isBeneficie()
+                    ob.isBeneficie(),
+                    ob.getMontantAvance(),
+                    ob.getDateAvance()
             ));
         }
 
@@ -335,6 +337,14 @@ public class SessionService {
 
         BigDecimal montantRecu = totalCotisations.add(totalRepas).subtract(retenueFondAide);
         if (montantRecu.compareTo(BigDecimal.ZERO) < 0) montantRecu = BigDecimal.ZERO;
+        // Montant saisi par le bureau (ce qui a réellement été remis) : prime sur le calcul
+        if (request != null && request.montantRecu() != null) {
+            montantRecu = request.montantRecu();
+        }
+        if (ob.getMontantAvance() != null && montantRecu.compareTo(ob.getMontantAvance()) < 0) {
+            throw new IllegalArgumentException("Le montant du tour (" + montantRecu.toPlainString()
+                    + ") est inférieur à l'avance déjà versée (" + ob.getMontantAvance().toPlainString() + ")");
+        }
 
         ob.setBeneficie(true);
         ob.setMontantRecu(montantRecu);
@@ -441,6 +451,69 @@ public class SessionService {
      * Modifie la date de bénéfice d'un membre dans la session.
      * Interdit si le membre a déjà bénéficié.
      */
+    /**
+     * Corrige le montant réellement remis pour un tour déjà payé, sans renvoyer le rapport.
+     * Réservé aux tours tenus à l'ancienne : d'une session à lot figée, on corrige les parts.
+     */
+    @Transactional
+    public SessionResponse corrigerMontantRecu(UUID sessionId, UUID ordreBeneficiaireId, BigDecimal montant) {
+        OrdreBeneficiaire ob = tourDeLaSession(sessionId, ordreBeneficiaireId);
+        if (!ob.isBeneficie()) {
+            throw new IllegalStateException("Ce tour n'est pas encore payé : saisissez le montant à sa validation");
+        }
+        exigerToursALAncienne(ob);
+        if (montant == null || montant.signum() < 0) {
+            throw new IllegalArgumentException("Le montant remis doit être positif ou nul");
+        }
+        if (ob.getMontantAvance() != null && montant.compareTo(ob.getMontantAvance()) < 0) {
+            throw new IllegalArgumentException("Le montant du tour ne peut pas être inférieur à l'avance déjà versée ("
+                    + ob.getMontantAvance().toPlainString() + ")");
+        }
+        ob.setMontantRecu(montant);
+        ordreBeneficiaireRepository.save(ob);
+        return getById(sessionId);
+    }
+
+    /** Enregistre (ou supprime, montant nul) une avance versée sur un tour pas encore payé. */
+    @Transactional
+    public SessionResponse enregistrerAvance(UUID sessionId, UUID ordreBeneficiaireId,
+                                             BigDecimal montant, LocalDate dateAvance) {
+        OrdreBeneficiaire ob = tourDeLaSession(sessionId, ordreBeneficiaireId);
+        if (ob.isBeneficie()) {
+            throw new IllegalStateException("Ce tour est déjà payé : corrigez plutôt son montant reçu");
+        }
+        exigerToursALAncienne(ob);
+        if (montant == null || montant.signum() == 0) {
+            ob.setMontantAvance(null);
+            ob.setDateAvance(null);
+        } else {
+            if (montant.signum() < 0) throw new IllegalArgumentException("L'avance doit être positive");
+            LocalDate date = dateAvance != null ? dateAvance : LocalDate.now();
+            if (date.isAfter(LocalDate.now())) {
+                throw new IllegalArgumentException("La date de l'avance ne peut pas être dans le futur");
+            }
+            ob.setMontantAvance(montant);
+            ob.setDateAvance(date);
+        }
+        ordreBeneficiaireRepository.save(ob);
+        return getById(sessionId);
+    }
+
+    private OrdreBeneficiaire tourDeLaSession(UUID sessionId, UUID ordreBeneficiaireId) {
+        OrdreBeneficiaire ob = ordreBeneficiaireRepository.findById(ordreBeneficiaireId)
+                .orElseThrow(() -> new IllegalArgumentException("Tour introuvable : " + ordreBeneficiaireId));
+        if (!ob.getSession().getId().equals(sessionId)) {
+            throw new IllegalArgumentException("Ce tour n'appartient pas à la session " + sessionId);
+        }
+        return ob;
+    }
+
+    private static void exigerToursALAncienne(OrdreBeneficiaire ob) {
+        if (ob.getSession().getTontine().getMode() == Tontine.ModeTontine.A_LOT && ob.getSession().isFigee()) {
+            throw new IllegalStateException("Session à lot figée : les montants se gèrent part par part");
+        }
+    }
+
     @Transactional
     public SessionResponse mettreAJourDateBenefice(UUID sessionId, UUID ordreBeneficiaireId,
                                                     MettreAJourDateBeneficeRequest request) {

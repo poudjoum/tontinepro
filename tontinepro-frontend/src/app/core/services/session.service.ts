@@ -131,6 +131,18 @@ export class SessionService {
     return this.http.get<MonTourResponse>(`${this.api}/mon-tour`, { params });
   }
 
+  /** Corrige le montant réellement remis pour un tour déjà payé (le rapport n'est pas renvoyé). */
+  corrigerMontantRecu(sessionId: string, ordreBeneficiaireId: string, montantRecu: number) {
+    return this.http.patch<SessionResponse>(
+      `${this.api}/${sessionId}/beneficiaires/${ordreBeneficiaireId}/montant-recu`, { montantRecu });
+  }
+
+  /** Avance sur un tour pas encore payé ; montant 0 = supprimer l'avance. */
+  enregistrerAvance(sessionId: string, ordreBeneficiaireId: string, montant: number, dateAvance: string | null) {
+    return this.http.patch<SessionResponse>(
+      `${this.api}/${sessionId}/beneficiaires/${ordreBeneficiaireId}/avance`, { montant, dateAvance });
+  }
+
   mettreAJourDateBenefice(sessionId: string, ordreBeneficiaireId: string, dateBenefice: string) {
     return this.http.patch<SessionResponse>(
       `${this.api}/${sessionId}/beneficiaires/${ordreBeneficiaireId}/date`,

@@ -357,6 +357,14 @@ export class TontineLotComponent implements OnInit {
     });
   }
 
+  // ── Cagnotte d'une session pas figée, après des départs ───────────────────
+  cagnotteInitiale = computed(() => (this.lot()?.adhesions ?? []).reduce((s, a) => s + (a.montantMensuel ?? 0), 0));
+  cagnotteRestante = computed(() => (this.lot()?.adhesions ?? [])
+    .filter(a => !a.abandonnee).reduce((s, a) => s + (a.montantMensuel ?? 0), 0));
+  totalToursPayes = computed(() => (this.lot()?.lots ?? [])
+    .filter(t => t.beneficie).reduce((s, t) => s + (t.montantRecu ?? 0), 0));
+  toursAVenir = computed(() => (this.lot()?.lots ?? []).filter(t => !t.beneficie));
+
   // ── Versements (session figée) ────────────────────────────────────────────
   toursClos = computed(() => (this.lot()?.lots ?? []).filter(t => t.beneficie).length);
 

@@ -602,7 +602,16 @@
                 <div class="flex-shrink-0 text-right space-y-1">
                   @if (ob.beneficie) {
                     <span class="badge-green text-[10px]">✓ Bénéficié</span>
-                    <p class="text-xs text-gray-500">{{ ob.montantRecu | number:'1.0-0' }} FCFA</p>
+                    <p class="text-xs text-gray-500 tabular-nums">{{ ob.montantRecu | number:'1.0-0' }} FCFA</p>
+                    @if (ob.montantAvance) {
+                      <p class="text-[10px] text-gray-400 tabular-nums">dont avance {{ ob.montantAvance | number:'1.0-0' }}</p>
+                    }
+                    @if (session.statut === 'EN_COURS' && correctionId() !== ob.id) {
+                      <button type="button" (click)="ouvrirCorrection(ob)"
+                              class="block ml-auto text-[10px] text-gray-500 hover:text-primary-700 underline">
+                        ✎ Corriger le montant
+                      </button>
+                    }
                     <button (click)="voirRapport(session.id, ob.id)"
                             class="mt-1 text-[10px] text-primary-600 hover:text-primary-800 underline">
                       📄 Voir rapport
@@ -649,6 +658,61 @@
                 </div>
               </div>
 
+              <!-- Correction du montant remis (tour payé) -->
+              @if (ob.beneficie && correctionId() === ob.id) {
+                <div class="pt-2 border-t border-gray-200 space-y-1">
+                  <label class="block text-[10px] text-gray-500">
+                    Montant réellement remis{{ ob.montantAvance ? ' (avance comprise)' : '' }}
+                    <input type="number" min="0" [(ngModel)]="montantCorrige"
+                           class="mt-0.5 w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-right tabular-nums" />
+                  </label>
+                  <p class="text-[10px] text-gray-500">Le rapport déjà envoyé aux membres n'est pas renvoyé.</p>
+                  <div class="grid grid-cols-2 gap-2">
+                    <button type="button" (click)="correctionId.set(null)"
+                            class="border border-gray-200 rounded-lg py-2 text-xs text-gray-600">Annuler</button>
+                    <button type="button" (click)="corrigerMontant(session, ob)" [disabled]="saving()"
+                            class="bg-gray-800 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">Enregistrer</button>
+                  </div>
+                </div>
+              }
+
+              <!-- Avance sur un tour à venir -->
+              @if (!ob.beneficie && session.statut === 'EN_COURS') {
+                @if (avanceId() === ob.id) {
+                  <div class="pt-2 border-t border-gray-200 space-y-1">
+                    <div class="grid grid-cols-2 gap-2">
+                      <label class="text-[10px] text-gray-500">
+                        Avance versée
+                        <input type="number" min="0" [(ngModel)]="avanceMontant"
+                               class="mt-0.5 w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-right tabular-nums" />
+                      </label>
+                      <label class="text-[10px] text-gray-500">
+                        Le
+                        <input type="date" [(ngModel)]="avanceDate"
+                               class="mt-0.5 w-full border border-gray-300 rounded-lg px-2 py-2 text-xs" />
+                      </label>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button type="button" (click)="avanceId.set(null)"
+                              class="border border-gray-200 rounded-lg py-2 text-xs text-gray-600">Annuler</button>
+                      <button type="button" (click)="enregistrerAvance(session, ob)" [disabled]="saving()"
+                              class="bg-gray-800 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">Enregistrer</button>
+                    </div>
+                  </div>
+                } @else if (ob.montantAvance) {
+                  <div class="flex items-center justify-between text-[11px] bg-indigo-50 text-indigo-800 rounded px-2 py-1">
+                    <span class="tabular-nums">Avance de {{ ob.montantAvance | number:'1.0-0' }} FCFA le {{ ob.dateAvance | date:'dd/MM/yyyy' }}</span>
+                    <span class="flex gap-2">
+                      <button type="button" (click)="ouvrirAvance(ob)" class="underline">modifier</button>
+                      <button type="button" (click)="enregistrerAvance(session, ob, 0)" [disabled]="saving()" class="underline">supprimer</button>
+                    </span>
+                  </div>
+                } @else {
+                  <button type="button" (click)="ouvrirAvance(ob)"
+                          class="text-[10px] text-gray-500 hover:text-primary-700 underline">＋ Avance sur ce tour</button>
+                }
+              }
+
               <!-- Badge "prochain" -->
               @if (!ob.beneficie && prochainBeneficiaire(session)?.id === ob.id) {
                 <p class="text-[10px] font-medium text-amber-700 bg-amber-100 rounded px-2 py-0.5 inline-block">
@@ -670,9 +734,12 @@
                     </button>
                   }
                   @if (echeanceAtteinte(ob.dateBenefice)) {
-                    <p class="text-[10px] text-gray-500 mb-1">
-                      Montant calculé automatiquement : Σ cotisations + Σ repas − fond annuel
-                    </p>
+                    <label class="block text-[10px] text-gray-500 mb-1">
+                      Montant remis{{ ob.montantAvance ? ', avance de ' + (ob.montantAvance | number:'1.0-0') + ' comprise' : '' }}
+                      — vide : Σ cotisations + Σ repas − fond annuel
+                      <input type="number" min="0" [(ngModel)]="montantValidation[ob.id]" placeholder="calcul automatique"
+                             class="mt-0.5 w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-right tabular-nums" />
+                    </label>
                     <button (click)="validerBenefice(session, ob)" [disabled]="saving()"
                             [class]="'w-full text-xs py-2 rounded-lg font-semibold text-white ' +
                               (datePassee(ob.dateBenefice) ? 'bg-red-600 hover:bg-red-700' : 'bg-primary-600 hover:bg-primary-700')">

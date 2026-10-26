@@ -11,6 +11,9 @@ export interface OrdreBeneficiaireResponse {
   dateBenefice: string | null;
   montantRecu: number | null;
   beneficie: boolean;
+  /** Avance versée avant l'échéance ; comprise dans montantRecu une fois le tour payé. */
+  montantAvance: number | null;
+  dateAvance: string | null;
 }
 
 export interface SessionResponse {
@@ -38,7 +41,8 @@ export interface MiseAJourDateRequest {
   dateProchaineTontine: string;
 }
 
-export interface ValiderBeneficeRequest {}
+/** montantRecu : total remis au bénéficiaire (avance comprise) ; absent = calculé. */
+export interface ValiderBeneficeRequest { montantRecu?: number | null; }
 
 export interface ReordonnerBeneficiairesRequest {
   ordreMembreIds: string[];
