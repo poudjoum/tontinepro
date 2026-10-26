@@ -9,10 +9,11 @@ import { DocumentResponse, TypeDocument } from '../../core/models/document.model
 import { DocumentTontineResponse, TypeDocumentTontine } from '../../core/models/demande.model';
 import { MembreResponse } from '../../core/models/membre.model';
 import { environment } from '../../../environments/environment';
+import { DocumentationTontineProComponent } from '../../shared/components/documentation-tontinepro/documentation-tontinepro.component';
 
 @Component({
   selector: 'app-documents',
-  imports: [FormsModule],
+  imports: [FormsModule, DocumentationTontineProComponent],
   templateUrl: './documents.component.html',
 })
 export class DocumentsComponent implements OnInit {

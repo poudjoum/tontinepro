@@ -1,11 +1,12 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DocumentationTontineProComponent } from '../../shared/components/documentation-tontinepro/documentation-tontinepro.component';
 import { SetupService } from '../../core/services/setup.service';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-landing',
-  imports: [RouterLink],
+  imports: [RouterLink, DocumentationTontineProComponent],
   templateUrl: './landing.component.html',
 })
 export class LandingComponent implements OnInit {
