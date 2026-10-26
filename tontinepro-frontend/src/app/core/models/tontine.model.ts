@@ -126,7 +126,17 @@ export interface SessionLotResponse {
   }>;
   abandons: AbandonLot[];
   tresorerie: SuiviTresorerieLot;
+  /** Membres encore présents dans la session (avec ou sans mise) : candidats à un départ. */
+  membresSession: MembreSessionLot[];
 }
+
+export interface MembreSessionLot {
+  membreId: string; nom: string; prenom: string; montantMensuel: number | null;
+  dejaRecu: number; toursRecus: number; toursAVenir: number;
+}
+
+/** Montants saisis par le bureau au départ d'un membre ; null = calculé. */
+export interface SaisieDepart { moisCotises: number | null; totalCotise: number | null; totalRecu: number | null; }
 
 export type StatutAbandonLot = 'AVOIR_GELE' | 'AVOIR_RESTITUE' | 'DETTE' | 'DETTE_SOLDEE' | 'SOLDE_NUL';
 
@@ -137,6 +147,7 @@ export interface AbandonLot {
   totalCotise: number; totalRecu: number; solde: number;
   statut: StatutAbandonLot; dateRestitution: string | null;
   montantRembourse: number; resteARembourser: number;
+  saisieManuelle: boolean;
 }
 
 /** Trésorerie de la session ; solde négatif = ce que la trésorerie avance. */

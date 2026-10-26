@@ -1557,7 +1557,8 @@ public class SessionService {
         LocalDate dateNouveauMembre = null;
 
         if (!dejaDansSession) {
-            prochainOrdre = tousOrdres.size() + 1;
+            // max + 1 et non taille + 1 : un départ peut avoir laissé un trou dans l'ordre
+            prochainOrdre = tousOrdres.stream().mapToInt(OrdreBeneficiaire::getOrdre).max().orElse(0) + 1;
 
             LocalDate derniereDateExistante = tousOrdres.stream()
                     .map(OrdreBeneficiaire::getDateBenefice)

@@ -19,7 +19,7 @@ import {
   ReordonnerBeneficiairesRequest,
 } from '../models/session.model';
 import { CotisationResponse } from '../models/cotisation.model';
-import { SessionLotResponse, CompositionLotsResponse } from '../models/tontine.model';
+import { SessionLotResponse, CompositionLotsResponse, SaisieDepart } from '../models/tontine.model';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -92,8 +92,10 @@ export class SessionService {
   }
 
   /** Départ d'un membre en cours de session à lot. */
-  declarerAbandonLot(sessionId: string, membreId: string, dateAbandon: string | null, motif: string | null) {
-    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/abandons`, { membreId, dateAbandon, motif });
+  declarerAbandonLot(sessionId: string, membreId: string, dateAbandon: string | null, motif: string | null,
+                     saisie: SaisieDepart) {
+    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/abandons`,
+      { membreId, dateAbandon, motif, ...saisie });
   }
 
   restituerAvoirLot(sessionId: string, abandonId: string) {

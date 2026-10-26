@@ -70,6 +70,15 @@ public class AbandonLot {
     @Builder.Default
     private BigDecimal montantRembourse = BigDecimal.ZERO;
 
+    /** Montants cotisé / reçu saisis par le bureau plutôt que calculés. */
+    @Column(name = "saisie_manuelle", nullable = false)
+    @Builder.Default
+    private boolean saisieManuelle = false;
+
+    /** Tours non payés retirés de l'ordre (session pas figée), « ordre:date;… ». */
+    @Column(name = "tours_retires", length = 500)
+    private String toursRetires;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

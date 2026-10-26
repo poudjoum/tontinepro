@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { TontineService } from '../../../core/services/tontine.service';
 import { SessionService } from '../../../core/services/session.service';
 import { MembreService } from '../../../core/services/membre.service';
-import { TontineResponse, SessionLotResponse, CompositionLotsResponse, PartLotMembre, AbandonLot } from '../../../core/models/tontine.model';
+import { TontineResponse, SessionLotResponse, CompositionLotsResponse, PartLotMembre, AbandonLot, MembreSessionLot } from '../../../core/models/tontine.model';
 import { SessionResponse } from '../../../core/models/session.model';
 import { MembreResponse } from '../../../core/models/membre.model';
 
@@ -239,25 +239,66 @@ export class TontineLotComponent implements OnInit {
   departMembreId = '';
   departDate = new Date().toISOString().slice(0, 10);
   departMotif = '';
+  /** Saisie du bureau : obligatoire tant que la session n'est pas figée, sinon facultative. */
+  departMois: number | null = null;
+  departCotise: number | null = null;
+  departRecu: number | null = null;
   /** Montant saisi pour un remboursement, par abandon. */
   remboursements: Record<string, number | null> = {};
 
-  inscritsActifs = computed(() => (this.lot()?.adhesions ?? []).filter(a => !a.abandonnee));
+  partantsPossibles = computed(() => this.lot()?.membresSession ?? []);
+  partant = signal<MembreSessionLot | null>(null);
   tousToursVerses = computed(() => {
     const l = this.lot();
     return !!l && l.figee && l.lots.every(t => t.beneficie);
   });
 
+  /** Membre choisi : reprend ce qu'il a déjà reçu et propose mise × mois pour le cotisé. */
+  choisirPartant(): void {
+    const m = this.partantsPossibles().find(x => x.membreId === this.departMembreId) ?? null;
+    this.partant.set(m);
+    this.departRecu = m ? m.dejaRecu : null;
+    this.recalculerCotise();
+  }
+
+  recalculerCotise(): void {
+    const mise = this.partant()?.montantMensuel;
+    if (mise && this.departMois != null) this.departCotise = mise * this.departMois;
+  }
+
+  solde(): number | null {
+    if (this.departCotise == null) return null;
+    return this.departCotise - (this.departRecu ?? 0);
+  }
+
   declarerDepart(): void {
     const s = this.session();
-    if (!s || !this.departMembreId) { this.error.set('Choisissez le membre qui part.'); return; }
-    const a = this.inscritsActifs().find(x => x.membreId === this.departMembreId);
-    if (!confirm(`Enregistrer le départ de ${a?.prenom} ${a?.nom} ? Ses parts non versées seront annulées `
-      + `et ses cotisations à venir supprimées. Son solde (cotisé − reçu) sera calculé.`)) return;
+    const l = this.lot();
+    const a = this.partant();
+    if (!s || !l || !a) { this.error.set('Choisissez le membre qui part.'); return; }
+    if (!l.figee && (this.departMois == null || this.departCotise == null)) {
+      this.error.set('Saisissez le nombre de mois et le montant cotisés par le membre.'); return;
+    }
+    const solde = this.solde();
+    const bilan = solde == null ? 'Son solde (cotisé − reçu) sera calculé.'
+      : solde < 0 ? `Il doit ${this.fmt(-solde)} FCFA au groupe.`
+      : `Avoir gelé de ${this.fmt(solde)} FCFA, rendu en fin de session.`;
+    const tours = l.figee ? 'Ses parts non versées seront annulées' : `Ses ${a.toursAVenir} tour(s) non payé(s) seront retirés de l'ordre`;
+    if (!confirm(`Enregistrer le départ de ${a.prenom} ${a.nom} ? ${tours} et ses cotisations à venir supprimées. ${bilan}`)) return;
     this.executer(
-      this.sessionSvc.declarerAbandonLot(s.id, this.departMembreId, this.departDate || null, this.departMotif || null),
-      `Départ de ${a?.prenom} ${a?.nom} enregistré.`,
-      () => { this.formDepart.set(false); this.departMembreId = ''; this.departMotif = ''; });
+      this.sessionSvc.declarerAbandonLot(s.id, a.membreId, this.departDate || null, this.departMotif || null,
+        // Reçu inchangé : laissé au calcul de l'application
+        { moisCotises: this.departMois, totalCotise: this.departCotise,
+          totalRecu: this.departRecu === a.dejaRecu ? null : this.departRecu }),
+      `Départ de ${a.prenom} ${a.nom} enregistré.`,
+      () => this.fermerDepart());
+  }
+
+  fermerDepart(): void {
+    this.formDepart.set(false);
+    this.departMembreId = ''; this.departMotif = '';
+    this.departMois = null; this.departCotise = null; this.departRecu = null;
+    this.partant.set(null);
   }
 
   restituer(a: AbandonLot): void {
@@ -280,7 +321,7 @@ export class TontineLotComponent implements OnInit {
   annulerDepart(a: AbandonLot): void {
     const s = this.session();
     if (!s) return;
-    if (!confirm(`Annuler le départ de ${a.prenom} ${a.nom} ? Ses parts seront rétablies ; `
+    if (!confirm(`Annuler le départ de ${a.prenom} ${a.nom} ? Ses parts ou ses tours seront rétablis ; `
       + `pensez à régénérer ses cotisations à venir.`)) return;
     this.executer(this.sessionSvc.annulerAbandonLot(s.id, a.abandonId), `Départ de ${a.prenom} ${a.nom} annulé.`);
   }

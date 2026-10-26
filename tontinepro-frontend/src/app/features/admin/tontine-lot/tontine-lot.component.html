@@ -345,7 +345,7 @@
             <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Départs ({{ l.abandons.length }})</h2>
             <p class="text-[11px] text-gray-500">Avant son tour : avoir gelé, rendu en fin de session. Après : dette.</p>
           </div>
-          @if (!formDepart() && inscritsActifs().length > 0) {
+          @if (!formDepart() && partantsPossibles().length > 0) {
             <button type="button" (click)="formDepart.set(true)"
                     class="border border-gray-200 text-gray-700 rounded-lg px-3 py-2 text-xs font-semibold">
               Déclarer un départ
@@ -355,13 +355,51 @@
 
         @if (formDepart()) {
           <div class="rounded-lg bg-gray-50 p-3 space-y-2">
-            <select [(ngModel)]="departMembreId" aria-label="Membre qui part"
+            <select [(ngModel)]="departMembreId" (ngModelChange)="choisirPartant()" aria-label="Membre qui part"
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
               <option value="">— Membre qui part —</option>
-              @for (a of inscritsActifs(); track a.membreId) {
-                <option [value]="a.membreId">{{ a.prenom }} {{ a.nom }} ({{ a.montantMensuel | number:'1.0-0' }}/mois)</option>
+              @for (a of partantsPossibles(); track a.membreId) {
+                <option [value]="a.membreId">
+                  {{ a.prenom }} {{ a.nom }}@if (a.montantMensuel) { ({{ a.montantMensuel | number:'1.0-0' }}/mois)}@if (a.toursRecus > 0) { · a déjà reçu}
+                </option>
               }
             </select>
+            @if (partant(); as p) {
+              <p class="text-[11px] text-gray-600">
+                @if (p.toursRecus > 0) {
+                  A déjà reçu <strong class="tabular-nums">{{ p.dejaRecu | number:'1.0-0' }} FCFA</strong> ({{ p.toursRecus }} tour(s)).
+                } @else { N'a encore rien reçu. }
+                @if (p.toursAVenir > 0) { {{ p.toursAVenir }} tour(s) à venir {{ l.figee ? 'annulé(s)' : 'retiré(s) de l\'ordre' }}. }
+              </p>
+            }
+            <div class="grid grid-cols-3 gap-2">
+              <label class="text-[10px] text-gray-500">
+                Mois cotisés{{ l.figee ? '' : ' *' }}
+                <input type="number" min="0" [(ngModel)]="departMois" (ngModelChange)="recalculerCotise()"
+                       [placeholder]="l.figee ? 'calculé' : ''"
+                       class="mt-0.5 w-full border border-gray-200 rounded-lg px-2 py-2 text-xs text-right tabular-nums" />
+              </label>
+              <label class="text-[10px] text-gray-500">
+                Total cotisé{{ l.figee ? '' : ' *' }}
+                <input type="number" min="0" [(ngModel)]="departCotise"
+                       [placeholder]="l.figee ? 'calculé' : ''"
+                       class="mt-0.5 w-full border border-gray-200 rounded-lg px-2 py-2 text-xs text-right tabular-nums" />
+              </label>
+              <label class="text-[10px] text-gray-500">
+                Déjà reçu
+                <input type="number" min="0" [(ngModel)]="departRecu"
+                       class="mt-0.5 w-full border border-gray-200 rounded-lg px-2 py-2 text-xs text-right tabular-nums" />
+              </label>
+            </div>
+            @if (!l.figee) {
+              <p class="text-[10px] text-gray-500">Session pas encore figée : l'application ne connaît pas toutes les
+                cotisations, saisissez ce que le membre a réellement versé dans la session.</p>
+            }
+            @if (solde() !== null) {
+              <p class="text-xs font-semibold tabular-nums" [class.text-red-700]="solde()! < 0" [class.text-amber-700]="solde()! >= 0">
+                {{ solde()! < 0 ? '⚠ Dette : ' + (-solde()! | number:'1.0-0') : '❄ Avoir gelé : ' + (solde()! | number:'1.0-0') }} FCFA
+              </p>
+            }
             <div class="grid grid-cols-[140px_1fr] gap-2">
               <label class="text-[10px] text-gray-500">
                 Date du départ
@@ -375,7 +413,7 @@
               </label>
             </div>
             <div class="grid grid-cols-2 gap-2">
-              <button type="button" (click)="formDepart.set(false)"
+              <button type="button" (click)="fermerDepart()"
                       class="border border-gray-200 rounded-lg py-2 text-xs text-gray-600">Annuler</button>
               <button type="button" (click)="declarerDepart()" [disabled]="saving() || !departMembreId"
                       class="bg-gray-800 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
@@ -393,7 +431,7 @@
               <div class="min-w-0">
                 <p class="text-sm font-medium text-gray-800">{{ a.prenom }} {{ a.nom }}</p>
                 <p class="text-[11px] text-gray-500 tabular-nums">
-                  parti le {{ a.dateAbandon | date:'dd/MM/yyyy' }} · {{ a.moisCotises }} mois cotisé(s)
+                  parti le {{ a.dateAbandon | date:'dd/MM/yyyy' }} · {{ a.moisCotises }} mois cotisé(s)@if (a.saisieManuelle) { · saisi par le bureau}
                   @if (a.motif) { · {{ a.motif }} }
                 </p>
               </div>

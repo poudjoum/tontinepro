@@ -3,6 +3,7 @@ package com.tontinepro.tontinepro_backend.api.session;
 import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
 import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
+import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.session.*;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,8 @@ class AbandonLotServiceTest {
     private final AbandonLotRepository abandonRepo = mock(AbandonLotRepository.class);
     private final CotisationRepository cotisationRepo = mock(CotisationRepository.class);
     private final LotService lotService = mock(LotService.class);
+    private final OrdreBeneficiaireRepository ordreRepo = mock(OrdreBeneficiaireRepository.class);
+    private final MembreRepository membreRepo = mock(MembreRepository.class);
 
     private AbandonLotService service;
     private Tontine tontine;
@@ -40,7 +43,8 @@ class AbandonLotServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AbandonLotService(sessionRepo, participationRepo, partRepo, abandonRepo, cotisationRepo, lotService);
+        service = new AbandonLotService(sessionRepo, participationRepo, partRepo, abandonRepo, cotisationRepo, lotService,
+                ordreRepo, membreRepo);
         tontine = new Tontine();
         tontine.setId(UUID.randomUUID());
         tontine.setMode(Tontine.ModeTontine.A_LOT);
@@ -154,6 +158,87 @@ class AbandonLotServiceTest {
     void refuseUneDateFuture() {
         assertThatThrownBy(() -> service.declarer(session.getId(), membre.getId(), LocalDate.now().plusDays(1), null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // ── Session pas figée : tours tenus à l'ancienne, montants saisis par le bureau ──
+
+    private OrdreBeneficiaire tourClassique(int ordre, LocalDate date, String recu) {
+        session.setFigee(false);
+        when(participationRepo.findBySessionIdAndMembreId(session.getId(), membre.getId())).thenReturn(Optional.empty());
+        when(membreRepo.findById(membre.getId())).thenReturn(Optional.of(membre));
+        OrdreBeneficiaire ob = OrdreBeneficiaire.builder().id(UUID.randomUUID()).session(session).membre(membre)
+                .ordre(ordre).dateBenefice(date).beneficie(recu != null)
+                .montantRecu(recu != null ? new BigDecimal(recu) : null).build();
+        when(ordreRepo.findAllBySessionIdOrderByOrdre(session.getId())).thenReturn(List.of(ob));
+        return ob;
+    }
+
+    @Test
+    void pasFigee_membreSansMise_avoirSaisiEtTourRetire() {
+        LocalDate dateTour = LocalDate.now().plusMonths(5);
+        OrdreBeneficiaire ob = tourClassique(15, dateTour, null);
+
+        AbandonLot a = service.declarer(session.getId(), membre.getId(), LocalDate.now(), null,
+                new AbandonLotService.Saisie(1, new BigDecimal("50000"), null));
+
+        assertThat(a.getMoisCotises()).isEqualTo(1);
+        assertThat(a.getTotalCotise()).isEqualByComparingTo("50000");
+        assertThat(a.getTotalRecu()).isEqualByComparingTo("0");
+        assertThat(a.getStatut()).isEqualTo(AbandonLot.Statut.AVOIR_GELE);
+        assertThat(a.isSaisieManuelle()).isTrue();
+        assertThat(a.getToursRetires()).isEqualTo("15:" + dateTour);
+        verify(ordreRepo).deleteAll(List.of(ob));
+    }
+
+    @Test
+    void pasFigee_tourDejaPaye_detteSurLeRecu() {
+        tourClassique(12, LocalDate.now().minusDays(1), "420000");
+
+        AbandonLot a = service.declarer(session.getId(), membre.getId(), LocalDate.now(), null,
+                new AbandonLotService.Saisie(5, new BigDecimal("150000"), null));
+
+        assertThat(a.getTotalRecu()).isEqualByComparingTo("420000");
+        assertThat(a.getSolde()).isEqualByComparingTo("-270000");
+        assertThat(a.getStatut()).isEqualTo(AbandonLot.Statut.DETTE);
+        assertThat(a.getToursRetires()).isNull();
+        verify(ordreRepo, never()).deleteAll(anyList());
+    }
+
+    @Test
+    void pasFigee_exigeLaSaisieDuCotise() {
+        tourClassique(13, LocalDate.now().plusMonths(3), null);
+
+        assertThatThrownBy(() -> service.declarer(session.getId(), membre.getId(), LocalDate.now(), null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("saisissez");
+    }
+
+    @Test
+    void pasFigee_annulerRemetLeTourDansLOrdre() {
+        session.setFigee(false);
+        AbandonLot a = abandon(new BigDecimal("50000"), AbandonLot.Statut.AVOIR_GELE);
+        a.setToursRetires("13:2027-02-01");
+
+        service.annuler(session.getId(), a.getId());
+
+        verify(ordreRepo).save(argThat(ob -> ob.getOrdre() == 13
+                && LocalDate.of(2027, 2, 1).equals(ob.getDateBenefice()) && ob.getMembre() == membre));
+        verify(abandonRepo).delete(a);
+    }
+
+    @Test
+    void pasFigee_avoirRestituableSeulementQuandTousLesToursSontPayes() {
+        AbandonLot a = abandon(new BigDecimal("50000"), AbandonLot.Statut.AVOIR_GELE);
+        OrdreBeneficiaire autre = OrdreBeneficiaire.builder().id(UUID.randomUUID()).session(session)
+                .membre(new Membre()).ordre(14).build();
+        when(ordreRepo.findAllBySessionIdOrderByOrdre(session.getId())).thenReturn(List.of(autre));
+
+        assertThatThrownBy(() -> service.restituer(session.getId(), a.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        autre.setBeneficie(true);
+        service.restituer(session.getId(), a.getId());
+        assertThat(a.getStatut()).isEqualTo(AbandonLot.Statut.AVOIR_RESTITUE);
     }
 
     private AbandonLot abandon(BigDecimal solde, AbandonLot.Statut statut) {

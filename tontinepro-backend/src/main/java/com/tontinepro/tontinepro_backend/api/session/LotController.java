@@ -75,7 +75,8 @@ public class LotController {
     @Operation(summary = "Déclarer l'abandon d'un membre : avoir gelé (cotisé − reçu) ou dette")
     public SessionLotResponse declarerAbandon(@PathVariable UUID sessionId,
                                               @Valid @RequestBody DeclarerAbandonRequest request) {
-        abandonLotService.declarer(sessionId, request.membreId(), request.dateAbandon(), request.motif());
+        abandonLotService.declarer(sessionId, request.membreId(), request.dateAbandon(), request.motif(),
+                new AbandonLotService.Saisie(request.moisCotises(), request.totalCotise(), request.totalRecu()));
         return lotService.getLotView(sessionId);
     }
 
