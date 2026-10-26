@@ -83,6 +83,19 @@ export interface UpdateTontineConfigRequest {
   moisClotureAdhesions?: number;
 }
 
+/** Aperçu de la composition des lots avant figeage. */
+export interface PartProposee {
+  membreId: string; nom: string; prenom: string; montant: number; partCagnotte: number;
+}
+export interface CompositionLotsResponse {
+  montantLot: number;
+  nombreTours: number;
+  cagnotte: number;
+  complete: boolean;
+  lots: Array<{ parts: PartProposee[] }>;
+  restes: PartProposee[];
+}
+
 export interface SessionLotResponse {
   sessionId: string;
   figee: boolean;

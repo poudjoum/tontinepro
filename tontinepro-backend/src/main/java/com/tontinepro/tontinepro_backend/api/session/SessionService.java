@@ -225,6 +225,11 @@ public class SessionService {
         SessionTontine session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
 
+        if (session.getTontine().getMode() == Tontine.ModeTontine.A_LOT) {
+            // Un membre peut porter plusieurs tours : l'ordre par membre n'a pas de sens ici.
+            throw new IllegalStateException("L'ordre des tours d'une tontine à lot est tiré au figeage");
+        }
+
         List<OrdreBeneficiaire> existants = ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId);
 
         // Vérifier que les IDs correspondent aux membres existants

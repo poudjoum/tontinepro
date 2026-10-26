@@ -1,6 +1,8 @@
 package com.tontinepro.tontinepro_backend.api.session;
 
 import com.tontinepro.tontinepro_backend.api.session.dto.AdhererLotRequest;
+import com.tontinepro.tontinepro_backend.api.session.dto.CompositionLotsResponse;
+import com.tontinepro.tontinepro_backend.api.session.dto.FigerLotRequest;
 import com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,11 +39,19 @@ public class LotController {
         return lotService.getLotView(sessionId);
     }
 
+    @GetMapping("/composition")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Proposer une composition des lots (combinaisons exactes), sans l'enregistrer")
+    public CompositionLotsResponse composition(@PathVariable UUID sessionId) {
+        return lotService.apercu(sessionId);
+    }
+
     @PostMapping("/figer")
     @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
-    @Operation(summary = "Figer manuellement la session (sinon automatique en fin de période d'adhésion)")
-    public SessionLotResponse figer(@PathVariable UUID sessionId) {
-        lotService.figer(sessionId);
+    @Operation(summary = "Figer la session avec la composition du bureau (ou automatique si absente)")
+    public SessionLotResponse figer(@PathVariable UUID sessionId,
+                                    @Valid @RequestBody(required = false) FigerLotRequest request) {
+        lotService.figer(sessionId, request);
         return lotService.getLotView(sessionId);
     }
 }

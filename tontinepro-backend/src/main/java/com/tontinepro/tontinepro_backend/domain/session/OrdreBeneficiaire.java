@@ -11,10 +11,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "ordre_beneficiaires",
-       uniqueConstraints = {
-           @UniqueConstraint(columnNames = {"session_id", "ordre"}),
-           @UniqueConstraint(columnNames = {"session_id", "membre_id"})
-       })
+       // Pas d'unicité (session, membre) : en mode à lot, un membre peut avoir plusieurs tours.
+       uniqueConstraints = @UniqueConstraint(columnNames = {"session_id", "ordre"}))
 @Getter
 @Setter
 @NoArgsConstructor

@@ -1,5 +1,7 @@
 package com.tontinepro.tontinepro_backend.api.session;
 
+import com.tontinepro.tontinepro_backend.api.session.dto.CompositionLotsResponse;
+import com.tontinepro.tontinepro_backend.api.session.dto.FigerLotRequest;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.session.*;
@@ -16,7 +18,7 @@ import java.util.*;
 
 /**
  * Logique du mode « tontine à lot » : inscription des mises, et figeage
- * (constitution des lots/tours, cagnotte, regroupement aléatoire des partiels).
+ * (constitution des lots/tours en combinaisons exactes, cagnotte, ordre tiré au hasard).
  */
 @Slf4j
 @Service
@@ -55,12 +57,38 @@ public class LotService {
     }
 
     /**
-     * Fige la session : constitue les lots, calcule la cagnotte et le nombre de tours,
-     * regroupe aléatoirement les mises partielles, tire l'ordre au hasard.
+     * Aperçu de la composition automatique (rien n'est enregistré) : lots exacts et
+     * reliquats non placés. Le bureau s'en sert comme base, l'ajuste puis fige.
+     */
+    @Transactional(readOnly = true)
+    public CompositionLotsResponse apercu(UUID sessionId) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+        exigerModeLot(session);
+        BigDecimal lot = montantLot(session);
+        List<ParticipationLot> participations = participationLotRepository.findAllBySessionId(sessionId);
+        Map<UUID, Membre> membres = membresParId(participations);
+
+        CompositionLots.Proposition p = CompositionLots.proposer(mises(participations), lot, new Random());
+        int nbTours = p.lots().size();
+        List<CompositionLotsResponse.LotPropose> lots = p.lots().stream()
+                .map(parts -> new CompositionLotsResponse.LotPropose(
+                        parts.stream().map(pt -> partProposee(pt, membres, nbTours)).toList()))
+                .toList();
+        List<CompositionLotsResponse.PartProposee> restes = p.restes().stream()
+                .map(pt -> partProposee(pt, membres, nbTours)).toList();
+        return new CompositionLotsResponse(lot, nbTours, lot.multiply(BigDecimal.valueOf(nbTours)),
+                p.complete(), lots, restes);
+    }
+
+    /**
+     * Fige la session : constitue les lots/tours, calcule la cagnotte, tire l'ordre au hasard.
+     * Avec {@code composition}, applique celle du bureau après contrôle ; sinon compose
+     * automatiquement. Refuse de figer tant qu'un reliquat ne rentre dans aucun lot exact.
      * Idempotent : ne fait rien si déjà figée.
      */
     @Transactional
-    public SessionTontine figer(UUID sessionId) {
+    public SessionTontine figer(UUID sessionId, FigerLotRequest composition) {
         SessionTontine session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
         exigerModeLot(session);
@@ -68,94 +96,65 @@ public class LotService {
             return session;
         }
 
-        BigDecimal lot = session.getTontine().getMontantLot();
-        if (lot == null || lot.signum() <= 0) {
-            throw new IllegalStateException("Montant du lot non configuré sur la tontine");
-        }
-
+        BigDecimal lot = montantLot(session);
         List<ParticipationLot> participations = participationLotRepository.findAllBySessionId(sessionId);
         if (participations.isEmpty()) {
             throw new IllegalStateException("Aucune adhésion à figer pour cette session");
         }
+        Map<UUID, Membre> membres = membresParId(participations);
 
-        // 1. Décomposer chaque mise en lots pleins (= lot) + reliquat
-        // Un "slot" est une liste de contributions (membre, montant alloué à ce slot).
-        List<List<Contribution>> slots = new ArrayList<>();
-        List<Contribution> reliquats = new ArrayList<>();
-
-        for (ParticipationLot p : participations) {
-            BigDecimal mise = p.getMontantMensuel();
-            BigDecimal pleins = mise.divideToIntegralValue(lot);   // nb de lots pleins
-            int nbPleins = pleins.intValue();
-            for (int i = 0; i < nbPleins; i++) {
-                slots.add(new ArrayList<>(List.of(new Contribution(p.getMembre(), lot))));
+        List<List<CompositionLots.Part>> lots;
+        if (composition != null && composition.lots() != null && !composition.lots().isEmpty()) {
+            List<List<CompositionLots.Part>> demandee = composition.lots().stream()
+                    .map(l -> l.parts().stream()
+                            .map(pt -> new CompositionLots.Part(pt.membreId(), pt.montant()))
+                            .toList())
+                    .toList();
+            lots = CompositionLots.valider(demandee, mises(participations), lot);
+        } else {
+            CompositionLots.Proposition p = CompositionLots.proposer(mises(participations), lot, new Random());
+            if (!p.complete()) {
+                String detail = p.restes().stream()
+                        .map(r -> nomComplet(membres.get(r.membreId())) + " (" + r.montant().toPlainString() + ")")
+                        .collect(java.util.stream.Collectors.joining(", "));
+                throw new IllegalStateException("Figeage impossible : ces reliquats ne forment aucun lot de "
+                        + lot.toPlainString() + " exact — " + detail
+                        + ". Ajustez les mises ou composez les lots manuellement.");
             }
-            BigDecimal reliquat = mise.subtract(lot.multiply(pleins));
-            if (reliquat.signum() > 0) {
-                reliquats.add(new Contribution(p.getMembre(), reliquat));
-            }
+            lots = new ArrayList<>(p.lots());
         }
 
-        // 2. Regrouper aléatoirement les reliquats jusqu'à atteindre un lot
-        Collections.shuffle(reliquats);
-        List<Contribution> courant = new ArrayList<>();
-        BigDecimal cumul = BigDecimal.ZERO;
-        for (Contribution c : reliquats) {
-            courant.add(c);
-            cumul = cumul.add(c.montant());
-            if (cumul.compareTo(lot) >= 0) {
-                slots.add(new ArrayList<>(courant));
-                courant.clear();
-                cumul = BigDecimal.ZERO;
-            }
-        }
-        // Reliquats restants non casables → trésorerie (pas de tour créé)
-        BigDecimal versTresorerie = BigDecimal.ZERO;
-        for (Contribution c : courant) {
-            versTresorerie = versTresorerie.add(c.montant());
-        }
-
-        int nbTours = slots.size();
-        if (nbTours == 0) {
-            throw new IllegalStateException(
-                    "Aucun lot complet n'a pu être formé avec les mises actuelles (montant du lot trop élevé ?)");
-        }
+        int nbTours = lots.size();
         BigDecimal cagnotte = lot.multiply(BigDecimal.valueOf(nbTours));
 
-        // 3. Tirer l'ordre au hasard et créer les tours + parts
-        Collections.shuffle(slots);
+        // Ordre des tours tiré au hasard ; chaque membre touche sa part × nb de tours
+        List<List<CompositionLots.Part>> ordonnes = new ArrayList<>(lots);
+        Collections.shuffle(ordonnes);
         int ordre = 1;
-        for (List<Contribution> slot : slots) {
-            Membre membreUnique = slot.size() == 1 ? slot.get(0).membre() : slot.get(0).membre();
+        for (List<CompositionLots.Part> parts : ordonnes) {
             OrdreBeneficiaire ob = ordreBeneficiaireRepository.save(OrdreBeneficiaire.builder()
                     .session(session)
-                    .membre(membreUnique)   // référence indicative ; les parts portent le détail
+                    .membre(membres.get(parts.get(0).membreId()))   // référence indicative ; les parts portent le détail
                     .ordre(ordre++)
                     .beneficie(false)
                     .build());
-
-            for (Contribution c : slot) {
-                // part de cagnotte = mise allouée × nb tours (chacun récupère sa mise × durée)
-                BigDecimal part = c.montant().multiply(BigDecimal.valueOf(nbTours))
-                        .setScale(2, RoundingMode.HALF_UP);
+            for (CompositionLots.Part pt : parts) {
                 partLotRepository.save(PartLot.builder()
                         .ordreBeneficiaire(ob)
-                        .membre(c.membre())
-                        .montantMensuel(c.montant())
-                        .partCagnotte(part)
+                        .membre(membres.get(pt.membreId()))
+                        .montantMensuel(pt.montant())
+                        .partCagnotte(partCagnotte(pt.montant(), nbTours))
                         .build());
             }
         }
 
         session.setCagnotte(cagnotte);
         session.setNombreMembres(nbTours);
-        session.setTresorerieLots(session.getTresorerieLots().add(versTresorerie));
         session.setFigee(true);
         session.setDateFigeage(LocalDate.now());
         SessionTontine saved = sessionRepository.save(session);
 
-        log.info("[Lot] Session {} figée : {} tours, cagnotte {}, trésorerie +{}",
-                sessionId, nbTours, cagnotte, versTresorerie);
+        log.info("[Lot] Session {} figée : {} tours, cagnotte {}", sessionId, nbTours, cagnotte);
         return saved;
     }
 
@@ -179,7 +178,38 @@ public class LotService {
             throw new IllegalStateException("Cette session n'est pas une tontine à lot");
         }
     }
+    private BigDecimal montantLot(SessionTontine session) {
+        BigDecimal lot = session.getTontine().getMontantLot();
+        if (lot == null || lot.signum() <= 0) {
+            throw new IllegalStateException("Montant du lot non configuré sur la tontine");
+        }
+        return lot;
+    }
 
-    /** Contribution d'un membre à un slot (montant alloué à ce lot). */
-    private record Contribution(Membre membre, BigDecimal montant) {}
+    private static List<CompositionLots.Mise> mises(List<ParticipationLot> participations) {
+        return participations.stream()
+                .map(p -> new CompositionLots.Mise(p.getMembre().getId(), p.getMontantMensuel()))
+                .toList();
+    }
+
+    private static Map<UUID, Membre> membresParId(List<ParticipationLot> participations) {
+        Map<UUID, Membre> membres = new HashMap<>();
+        participations.forEach(p -> membres.put(p.getMembre().getId(), p.getMembre()));
+        return membres;
+    }
+
+    private static BigDecimal partCagnotte(BigDecimal montant, int nbTours) {
+        return montant.multiply(BigDecimal.valueOf(nbTours)).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private static CompositionLotsResponse.PartProposee partProposee(CompositionLots.Part pt,
+                                                                    Map<UUID, Membre> membres, int nbTours) {
+        Membre m = membres.get(pt.membreId());
+        return new CompositionLotsResponse.PartProposee(pt.membreId(), m.getNom(), m.getPrenom(),
+                pt.montant(), partCagnotte(pt.montant(), nbTours));
+    }
+
+    private static String nomComplet(Membre m) {
+        return m == null ? "?" : (m.getPrenom() + " " + m.getNom()).trim();
+    }
 }

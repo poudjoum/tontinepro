@@ -41,7 +41,7 @@ public class FigeageLotScheduler {
                 continue; // période d'adhésion encore ouverte
             }
             try {
-                lotService.figer(session.getId());
+                lotService.figer(session.getId(), null);
                 log.info("[FigeageLot] Session {} figée automatiquement", session.getId());
             } catch (Exception e) {
                 log.warn("[FigeageLot] Échec figeage session {} : {}", session.getId(), e.getMessage());

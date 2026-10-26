@@ -19,7 +19,7 @@ import {
   ReordonnerBeneficiairesRequest,
 } from '../models/session.model';
 import { CotisationResponse } from '../models/cotisation.model';
-import { SessionLotResponse } from '../models/tontine.model';
+import { SessionLotResponse, CompositionLotsResponse } from '../models/tontine.model';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -82,8 +82,14 @@ export class SessionService {
       `${this.api}/${sessionId}/lot/adherer`, { membreId, montantMensuel });
   }
 
-  figerLot(sessionId: string) {
-    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/figer`, {});
+  /** Composition proposée (combinaisons exactes), non enregistrée. */
+  getCompositionLot(sessionId: string) {
+    return this.http.get<CompositionLotsResponse>(`${this.api}/${sessionId}/lot/composition`);
+  }
+
+  /** Fige avec la composition du bureau (automatique si `lots` absent). */
+  figerLot(sessionId: string, lots?: Array<{ parts: Array<{ membreId: string; montant: number }> }>) {
+    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/figer`, lots ? { lots } : {});
   }
 
   echeancier(sessionId: string) {
