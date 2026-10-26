@@ -37,7 +37,8 @@ class LotServiceVersementTest {
     void setUp() {
         service = new LotService(mock(SessionTontineRepository.class), mock(ParticipationLotRepository.class),
                 obRepo, partRepo, mock(MembreRepository.class), retenue, mock(PeriodiciteService.class),
-                mock(AbandonLotRepository.class), mock(CotisationRepository.class));
+                mock(AbandonLotRepository.class), mock(CotisationRepository.class),
+                mock(TourRestitutionRepository.class), mock(TourRestitutionCotisantRepository.class));
         tontine = new Tontine();
         tontine.setId(UUID.randomUUID());
         tontine.setMode(Tontine.ModeTontine.A_LOT);

@@ -79,6 +79,11 @@ public class AbandonLot {
     @Column(name = "tours_retires", length = 500)
     private String toursRetires;
 
+    /** Rendu par le tour de remboursement : le rouvrir regèle l'avoir. */
+    @Column(name = "restitue_par_tour", nullable = false)
+    @Builder.Default
+    private boolean restitueParTour = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

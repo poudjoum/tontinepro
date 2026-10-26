@@ -353,6 +353,9 @@
             @if (l.tresorerie.remboursementsDettes > 0) {
               <div class="flex justify-between"><dt class="text-gray-500">Dettes remboursées</dt><dd>{{ l.tresorerie.remboursementsDettes | number:'1.0-0' }}</dd></div>
             }
+            @if (l.tresorerie.cotisationsRemboursement > 0) {
+              <div class="flex justify-between"><dt class="text-gray-500">Tour de remboursement encaissé</dt><dd>{{ l.tresorerie.cotisationsRemboursement | number:'1.0-0' }}</dd></div>
+            }
             @if (l.tresorerie.avoirsRestitues > 0) {
               <div class="flex justify-between"><dt class="text-gray-500">Avoirs restitués</dt><dd>− {{ l.tresorerie.avoirsRestitues | number:'1.0-0' }}</dd></div>
             }
@@ -363,6 +366,137 @@
               <div class="flex justify-between"><dt class="text-gray-500">Dettes à recouvrer</dt><dd class="font-semibold text-red-700">{{ l.tresorerie.dettesARecouvrer | number:'1.0-0' }}</dd></div>
             }
           </dl>
+        </section>
+      }
+
+      <!-- Tour de remboursement des avoirs gelés -->
+      @if (l.restitution || avoirsGeles().length > 0) {
+        <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Tour de remboursement</h2>
+              <p class="text-[11px] text-gray-500">Dernier tour : les membres cochés cotisent pour rendre leurs avoirs aux membres partis.</p>
+            </div>
+            @if (l.restitution; as r) {
+              @if (r.clos) {
+                <span class="shrink-0 text-[11px] font-semibold text-green-700">✓ clos le {{ r.dateCloture | date:'dd/MM' }}</span>
+              } @else {
+                <span class="shrink-0 text-[11px] font-semibold text-gray-600 tabular-nums">{{ r.dateTour | date:'dd/MM/yyyy' }}</span>
+              }
+            }
+          </div>
+
+          @if (formRemboursement()) {
+            <div class="rounded-lg bg-gray-50 p-3 space-y-2">
+              <label class="block text-[10px] text-gray-500">
+                Date du tour
+                <input type="date" [(ngModel)]="rembDate"
+                       class="mt-0.5 w-full border border-gray-200 rounded-lg px-2 py-2 text-xs" />
+              </label>
+              <p class="text-[10px] text-gray-500">Cochez les membres qui cotisent ; chacun verse sa mise (modifiable).</p>
+              <ul class="divide-y divide-gray-100">
+                @for (m of l.membresSession; track m.membreId) {
+                  <li class="grid grid-cols-[auto_1fr_110px] items-center gap-2 py-1.5">
+                    <input type="checkbox" [(ngModel)]="rembCoches[m.membreId]" [id]="'remb-' + m.membreId"
+                           class="h-4 w-4 accent-primary-600" />
+                    <label [for]="'remb-' + m.membreId" class="min-w-0 text-xs text-gray-800">
+                      {{ m.prenom }} {{ m.nom }}
+                      @if (multipleRecu(m); as x) {
+                        <span class="block text-[10px] text-gray-500 tabular-nums">a reçu {{ m.dejaRecu | number:'1.0-0' }} (×{{ x }})</span>
+                      } @else if (m.dejaRecu > 0) {
+                        <span class="block text-[10px] text-gray-500 tabular-nums">a reçu {{ m.dejaRecu | number:'1.0-0' }}</span>
+                      }
+                    </label>
+                    <input type="number" min="1" [(ngModel)]="rembMontants[m.membreId]" [disabled]="!rembCoches[m.membreId]"
+                           [attr.aria-label]="'Montant versé par ' + m.prenom + ' ' + m.nom"
+                           class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-right tabular-nums disabled:opacity-40" />
+                  </li>
+                }
+              </ul>
+              <dl class="text-xs space-y-1 tabular-nums">
+                <div class="flex justify-between"><dt class="text-gray-500">Collecte prévue</dt><dd class="font-semibold">{{ rembTotalCoche() | number:'1.0-0' }}</dd></div>
+                <div class="flex justify-between"><dt class="text-gray-500">Avoirs gelés à rendre</dt><dd>{{ l.tresorerie.avoirsGelesARestituer | number:'1.0-0' }}</dd></div>
+                @if (rembTotalCoche() !== l.tresorerie.avoirsGelesARestituer) {
+                  <div class="flex justify-between" [class.text-amber-700]="rembTotalCoche() < l.tresorerie.avoirsGelesARestituer">
+                    <dt>{{ rembTotalCoche() < l.tresorerie.avoirsGelesARestituer ? 'Avancé par la trésorerie' : 'Gardé en trésorerie' }}</dt>
+                    <dd>{{ (rembTotalCoche() - l.tresorerie.avoirsGelesARestituer) | number:'1.0-0' }}</dd>
+                  </div>
+                }
+              </dl>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" (click)="formRemboursement.set(false)"
+                        class="border border-gray-200 rounded-lg py-2 text-xs text-gray-600">Annuler</button>
+                <button type="button" (click)="programmerRemboursement()" [disabled]="saving()"
+                        class="bg-gray-800 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
+                  Enregistrer le tour
+                </button>
+              </div>
+            </div>
+          } @else if (l.restitution) {
+            @let r = l.restitution;
+            <ul class="divide-y divide-gray-100">
+              @for (c of r.cotisants; track c.cotisantId) {
+                <li class="flex items-center justify-between gap-2 py-1.5">
+                  <div class="min-w-0">
+                    <p class="text-xs text-gray-800">{{ c.prenom }} {{ c.nom }}</p>
+                    <p class="text-[10px] tabular-nums" [class.text-green-700]="c.paye" [class.text-gray-500]="!c.paye">
+                      {{ c.montant | number:'1.0-0' }} FCFA@if (c.paye) { · ✓ encaissé le {{ c.datePaiement | date:'dd/MM' }}}
+                    </p>
+                  </div>
+                  @if (!r.clos) {
+                    @if (c.paye) {
+                      <button type="button" (click)="encaisserRemboursement(c, false)" [disabled]="saving()"
+                              class="shrink-0 text-[11px] text-gray-500 underline py-1 disabled:opacity-50">Annuler</button>
+                    } @else {
+                      <button type="button" (click)="encaisserRemboursement(c, true)" [disabled]="saving()"
+                              class="shrink-0 border border-gray-200 text-gray-700 rounded-lg px-3 py-1.5 text-[11px] font-semibold disabled:opacity-50">
+                        Encaisser
+                      </button>
+                    }
+                  }
+                </li>
+              }
+            </ul>
+            <dl class="text-xs space-y-1 tabular-nums border-t border-gray-100 pt-2">
+              <div class="flex justify-between"><dt class="text-gray-500">Encaissé</dt><dd>{{ r.totalEncaisse | number:'1.0-0' }} / {{ r.totalAttendu | number:'1.0-0' }}</dd></div>
+              <div class="flex justify-between"><dt class="text-gray-500">{{ r.clos ? 'Avoirs rendus' : 'Avoirs gelés à rendre' }}</dt><dd>− {{ r.avoirsARestituer | number:'1.0-0' }}</dd></div>
+              @if (r.ecart !== 0) {
+                <div class="flex justify-between font-semibold" [class.text-amber-700]="r.ecart < 0" [class.text-green-700]="r.ecart > 0">
+                  <dt>{{ r.ecart < 0 ? 'Avancé par la trésorerie' : 'Gardé en trésorerie' }}</dt>
+                  <dd>{{ (r.ecart < 0 ? -r.ecart : r.ecart) | number:'1.0-0' }}</dd>
+                </div>
+              }
+            </dl>
+            @if (r.clos) {
+              <button type="button" (click)="rouvrirRemboursement()" [disabled]="saving()"
+                      class="text-[11px] text-gray-500 underline py-1 disabled:opacity-50">Rouvrir le tour</button>
+            } @else {
+              <button type="button" (click)="cloreRemboursement()"
+                      [disabled]="saving() || !tousToursVerses() || r.totalEncaisse !== r.totalAttendu || avoirsGeles().length === 0"
+                      class="w-full bg-primary-600 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-40">
+                Rendre {{ r.avoirsARestituer | number:'1.0-0' }} FCFA aux membres partis
+              </button>
+              @if (!tousToursVerses()) {
+                <p class="text-[10px] text-gray-500">Possible quand tous les autres tours sont payés.</p>
+              } @else if (r.totalEncaisse !== r.totalAttendu) {
+                <p class="text-[10px] text-gray-500">Encaissez chaque cotisant (ou retirez-le du tour) avant de rendre les avoirs.</p>
+              }
+              <div class="flex gap-4">
+                <button type="button" (click)="ouvrirRemboursement()" [disabled]="saving()"
+                        class="text-[11px] text-gray-600 underline py-1 disabled:opacity-50">Modifier</button>
+                <button type="button" (click)="supprimerRemboursement()" [disabled]="saving()"
+                        class="text-[11px] text-gray-500 underline py-1 disabled:opacity-50">Supprimer</button>
+              </div>
+            }
+          } @else {
+            <p class="text-xs text-gray-600 tabular-nums">
+              {{ avoirsGeles().length }} avoir(s) gelé(s), {{ l.tresorerie.avoirsGelesARestituer | number:'1.0-0' }} FCFA à rendre.
+            </p>
+            <button type="button" (click)="ouvrirRemboursement()" [disabled]="saving()"
+                    class="w-full border border-gray-200 text-gray-700 rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
+              Programmer le tour de remboursement
+            </button>
+          }
         </section>
       }
 

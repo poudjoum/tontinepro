@@ -36,6 +36,8 @@ public class LotService {
     private final PeriodiciteService periodiciteService;
     private final AbandonLotRepository abandonLotRepository;
     private final CotisationRepository cotisationRepository;
+    private final TourRestitutionRepository tourRestitutionRepository;
+    private final TourRestitutionCotisantRepository tourRestitutionCotisantRepository;
 
     /** Inscrit (ou met à jour) la mise mensuelle d'un membre dans une session à lot. */
     @Transactional
@@ -187,12 +189,16 @@ public class LotService {
             }
         }
         List<AbandonLot> abandons = abandonLotRepository.findAllBySessionIdOrderByDateAbandon(sessionId);
+        TourRestitution tourRestitution = tourRestitutionRepository.findBySessionId(sessionId).orElse(null);
+        List<TourRestitutionCotisant> cotisantsRestitution = tourRestitution == null ? List.of()
+                : tourRestitutionCotisantRepository.findAllByTourId(tourRestitution.getId());
         return com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.build(
                 sessionId, session.isFigee(), session.getDateFigeage(),
                 session.getTontine().getMontantLot(), session.getCagnotte(),
                 session.isFigee() ? ordres.size() : null,
                 session.getTresorerieLots(), participations, ordres, parts, datesTour, retenuesPrevues,
-                abandons, suiviTresorerie(session, participations, parts, abandons));
+                abandons, suiviTresorerie(session, participations, parts, abandons, cotisantsRestitution),
+                vueRestitution(tourRestitution, cotisantsRestitution, abandons));
     }
 
     // ── Versements (une part = un co-bénéficiaire payé séparément) ────────────
@@ -295,7 +301,7 @@ public class LotService {
      */
     private com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.SuiviTresorerie suiviTresorerie(
             SessionTontine session, List<ParticipationLot> participations,
-            List<PartLot> parts, List<AbandonLot> abandons) {
+            List<PartLot> parts, List<AbandonLot> abandons, List<TourRestitutionCotisant> cotisantsRestitution) {
         Set<UUID> inscrits = new HashSet<>();
         participations.forEach(p -> inscrits.add(p.getMembre().getId()));
         BigDecimal mises = cotisationRepository.findAllByTontineId(session.getTontine().getId()).stream()
@@ -313,9 +319,37 @@ public class LotService {
         BigDecimal avoirsGeles = somme(abandons, AbandonLot.Statut.AVOIR_GELE, AbandonLot::getSolde);
         BigDecimal dettes = abandons.stream().filter(a -> a.getStatut() == AbandonLot.Statut.DETTE)
                 .map(AbandonLot::resteARembourser).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal solde = mises.add(rembourse).subtract(versees).subtract(restitue);
+        BigDecimal remboursementTour = encaisse(cotisantsRestitution);
+        BigDecimal solde = mises.add(rembourse).add(remboursementTour).subtract(versees).subtract(restitue);
         return new com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.SuiviTresorerie(
-                mises, rembourse, versees, restitue, solde, avoirsGeles, dettes);
+                mises, rembourse, remboursementTour, versees, restitue, solde, avoirsGeles, dettes);
+    }
+
+    /** Tour de remboursement : avoirs encore gelés tant qu'il est ouvert, ceux qu'il a rendus une fois clos. */
+    private static com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.TourRemboursement vueRestitution(
+            TourRestitution tour, List<TourRestitutionCotisant> cotisants, List<AbandonLot> abandons) {
+        if (tour == null) return null;
+        var vues = cotisants.stream()
+                .map(c -> new com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.CotisantRemboursement(
+                        c.getId(), c.getMembre().getId(), c.getMembre().getNom(), c.getMembre().getPrenom(),
+                        c.getMontant(), c.isPaye(), c.getDatePaiement()))
+                .sorted(Comparator.comparing(
+                        (com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.CotisantRemboursement c)
+                                -> c.prenom() == null ? "" : c.prenom().trim().toLowerCase()))
+                .toList();
+        BigDecimal attendu = cotisants.stream().map(TourRestitutionCotisant::getMontant)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal encaisse = encaisse(cotisants);
+        BigDecimal avoirs = tour.isClos() ? tour.getMontantRestitue()
+                : somme(abandons, AbandonLot.Statut.AVOIR_GELE, AbandonLot::getSolde);
+        return new com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.TourRemboursement(
+                tour.getDateTour(), tour.isClos(), tour.getDateCloture(), vues, attendu, encaisse, avoirs,
+                encaisse.subtract(avoirs));
+    }
+
+    private static BigDecimal encaisse(List<TourRestitutionCotisant> cotisants) {
+        return cotisants.stream().filter(TourRestitutionCotisant::isPaye).map(TourRestitutionCotisant::getMontant)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private static BigDecimal somme(List<AbandonLot> abandons, AbandonLot.Statut statut,

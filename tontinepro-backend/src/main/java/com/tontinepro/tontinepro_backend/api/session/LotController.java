@@ -6,6 +6,7 @@ import com.tontinepro.tontinepro_backend.api.session.dto.DeclarerAbandonRequest;
 import com.tontinepro.tontinepro_backend.api.session.dto.RemboursementDetteRequest;
 import com.tontinepro.tontinepro_backend.api.session.dto.FigerLotRequest;
 import com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse;
+import com.tontinepro.tontinepro_backend.api.session.dto.TourRemboursementRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,6 +26,7 @@ public class LotController {
     private final LotService lotService;
     private final SessionService sessionService;
     private final AbandonLotService abandonLotService;
+    private final TourRestitutionService tourRestitutionService;
 
     @GetMapping
     @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
@@ -102,6 +104,57 @@ public class LotController {
     @Operation(summary = "Annuler un abandon saisi par erreur")
     public SessionLotResponse annulerAbandon(@PathVariable UUID sessionId, @PathVariable UUID abandonId) {
         abandonLotService.annuler(sessionId, abandonId);
+        return lotService.getLotView(sessionId);
+    }
+
+    @PutMapping("/remboursement")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Programmer le tour de remboursement des avoirs gelés : date et cotisants")
+    public SessionLotResponse programmerRemboursement(@PathVariable UUID sessionId,
+                                                      @Valid @RequestBody TourRemboursementRequest request) {
+        tourRestitutionService.programmer(sessionId, request.dateTour(), request.cotisants().stream()
+                .map(c -> new TourRestitutionService.Cotisant(c.membreId(), c.montant())).toList());
+        return lotService.getLotView(sessionId);
+    }
+
+    @PostMapping("/remboursement/cotisants/{cotisantId}/encaisser")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Encaisser la cotisation d'un membre au tour de remboursement")
+    public SessionLotResponse encaisserRemboursement(@PathVariable UUID sessionId, @PathVariable UUID cotisantId) {
+        tourRestitutionService.encaisser(sessionId, cotisantId, true);
+        return lotService.getLotView(sessionId);
+    }
+
+    @PostMapping("/remboursement/cotisants/{cotisantId}/annuler-encaissement")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Annuler l'encaissement d'une cotisation au tour de remboursement")
+    public SessionLotResponse annulerEncaissementRemboursement(@PathVariable UUID sessionId,
+                                                               @PathVariable UUID cotisantId) {
+        tourRestitutionService.encaisser(sessionId, cotisantId, false);
+        return lotService.getLotView(sessionId);
+    }
+
+    @PostMapping("/remboursement/clore")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Clore le tour de remboursement : rend tous les avoirs gelés")
+    public SessionLotResponse cloreRemboursement(@PathVariable UUID sessionId) {
+        tourRestitutionService.clore(sessionId);
+        return lotService.getLotView(sessionId);
+    }
+
+    @PostMapping("/remboursement/rouvrir")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Rouvrir le tour de remboursement : les avoirs rendus redeviennent gelés")
+    public SessionLotResponse rouvrirRemboursement(@PathVariable UUID sessionId) {
+        tourRestitutionService.rouvrir(sessionId);
+        return lotService.getLotView(sessionId);
+    }
+
+    @DeleteMapping("/remboursement")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Supprimer le tour de remboursement (pas encore clos)")
+    public SessionLotResponse supprimerRemboursement(@PathVariable UUID sessionId) {
+        tourRestitutionService.supprimer(sessionId);
         return lotService.getLotView(sessionId);
     }
 

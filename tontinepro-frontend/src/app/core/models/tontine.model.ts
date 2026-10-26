@@ -128,6 +128,23 @@ export interface SessionLotResponse {
   tresorerie: SuiviTresorerieLot;
   /** Membres encore présents dans la session (avec ou sans mise) : candidats à un départ. */
   membresSession: MembreSessionLot[];
+  /** Tour de remboursement des avoirs gelés, s'il est programmé. */
+  restitution: TourRemboursementLot | null;
+}
+
+/**
+ * Tour de remboursement : les cotisants cochés par le bureau financent la restitution des
+ * avoirs gelés. ecart = encaissé − avoirs (négatif : avancé par la trésorerie).
+ */
+export interface TourRemboursementLot {
+  dateTour: string; clos: boolean; dateCloture: string | null;
+  cotisants: CotisantRemboursementLot[];
+  totalAttendu: number; totalEncaisse: number; avoirsARestituer: number; ecart: number;
+}
+
+export interface CotisantRemboursementLot {
+  cotisantId: string; membreId: string; nom: string; prenom: string;
+  montant: number; paye: boolean; datePaiement: string | null;
 }
 
 export interface MembreSessionLot {
@@ -152,7 +169,7 @@ export interface AbandonLot {
 
 /** Trésorerie de la session ; solde négatif = ce que la trésorerie avance. */
 export interface SuiviTresorerieLot {
-  misesEncaissees: number; remboursementsDettes: number;
+  misesEncaissees: number; remboursementsDettes: number; cotisationsRemboursement: number;
   partsVersees: number; avoirsRestitues: number; solde: number;
   avoirsGelesARestituer: number; dettesARecouvrer: number;
 }

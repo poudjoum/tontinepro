@@ -25,8 +25,21 @@ public record SessionLotResponse(
         List<Lot> lots,
         List<Abandon> abandons,
         SuiviTresorerie tresorerie,
-        List<MembreSession> membresSession
+        List<MembreSession> membresSession,
+        TourRemboursement restitution
 ) {
+    /**
+     * Tour de remboursement : les cotisants cochés par le bureau financent la restitution
+     * des avoirs gelés. {@code ecart} = encaissé − avoirs : négatif, la trésorerie avance
+     * le manque ; positif, elle garde le surplus.
+     */
+    public record TourRemboursement(LocalDate dateTour, boolean clos, LocalDate dateCloture,
+                                    List<CotisantRemboursement> cotisants, BigDecimal totalAttendu,
+                                    BigDecimal totalEncaisse, BigDecimal avoirsARestituer, BigDecimal ecart) {}
+
+    public record CotisantRemboursement(UUID cotisantId, UUID membreId, String nom, String prenom,
+                                        BigDecimal montant, boolean paye, LocalDate datePaiement) {}
+
     /**
      * Membre encore présent dans la session (inscrit avec une mise, ou dans l'ordre des tours),
      * avec ce qu'il a déjà reçu : candidats à un départ.
@@ -49,6 +62,7 @@ public record SessionLotResponse(
      * que la trésorerie avance en attendant que les tours des membres partis arrivent.
      */
     public record SuiviTresorerie(BigDecimal misesEncaissees, BigDecimal remboursementsDettes,
+                                  BigDecimal cotisationsRemboursement,
                                   BigDecimal partsVersees, BigDecimal avoirsRestitues, BigDecimal solde,
                                   BigDecimal avoirsGelesARestituer, BigDecimal dettesARecouvrer) {}
 
@@ -73,7 +87,8 @@ public record SessionLotResponse(
                                            Map<UUID, LocalDate> datesTour,
                                            Map<UUID, BigDecimal> retenuesPrevues,
                                            List<AbandonLot> abandons,
-                                           SuiviTresorerie tresorerie) {
+                                           SuiviTresorerie tresorerie,
+                                           TourRemboursement restitution) {
 
         List<Adhesion> adhesions = participations.stream()
                 .map(p -> new Adhesion(p.getMembre().getId(), p.getMembre().getNom(),
@@ -104,7 +119,7 @@ public record SessionLotResponse(
 
         return new SessionLotResponse(sessionId, figee, dateFigeage, montantLot, cagnotte,
                 nombreTours, tresorerieLots, adhesions, lots, vueAbandons, tresorerie,
-                membresSession(figee, participations, ordres, parts, abandons));
+                membresSession(figee, participations, ordres, parts, abandons), restitution);
     }
 
     private static List<MembreSession> membresSession(boolean figee, List<ParticipationLot> participations,

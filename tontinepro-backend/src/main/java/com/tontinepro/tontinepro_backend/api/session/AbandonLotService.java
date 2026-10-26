@@ -191,17 +191,21 @@ public class AbandonLotService {
         if (a.getStatut() != AbandonLot.Statut.AVOIR_GELE) {
             throw new IllegalStateException("Aucun avoir gelé à restituer pour ce membre");
         }
-        boolean toursClos = partLotRepository.findAllByOrdreBeneficiaireSessionId(sessionId).stream()
-                .allMatch(p -> p.isVerse() || p.isAnnulee())
-                && ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId).stream()
-                        .allMatch(OrdreBeneficiaire::isBeneficie);
-        if (!toursClos) {
+        if (!toursClos(sessionId)) {
             throw new IllegalStateException(
                     "L'avoir gelé se restitue en fin de session : tous les tours doivent d'abord être versés");
         }
         a.setStatut(AbandonLot.Statut.AVOIR_RESTITUE);
         a.setDateRestitution(LocalDate.now());
         return abandonLotRepository.save(a);
+    }
+
+    /** Tous les tours de la session sont-ils versés (parts versées ou annulées) ? */
+    boolean toursClos(UUID sessionId) {
+        return partLotRepository.findAllByOrdreBeneficiaireSessionId(sessionId).stream()
+                .allMatch(p -> p.isVerse() || p.isAnnulee())
+                && ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId).stream()
+                        .allMatch(OrdreBeneficiaire::isBeneficie);
     }
 
     /** Enregistre un remboursement sur la dette d'un membre parti après son tour. */

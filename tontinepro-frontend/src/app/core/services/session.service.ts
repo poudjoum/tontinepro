@@ -111,6 +111,30 @@ export class SessionService {
     return this.http.delete<SessionLotResponse>(`${this.api}/${sessionId}/lot/abandons/${abandonId}`);
   }
 
+  /** Programme (ou modifie) le tour de remboursement des avoirs gelés. */
+  programmerRemboursementLot(sessionId: string, dateTour: string,
+                             cotisants: Array<{ membreId: string; montant: number }>) {
+    return this.http.put<SessionLotResponse>(`${this.api}/${sessionId}/lot/remboursement`, { dateTour, cotisants });
+  }
+
+  encaisserRemboursementLot(sessionId: string, cotisantId: string, paye: boolean) {
+    const action = paye ? 'encaisser' : 'annuler-encaissement';
+    return this.http.post<SessionLotResponse>(
+      `${this.api}/${sessionId}/lot/remboursement/cotisants/${cotisantId}/${action}`, {});
+  }
+
+  cloreRemboursementLot(sessionId: string) {
+    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/remboursement/clore`, {});
+  }
+
+  rouvrirRemboursementLot(sessionId: string) {
+    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/remboursement/rouvrir`, {});
+  }
+
+  supprimerRemboursementLot(sessionId: string) {
+    return this.http.delete<SessionLotResponse>(`${this.api}/${sessionId}/lot/remboursement`);
+  }
+
   /** Composition proposée (combinaisons exactes), non enregistrée. */
   getCompositionLot(sessionId: string) {
     return this.http.get<CompositionLotsResponse>(`${this.api}/${sessionId}/lot/composition`);

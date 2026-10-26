@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { TontineService } from '../../../core/services/tontine.service';
 import { SessionService } from '../../../core/services/session.service';
 import { MembreService } from '../../../core/services/membre.service';
-import { TontineResponse, SessionLotResponse, CompositionLotsResponse, PartLotMembre, AbandonLot, MembreSessionLot } from '../../../core/models/tontine.model';
+import { TontineResponse, SessionLotResponse, CompositionLotsResponse, PartLotMembre, AbandonLot, MembreSessionLot, CotisantRemboursementLot } from '../../../core/models/tontine.model';
 import { SessionResponse } from '../../../core/models/session.model';
 import { MembreResponse } from '../../../core/models/membre.model';
 
@@ -260,9 +260,10 @@ export class TontineLotComponent implements OnInit {
     const dates = [...new Set((this.lot()?.lots ?? []).map(t => t.dateTour).filter((d): d is string => !!d && d <= aujourdhui))];
     return dates.sort().map((date, i) => ({ numero: i + 1, date }));
   });
+  /** Session figée : parts versées ; pas figée : tours de l'ordre payés. */
   tousToursVerses = computed(() => {
     const l = this.lot();
-    return !!l && l.figee && l.lots.every(t => t.beneficie);
+    return !!l && l.lots.length > 0 && l.lots.every(t => t.beneficie);
   });
 
   /** Membre choisi : reprend ce qu'il a déjà reçu et propose mise × mois pour le cotisé. */
@@ -345,6 +346,102 @@ export class TontineLotComponent implements OnInit {
     if (!confirm(`Annuler le départ de ${a.prenom} ${a.nom} ? Ses parts ou ses tours seront rétablis ; `
       + `pensez à régénérer ses cotisations à venir.`)) return;
     this.executer(this.sessionSvc.annulerAbandonLot(s.id, a.abandonId), `Départ de ${a.prenom} ${a.nom} annulé.`);
+  }
+
+  // ── Tour de remboursement des avoirs gelés ────────────────────────────────
+  formRemboursement = signal(false);
+  rembDate = '';
+  /** Membres cochés et montant versé par chacun, par membreId. */
+  rembCoches: Record<string, boolean> = {};
+  rembMontants: Record<string, number | null> = {};
+
+  avoirsGeles = computed(() => (this.lot()?.abandons ?? []).filter(a => a.statut === 'AVOIR_GELE'));
+
+  /**
+   * Plus grand multiple de leur mise déjà reçu (×12 en général) : ceux qui l'ont atteint
+   * sont proposés comme cotisants du tour de remboursement.
+   */
+  private multipleMax = computed(() => Math.max(0, ...(this.lot()?.membresSession ?? [])
+    .map(m => this.multipleRecu(m) ?? 0)));
+
+  multipleRecu(m: MembreSessionLot): number | null {
+    return m.montantMensuel && m.dejaRecu > 0 ? Math.round(m.dejaRecu / m.montantMensuel) : null;
+  }
+
+  rembTotalCoche(): number {
+    return (this.lot()?.membresSession ?? []).filter(m => this.rembCoches[m.membreId])
+      .reduce((s, m) => s + (Number(this.rembMontants[m.membreId]) || 0), 0);
+  }
+
+  /** Ouvre le formulaire : reprend le tour programmé, sinon propose ceux qui ont reçu le plus gros multiple. */
+  ouvrirRemboursement(): void {
+    const l = this.lot();
+    if (!l) return;
+    const r = l.restitution;
+    this.rembCoches = {};
+    this.rembMontants = {};
+    for (const m of l.membresSession) {
+      const c = r?.cotisants.find(x => x.membreId === m.membreId);
+      this.rembCoches[m.membreId] = r ? !!c : this.multipleMax() > 0 && this.multipleRecu(m) === this.multipleMax();
+      this.rembMontants[m.membreId] = c?.montant ?? m.montantMensuel;
+    }
+    const derniereDate = l.lots.map(t => t.dateTour).filter((d): d is string => !!d).sort().pop();
+    this.rembDate = r?.dateTour ?? (derniereDate ? this.moisSuivant(derniereDate) : new Date().toISOString().slice(0, 10));
+    this.formRemboursement.set(true);
+  }
+
+  private moisSuivant(date: string): string {
+    const d = new Date(date + 'T00:00:00');
+    d.setMonth(d.getMonth() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  programmerRemboursement(): void {
+    const s = this.session();
+    const l = this.lot();
+    if (!s || !l) return;
+    const cotisants = l.membresSession.filter(m => this.rembCoches[m.membreId])
+      .map(m => ({ membreId: m.membreId, montant: Number(this.rembMontants[m.membreId]) }));
+    if (!this.rembDate) { this.error.set('Indiquez la date du tour de remboursement.'); return; }
+    if (cotisants.length === 0) { this.error.set('Cochez au moins un membre qui cotise.'); return; }
+    if (cotisants.some(c => !c.montant || c.montant <= 0)) {
+      this.error.set('Saisissez le montant versé par chaque membre coché.'); return;
+    }
+    this.executer(this.sessionSvc.programmerRemboursementLot(s.id, this.rembDate, cotisants),
+      'Tour de remboursement enregistré.', () => this.formRemboursement.set(false));
+  }
+
+  encaisserRemboursement(c: CotisantRemboursementLot, paye: boolean): void {
+    const s = this.session();
+    if (!s) return;
+    if (!paye && !confirm(`Annuler l'encaissement de ${c.prenom} ${c.nom} ?`)) return;
+    this.executer(this.sessionSvc.encaisserRemboursementLot(s.id, c.cotisantId, paye),
+      paye ? `${this.fmt(c.montant)} FCFA encaissés de ${c.prenom} ${c.nom}.` : 'Encaissement annulé.');
+  }
+
+  cloreRemboursement(): void {
+    const s = this.session();
+    const r = this.lot()?.restitution;
+    if (!s || !r) return;
+    const ecart = r.ecart < 0 ? ` La trésorerie avance ${this.fmt(-r.ecart)} FCFA.`
+      : r.ecart > 0 ? ` La trésorerie garde ${this.fmt(r.ecart)} FCFA.` : '';
+    if (!confirm(`Rendre ${this.fmt(r.avoirsARestituer)} FCFA aux ${this.avoirsGeles().length} membre(s) parti(s) ?${ecart}`)) return;
+    this.executer(this.sessionSvc.cloreRemboursementLot(s.id), 'Avoirs gelés restitués : tour de remboursement clos.');
+  }
+
+  rouvrirRemboursement(): void {
+    const s = this.session();
+    if (!s) return;
+    if (!confirm('Rouvrir le tour de remboursement ? Les avoirs rendus redeviendront gelés.')) return;
+    this.executer(this.sessionSvc.rouvrirRemboursementLot(s.id), 'Tour de remboursement rouvert.');
+  }
+
+  supprimerRemboursement(): void {
+    const s = this.session();
+    if (!s) return;
+    if (!confirm('Supprimer le tour de remboursement et ses encaissements ?')) return;
+    this.executer(this.sessionSvc.supprimerRemboursementLot(s.id), 'Tour de remboursement supprimé.',
+      () => this.formRemboursement.set(false));
   }
 
   private executer(appel: Observable<SessionLotResponse>, message: string, apres?: () => void): void {
