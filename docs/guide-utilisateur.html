@@ -125,7 +125,7 @@
     <div class="cover-logo">T</div>
     <h1>TontinePro</h1>
     <p class="subtitle">Guide Utilisateur Complet</p>
-    <span class="version">Version 1.5 — Septembre 2026</span>
+    <span class="version">Version 1.6 — Octobre 2026</span>
   </div>
 
   <!-- Table des matières -->
@@ -145,6 +145,7 @@
       <li><a href="#historique">Rattrapage historique — Import Excel</a></li>
       <li><a href="#multi-tontine">Plusieurs tontines — choisir sa tontine courante</a></li>
       <li><a href="#outils-bureau">Outils du bureau — reprise, fond de caisse antérieur, tontine à lot, import des membres</a></li>
+      <li><a href="#tontine-lot">Tontine à lot — lots partagés, versements, départs</a></li>
     </ol>
   </div>
 
@@ -929,7 +930,7 @@
     </div>
 
     <h3>Tontine à lot</h3>
-    <p>En complément de la tontine à tour classique, le mode <strong>tontine à lot</strong> gère une cagnotte dont les lots peuvent être partagés entre plusieurs membres. La répartition est <strong>figée automatiquement</strong> passé le 3<sup>e</sup> mois, afin d'éviter les modifications tardives contestées.</p>
+    <p>En complément de la tontine à tour classique, le mode <strong>tontine à lot</strong> gère une cagnotte dont les lots peuvent être partagés entre plusieurs membres. Composition des lots, versement de chaque part et départ d'un membre en cours de session : tout est détaillé au <a href="#tontine-lot">chapitre 14</a>.</p>
 
     <h3>Import Excel des membres</h3>
     <p>Le secrétaire peut créer les membres <strong>en masse depuis un fichier Excel</strong> plutôt qu'un par un. Chaque membre reçoit un <strong>mot de passe temporaire</strong> qu'il devra changer à sa première connexion.</p>
@@ -950,10 +951,115 @@
     </div>
   </div>
 
+
+  <!-- 14. Tontine à lot -->
+  <div class="section" id="tontine-lot">
+    <div class="section-header">
+      <div class="section-icon icon-purple">🎲</div>
+      <h2>14. Tontine à lot — lots partagés, versements, départs</h2>
+    </div>
+
+    <p>Dans une tontine à lot, le <strong>lot</strong> est un montant fixe (par exemple 50 000 FCFA) et chaque membre
+      choisit librement sa <strong>mise mensuelle</strong>. Un lot peut revenir à un seul membre ou être
+      <strong>partagé entre plusieurs</strong> : 10 000 + 10 000 + 30 000, 20 000 + 30 000 ou 25 000 + 25 000 font
+      chacun un lot de 50 000. Le tour d'un lot partagé concerne donc plusieurs bénéficiaires, et
+      <strong>chacun touche sa mise × le nombre de tours</strong>.</p>
+    <p>Tout se gère dans <strong>Administration → 🎲 Tontine à lot</strong>, réservé au bureau.</p>
+
+    <div class="tip">
+      <div class="tip-title">💡 Exemple</div>
+      <p>Lot de 50 000 FCFA, 10 tours. Awa met 10 000, Bruno 10 000 et Chantal 30 000 par mois : ils partagent un lot.
+        Le jour de leur tour, Awa reçoit 10 000 × 10 = <strong>100 000</strong>, Bruno <strong>100 000</strong> et
+        Chantal 30 000 × 10 = <strong>300 000</strong>. Un membre qui met 60 000 par mois a un lot entier pour lui
+        seul et 10 000 dans un lot partagé : il a <strong>deux tours</strong>.</p>
+    </div>
+
+    <h3>1. Inscrire les mises</h3>
+    <p>Pendant la période d'adhésion, le bureau choisit chaque membre et saisit sa mise mensuelle. Une mise peut être
+      modifiée tant que la session n'est pas figée.</p>
+
+    <h3>2. Composer les lots</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-content">
+        <div class="step-title">Touche « Proposer une composition »</div>
+        <div class="step-desc">L'application découpe chaque mise en lots entiers, puis cherche des combinaisons qui font
+          <strong>exactement</strong> le montant du lot, avec le moins de membres possible par lot. Rien n'est encore enregistré.</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-content">
+        <div class="step-title">Ajuste si besoin</div>
+        <div class="step-desc">Touche une part pour la déplacer vers un autre lot ou un nouveau lot. En saisissant un
+          montant plus petit que la part, tu n'en déplaces qu'une partie (par exemple 20 000 sur 30 000).
+          Chaque lot affiche ✓, « manque X » ou « dépasse de X ».</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-content">
+        <div class="step-title">Touche « Figer N tours »</div>
+        <div class="step-desc">Le bouton ne s'active que si tous les lots sont exacts et que tout est placé. Les adhésions
+          sont alors closes et l'ordre des tours est tiré au hasard.</div></div></div>
+    </div>
+
+    <div class="warning">
+      <div class="warning-title">⚠️ Parts non placées</div>
+      <p>Une mise qui ne se combine avec aucune autre pour faire un lot exact (un 15 000 seul pour un lot de 50 000,
+        par exemple) apparaît en rouge dans « Non placé » et <strong>bloque le figeage</strong>. Rien ne part en
+        trésorerie sans que le bureau le sache : ajuste une mise, ou place la part à la main dans un lot.
+        Le figeage automatique de fin de période d'adhésion échoue lui aussi tant qu'il reste des parts non placées.</p>
+    </div>
+
+    <h3>3. Verser les parts</h3>
+    <p>Une fois la session figée, chaque tour liste ses bénéficiaires. Pour chacun, le bureau voit sa part, la
+      <strong>retenue de son fond de caisse</strong> et le montant qu'il touchera, puis touche <strong>« Verser »</strong>.
+      Chaque co-bénéficiaire est payé séparément.</p>
+    <ul>
+      <li>La retenue suit la règle habituelle : seul le <strong>reste dû</strong> du fond de caisse de l'année est
+        retenu. Un membre qui a plusieurs tours dans l'année n'est prélevé qu'une fois, et la retenue ne dépasse
+        jamais le montant de la part.</li>
+      <li>Le tour est <strong>clos</strong> quand la dernière part est versée ; le rapport de tour part alors par email.
+        Il liste chaque co-bénéficiaire et ce qu'il a reçu.</li>
+      <li>Un versement fait par erreur s'annule part par part : le tour est rouvert.</li>
+      <li>Le bouton « Valider le bénéfice » de l'écran Sessions verse d'un coup toutes les parts restantes du tour.</li>
+    </ul>
+    <p>Chaque mois, les cotisations générées pour une tontine à lot reprennent la <strong>mise de chaque inscrit</strong>.</p>
+
+    <h3>4. Un membre qui arrête en cours de session</h3>
+    <p>Dans la section <strong>« Départs »</strong>, le bureau touche « Déclarer un départ », choisit le membre, la
+      date et, s'il le souhaite, un motif. L'application calcule son <strong>solde = ce qu'il a réellement cotisé
+      dans la session − les parts qu'il a déjà reçues</strong>.</p>
+    <ul>
+      <li><strong>Il n'avait pas encore eu son tour</strong> : son argent est un <strong>avoir gelé</strong>
+        (sa mise × les mois cotisés), rendu en fin de session. Le bouton « Restituer » s'active quand tous les tours
+        sont versés.</li>
+      <li><strong>Il avait déjà eu son tour</strong> : il a une <strong>dette</strong> envers le groupe (ce qu'il a
+        reçu − ce qu'il a cotisé). Le bureau enregistre ses remboursements au fur et à mesure, jusqu'à « dette soldée ».</li>
+      <li>Ses parts pas encore versées sont annulées ; <strong>les autres membres de son lot gardent la leur</strong>.
+        Un tour qui ne concernait que lui est clos à 0.</li>
+      <li>Ses cotisations non payées sont supprimées à partir du mois du départ, et plus aucune n'est créée pour lui.</li>
+      <li>Un départ saisi par erreur peut être annulé tant qu'aucun argent n'a été rendu ou remboursé.
+        Pense ensuite à régénérer ses cotisations du mois.</li>
+    </ul>
+
+    <div class="tip">
+      <div class="tip-title">💡 Pourquoi rendre l'avoir en fin de session</div>
+      <p>Lot de 50 000, 10 tours. Awa (10 000 par mois) part après 4 mois ; son tour tombait au mois 8.
+        Des mois 5 à 7, il manque 10 000 par mois : la trésorerie avance 30 000. Au mois 8, sa part de 100 000
+        n'est pas versée. Aux mois 9 et 10, il manque encore 20 000. En fin de session il reste exactement
+        <strong>40 000</strong>, soit 10 000 × 4 mois : son avoir. Le rendre à la fin <strong>ne coûte rien au
+        groupe</strong> ; le rendre plus tôt demanderait de l'argent en plus.</p>
+    </div>
+
+    <h3>5. Trésorerie de la session</h3>
+    <p>La carte <strong>« Trésorerie de la session »</strong> montre les mises encaissées moins les parts versées.
+      Un solde négatif signale ce que la trésorerie <strong>avance</strong> en attendant le tour d'un membre parti.
+      Elle affiche aussi les avoirs gelés à rendre et les dettes à recouvrer.</p>
+
+    <div class="warning">
+      <div class="warning-title">⚠️ Clôture de la session</div>
+      <p>Tant qu'un avoir gelé n'a pas été rendu, la clôture de la session est refusée. Le bouton
+        <strong>« Forcer la clôture »</strong> apparaît alors pour passer outre, à décider en réunion.</p>
+    </div>
+  </div>
+
   <!-- Footer -->
   <div style="text-align:center;padding:32px 0 16px;color:#94a3b8;font-size:12px;border-top:1px solid #e2e8f0;margin-top:16px;">
-    <div style="font-weight:700;font-size:14px;color:#4f46e5;margin-bottom:4px;">TontinePro v1.1</div>
-    <div style="margin-bottom:10px;">tontinepro.tontinepro.uk · Septembre 2026</div>
+    <div style="font-weight:700;font-size:14px;color:#4f46e5;margin-bottom:4px;">TontinePro v1.6</div>
+    <div style="margin-bottom:10px;">tontinepro.tontinepro.uk · Octobre 2026</div>
     <div style="background:#f8fafc;border-radius:12px;padding:14px 20px;display:inline-block;text-align:left;margin-bottom:10px;">
       <div style="font-weight:700;font-size:12px;color:#1e293b;margin-bottom:6px;">Auteur &amp; Contact</div>
       <div style="color:#475569;">Poudjoum Leutcho Gedeon Rodrigue</div>
