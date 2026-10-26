@@ -82,6 +82,15 @@ export class SessionService {
       `${this.api}/${sessionId}/lot/adherer`, { membreId, montantMensuel });
   }
 
+  /** Verse sa part à un co-bénéficiaire (retenue du fond de caisse incluse). */
+  verserPartLot(sessionId: string, partId: string) {
+    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/parts/${partId}/verser`, {});
+  }
+
+  annulerVersementPartLot(sessionId: string, partId: string) {
+    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/parts/${partId}/annuler-versement`, {});
+  }
+
   /** Composition proposée (combinaisons exactes), non enregistrée. */
   getCompositionLot(sessionId: string) {
     return this.http.get<CompositionLotsResponse>(`${this.api}/${sessionId}/lot/composition`);

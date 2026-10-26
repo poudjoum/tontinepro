@@ -42,5 +42,9 @@ export class RapportTourComponent implements OnInit {
     return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
   }
 
+  totalRemisLot(r: RapportTourResponse): number {
+    return (r.partsLot ?? []).reduce((s, p) => s + (p.verse ? (p.montantVerse ?? 0) : 0), 0);
+  }
+
   imprimer(): void { window.print(); }
 }

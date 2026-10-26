@@ -30,6 +30,8 @@ public class LotService {
     private final OrdreBeneficiaireRepository ordreBeneficiaireRepository;
     private final PartLotRepository partLotRepository;
     private final MembreRepository membreRepository;
+    private final RetenueFondCaisse retenueFondCaisse;
+    private final PeriodiciteService periodiciteService;
 
     /** Inscrit (ou met à jour) la mise mensuelle d'un membre dans une session à lot. */
     @Transactional
@@ -158,7 +160,7 @@ public class LotService {
         return saved;
     }
 
-    /** Vue complète d'une session à lot : adhésions + lots/tours avec parts. */
+    /** Vue complète d'une session à lot : adhésions + lots/tours avec parts et versements. */
     @Transactional(readOnly = true)
     public com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse getLotView(UUID sessionId) {
         SessionTontine session = sessionRepository.findById(sessionId)
@@ -166,11 +168,157 @@ public class LotService {
         List<ParticipationLot> participations = participationLotRepository.findAllBySessionId(sessionId);
         List<OrdreBeneficiaire> ordres = ordreBeneficiaireRepository.findAllBySessionIdOrderByOrdre(sessionId);
         List<PartLot> parts = partLotRepository.findAllByOrdreBeneficiaireSessionId(sessionId);
+
+        Map<UUID, LocalDate> datesTour = new HashMap<>();
+        ordres.forEach(ob -> datesTour.put(ob.getId(), dateTour(ob)));
+        // Retenue prévue sur les parts pas encore versées (affichée avant le versement)
+        Map<UUID, BigDecimal> retenuesPrevues = new HashMap<>();
+        for (PartLot p : parts) {
+            if (!p.isVerse()) {
+                short annee = (short) datesTour.get(p.getOrdreBeneficiaire().getId()).getYear();
+                retenuesPrevues.put(p.getId(), retenuePrevue(session.getTontine(), p, annee));
+            }
+        }
         return com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.build(
                 sessionId, session.isFigee(), session.getDateFigeage(),
                 session.getTontine().getMontantLot(), session.getCagnotte(),
                 session.isFigee() ? ordres.size() : null,
-                session.getTresorerieLots(), participations, ordres, parts);
+                session.getTresorerieLots(), participations, ordres, parts, datesTour, retenuesPrevues);
+    }
+
+    // ── Versements (une part = un co-bénéficiaire payé séparément) ────────────
+
+    /**
+     * Verse une part : retient le reste dû du fond de caisse du membre, enregistre
+     * le montant remis. Le tour est clos quand toutes ses parts sont versées.
+     */
+    @Transactional
+    public OrdreBeneficiaire verserPart(UUID sessionId, UUID partId) {
+        PartLot part = partDeLaSession(sessionId, partId);
+        if (part.isVerse()) {
+            throw new IllegalStateException(nomComplet(part.getMembre()) + " a déjà reçu sa part pour ce tour");
+        }
+        OrdreBeneficiaire ob = part.getOrdreBeneficiaire();
+        short annee = (short) dateTour(ob).getYear();
+        BigDecimal retenue = retenuePrevue(ob.getSession().getTontine(), part, annee);
+
+        part.setVerse(true);
+        part.setDateVersement(LocalDate.now());
+        part.setMontantRetenue(retenue);
+        part.setMontantVerse(part.getPartCagnotte().subtract(retenue));
+        part.setAnneeRetenue(annee);
+        partLotRepository.save(part);
+        majTour(ob);
+        return ob;
+    }
+
+    /** Annule le versement d'une part (correction) : le tour redevient ouvert. */
+    @Transactional
+    public void annulerVersementPart(UUID sessionId, UUID partId) {
+        PartLot part = partDeLaSession(sessionId, partId);
+        if (!part.isVerse()) {
+            throw new IllegalStateException("Cette part n'a pas encore été versée — rien à annuler");
+        }
+        reinitialiser(part);
+        majTour(part.getOrdreBeneficiaire());
+    }
+
+    /** Verse toutes les parts restantes d'un tour (équivalent de « valider le bénéfice »). */
+    @Transactional
+    public void verserTour(UUID sessionId, UUID ordreBeneficiaireId) {
+        OrdreBeneficiaire ob = tourDeLaSession(sessionId, ordreBeneficiaireId);
+        List<PartLot> restantes = partLotRepository.findAllByOrdreBeneficiaireId(ob.getId()).stream()
+                .filter(p -> !p.isVerse()).toList();
+        if (restantes.isEmpty()) {
+            throw new IllegalStateException("Toutes les parts de ce tour ont déjà été versées");
+        }
+        restantes.forEach(p -> verserPart(sessionId, p.getId()));
+    }
+
+    /** Annule tous les versements d'un tour. */
+    @Transactional
+    public void annulerTour(UUID sessionId, UUID ordreBeneficiaireId) {
+        OrdreBeneficiaire ob = tourDeLaSession(sessionId, ordreBeneficiaireId);
+        partLotRepository.findAllByOrdreBeneficiaireId(ob.getId()).stream()
+                .filter(PartLot::isVerse)
+                .forEach(this::reinitialiser);
+        majTour(ob);
+    }
+
+    /**
+     * Retenue sur une part : reste dû du fond de caisse de l'année, diminué de ce qui a
+     * déjà été retenu sur les autres parts versées au membre (un membre à plusieurs
+     * tours n'est pas prélevé deux fois), plafonné au montant de la part.
+     */
+    private BigDecimal retenuePrevue(Tontine tontine, PartLot part, short annee) {
+        UUID membreId = part.getMembre().getId();
+        BigDecimal dejaRetenu = partLotRepository
+                .findAllByMembreIdAndVerseTrueAndAnneeRetenue(membreId, annee).stream()
+                .filter(p -> !p.getId().equals(part.getId()))
+                .map(p -> p.getMontantRetenue() != null ? p.getMontantRetenue() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal reste = retenueFondCaisse.resteDu(tontine, membreId, annee).subtract(dejaRetenu);
+        if (reste.signum() <= 0) return BigDecimal.ZERO;
+        return reste.min(part.getPartCagnotte());
+    }
+
+    /** Le tour est clos (bénéficié) quand toutes ses parts sont versées. */
+    private void majTour(OrdreBeneficiaire ob) {
+        List<PartLot> parts = partLotRepository.findAllByOrdreBeneficiaireId(ob.getId());
+        boolean complet = !parts.isEmpty() && parts.stream().allMatch(PartLot::isVerse);
+        ob.setBeneficie(complet);
+        ob.setMontantRecu(complet
+                ? parts.stream().map(PartLot::getMontantVerse).reduce(BigDecimal.ZERO, BigDecimal::add)
+                : null);
+        ordreBeneficiaireRepository.save(ob);
+    }
+
+    private void reinitialiser(PartLot part) {
+        part.setVerse(false);
+        part.setDateVersement(null);
+        part.setMontantRetenue(null);
+        part.setMontantVerse(null);
+        part.setAnneeRetenue(null);
+        partLotRepository.save(part);
+    }
+
+    /** Date du tour : celle enregistrée, sinon calculée selon la périodicité et l'ordre. */
+    LocalDate dateTour(OrdreBeneficiaire ob) {
+        if (ob.getDateBenefice() != null) return ob.getDateBenefice();
+        SessionTontine session = ob.getSession();
+        int nb = Math.max(session.getNombreMembres(), ob.getOrdre());
+        List<LocalDate> dates = periodiciteService.calculerDatesBenefice(
+                session.getTontine(), session.getDateDebut(), nb);
+        int index = ob.getOrdre() - 1;
+        return index < dates.size() && dates.get(index) != null
+                ? dates.get(index) : session.getDateDebut().plusMonths(index);
+    }
+
+    private PartLot partDeLaSession(UUID sessionId, UUID partId) {
+        PartLot part = partLotRepository.findById(partId)
+                .orElseThrow(() -> new IllegalArgumentException("Part introuvable : " + partId));
+        if (!part.getOrdreBeneficiaire().getSession().getId().equals(sessionId)) {
+            throw new IllegalArgumentException("Cette part n'appartient pas à la session " + sessionId);
+        }
+        exigerSessionFigee(part.getOrdreBeneficiaire().getSession());
+        return part;
+    }
+
+    private OrdreBeneficiaire tourDeLaSession(UUID sessionId, UUID ordreBeneficiaireId) {
+        OrdreBeneficiaire ob = ordreBeneficiaireRepository.findById(ordreBeneficiaireId)
+                .orElseThrow(() -> new IllegalArgumentException("Tour introuvable : " + ordreBeneficiaireId));
+        if (!ob.getSession().getId().equals(sessionId)) {
+            throw new IllegalArgumentException("Ce tour n'appartient pas à la session " + sessionId);
+        }
+        exigerSessionFigee(ob.getSession());
+        return ob;
+    }
+
+    private void exigerSessionFigee(SessionTontine session) {
+        exigerModeLot(session);
+        if (!session.isFigee()) {
+            throw new IllegalStateException("Les lots ne sont pas encore constitués : figez la session d'abord");
+        }
     }
 
     private void exigerModeLot(SessionTontine session) {

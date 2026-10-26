@@ -23,6 +23,9 @@ import com.tontinepro.tontinepro_backend.domain.pret.Pret;
 import com.tontinepro.tontinepro_backend.domain.pret.PretRepository;
 import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaire;
 import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaireRepository;
+import com.tontinepro.tontinepro_backend.domain.session.ParticipationLot;
+import com.tontinepro.tontinepro_backend.domain.session.ParticipationLotRepository;
+import com.tontinepro.tontinepro_backend.domain.session.PartLotRepository;
 import com.tontinepro.tontinepro_backend.domain.session.SessionTontine;
 import com.tontinepro.tontinepro_backend.domain.session.SessionTontineRepository;
 import com.tontinepro.tontinepro_backend.domain.tontine.Tontine;
@@ -56,6 +59,10 @@ public class SessionService {
     private final VersementAnterieurFondsRepository versementAnterieurRepository;
     private final MouvementFondsAideRepository mouvementFondsAideRepository;
     private final ContributionFondsAideRepository contributionFondsAideRepository;
+    private final RetenueFondCaisse retenueFondCaisse;
+    private final LotService lotService;
+    private final ParticipationLotRepository participationLotRepository;
+    private final PartLotRepository partLotRepository;
 
     @Transactional
     public SessionResponse creerSession(CreerSessionRequest request) {
@@ -277,14 +284,11 @@ public class SessionService {
 
         Tontine tontine = ob.getSession().getTontine();
 
-        // Mode « à lot » figé : le bénéficiaire (slot) encaisse la cagnotte entière.
-        // La répartition entre membres groupés est déjà portée par les PartLot.
-        if (tontine.getMode() == Tontine.ModeTontine.A_LOT
-                && ob.getSession().isFigee()
-                && ob.getSession().getCagnotte() != null) {
-            ob.setBeneficie(true);
-            ob.setMontantRecu(ob.getSession().getCagnotte());
-            ordreBeneficiaireRepository.save(ob);
+        // Mode « à lot » : chaque co-bénéficiaire du tour reçoit sa part (mise × nb de tours)
+        // moins sa propre retenue du fond de caisse. Valider le tour = verser les parts restantes.
+        if (tontine.getMode() == Tontine.ModeTontine.A_LOT) {
+            lotService.verserTour(sessionId, ordreBeneficiaireId);
+            envoyerRapportTour(sessionId, ordreBeneficiaireId);
             return getById(sessionId);
         }
 
@@ -334,15 +338,20 @@ public class SessionService {
 
         SessionResponse response = getById(sessionId);
 
-        // Générer et envoyer le rapport de tour par email à tous les membres (async)
+        envoyerRapportTour(sessionId, ordreBeneficiaireId);
+        return response;
+    }
+
+    /** Génère et envoie le rapport de tour par email à tous les membres (async). */
+    @Transactional(readOnly = true)
+    public void envoyerRapportTour(UUID sessionId, UUID ordreBeneficiaireId) {
         try {
             RapportTourResponse rapport = getRapportTour(sessionId, ordreBeneficiaireId);
-            rapportEmailService.envoyerRapportTour(ob.getSession().getTontine().getId(), rapport);
+            UUID tontineId = sessionRepository.findById(sessionId).orElseThrow().getTontine().getId();
+            rapportEmailService.envoyerRapportTour(tontineId, rapport);
         } catch (Exception e) {
             // L'envoi d'email ne doit pas bloquer la validation
         }
-
-        return response;
     }
 
     /**
@@ -362,9 +371,13 @@ public class SessionService {
             throw new IllegalStateException("Ce membre n'a pas encore été validé — rien à annuler");
         }
 
-        ob.setBeneficie(false);
-        ob.setMontantRecu(null);
-        ordreBeneficiaireRepository.save(ob);
+        if (ob.getSession().getTontine().getMode() == Tontine.ModeTontine.A_LOT) {
+            lotService.annulerTour(sessionId, ordreBeneficiaireId);
+        } else {
+            ob.setBeneficie(false);
+            ob.setMontantRecu(null);
+            ordreBeneficiaireRepository.save(ob);
+        }
 
         // Recalculer dateProchaineTontine = date la plus proche parmi les non-bénéficiés
         SessionTontine session = ob.getSession();
@@ -681,9 +694,20 @@ public class SessionService {
 
         List<Cotisation> result = new ArrayList<>();
 
+        // Tontine à lot : chaque inscrit cotise sa propre mise mensuelle (les tours ne
+        // reflètent pas les membres : un lot est partagé, un membre peut en porter plusieurs).
+        Map<UUID, BigDecimal> miseParMembre = new HashMap<>();
+        List<Membre> cotisants;
+        if (tontine.getMode() == Tontine.ModeTontine.A_LOT) {
+            List<ParticipationLot> participations = participationLotRepository.findAllBySessionId(sessionId);
+            participations.forEach(p -> miseParMembre.put(p.getMembre().getId(), p.getMontantMensuel()));
+            cotisants = participations.stream().map(ParticipationLot::getMembre).toList();
+        } else {
+            cotisants = ordres.stream().map(OrdreBeneficiaire::getMembre).toList();
+        }
+
         // ── Membres TONTINE (dans le calendrier) ──────────────────────────────────
-        for (OrdreBeneficiaire ob : ordres) {
-            Membre membre = ob.getMembre();
+        for (Membre membre : cotisants) {
             if (membre.getStatut() != Membre.Statut.ACTIF) continue;
 
             if (cotisationRepository.existsByMembreIdAndMoisAndAnnee(membre.getId(), mois, annee)) {
@@ -692,8 +716,10 @@ public class SessionService {
                         .findFirst()
                         .ifPresent(result::add);
             } else {
-                BigDecimal montant = tontine.getMontantCotisationMin() != null
-                        ? tontine.getMontantCotisationMin() : BigDecimal.ZERO;
+                BigDecimal montant = miseParMembre.containsKey(membre.getId())
+                        ? miseParMembre.get(membre.getId())
+                        : tontine.getMontantCotisationMin() != null
+                                ? tontine.getMontantCotisationMin() : BigDecimal.ZERO;
                 Cotisation c = cotisationRepository.save(Cotisation.builder()
                         .membre(membre)
                         .tontine(tontine)
@@ -1045,16 +1071,34 @@ public class SessionService {
                     m.getModePaiementAide(), fond, paye);
         }).toList();
 
+        // Tontine à lot : le tour a plusieurs bénéficiaires, chacun avec sa part
+        List<RapportTourResponse.PartLotRapport> partsLot = tontine.getMode() == Tontine.ModeTontine.A_LOT
+                ? partLotRepository.findAllByOrdreBeneficiaireId(ob.getId()).stream()
+                        .map(pl -> new RapportTourResponse.PartLotRapport(
+                                pl.getMembre().getId(),
+                                pl.getMembre().getPrenom() + " " + pl.getMembre().getNom(),
+                                pl.getMontantMensuel(), pl.getPartCagnotte(), pl.isVerse(),
+                                pl.getMontantRetenue(), pl.getMontantVerse()))
+                        .toList()
+                : List.of();
+        String beneficiaireNom = partsLot.isEmpty()
+                ? ob.getMembre().getPrenom() + " " + ob.getMembre().getNom()
+                : partsLot.stream().map(RapportTourResponse.PartLotRapport::nomPrenom)
+                        .collect(Collectors.joining(", "));
+        if (!partsLot.isEmpty() && ob.getMontantRecu() != null) {
+            cagnotte = ob.getMontantRecu();
+        }
+
         return new RapportTourResponse(
                 sessionId, session.getNumero(), tontine.getNom(),
                 dateTour, mois, annee,
                 ob.getMembre().getId(),
-                ob.getMembre().getPrenom() + " " + ob.getMembre().getNom(),
+                beneficiaireNom,
                 ob.getMembre().getMatricule(),
                 lignes,
                 totalCotis, totalFond, totalRepas, totalSanct,
                 potBrut, fondBeneficiaire, cagnotte,
-                contributeurs);
+                contributeurs, partsLot);
     }
 
     /**
@@ -1580,33 +1624,14 @@ public class SessionService {
         return sum.divide(BigDecimal.valueOf(cotis.size()), 2, java.math.RoundingMode.HALF_UP);
     }
 
-    /**
-     * Fond de caisse déjà versé par un membre sur l'année : part fond des
-     * cotisations payées dans l'application + versement antérieur déclaré à la
-     * reprise (argent collecté avant l'application).
-     */
+    /** Voir {@link RetenueFondCaisse#dejaVerse}. */
     private BigDecimal fondAideDejaVerse(UUID membreId, short annee) {
-        BigDecimal viaCotisations = cotisationRepository
-                .findAllByMembreIdAndAnneeAndStatut(membreId, annee, Cotisation.Statut.PAYEE)
-                .stream()
-                .map(c -> safe(c.getMontantFondAide()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal anterieur = versementAnterieurRepository.findByMembreIdAndAnnee(membreId, annee)
-                .map(VersementAnterieurFonds::getMontant)
-                .orElse(BigDecimal.ZERO);
-        return viaCotisations.add(anterieur);
+        return retenueFondCaisse.dejaVerse(membreId, annee);
     }
 
-    /**
-     * Reste dû du fond de caisse annuel, retenu sur le pot au bénéfice :
-     * obligation annuelle − déjà versé, jamais négatif. Un membre qui a versé
-     * son fond mensuellement (ou avant l'application) n'est pas prélevé deux fois.
-     */
+    /** Voir {@link RetenueFondCaisse#resteDu}. */
     private BigDecimal resteDuFondAide(Tontine tontine, UUID membreId, short annee) {
-        BigDecimal obligation = safe(tontine.getMontantFondAideAnnuelMembre());
-        if (obligation.signum() <= 0) return BigDecimal.ZERO;
-        BigDecimal reste = obligation.subtract(fondAideDejaVerse(membreId, annee));
-        return reste.signum() > 0 ? reste : BigDecimal.ZERO;
+        return retenueFondCaisse.resteDu(tontine, membreId, annee);
     }
 
     private static BigDecimal safe(BigDecimal v) {

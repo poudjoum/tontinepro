@@ -21,6 +21,7 @@ import java.util.UUID;
 public class LotController {
 
     private final LotService lotService;
+    private final SessionService sessionService;
 
     @GetMapping
     @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
@@ -44,6 +45,25 @@ public class LotController {
     @Operation(summary = "Proposer une composition des lots (combinaisons exactes), sans l'enregistrer")
     public CompositionLotsResponse composition(@PathVariable UUID sessionId) {
         return lotService.apercu(sessionId);
+    }
+
+    @PostMapping("/parts/{partId}/verser")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Verser sa part à un co-bénéficiaire (retenue du fond de caisse incluse)")
+    public SessionLotResponse verserPart(@PathVariable UUID sessionId, @PathVariable UUID partId) {
+        var tour = lotService.verserPart(sessionId, partId);
+        if (tour.isBeneficie()) {
+            sessionService.envoyerRapportTour(sessionId, tour.getId());   // dernière part : tour clos
+        }
+        return lotService.getLotView(sessionId);
+    }
+
+    @PostMapping("/parts/{partId}/annuler-versement")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Annuler le versement d'une part (correction)")
+    public SessionLotResponse annulerVersementPart(@PathVariable UUID sessionId, @PathVariable UUID partId) {
+        lotService.annulerVersementPart(sessionId, partId);
+        return lotService.getLotView(sessionId);
     }
 
     @PostMapping("/figer")

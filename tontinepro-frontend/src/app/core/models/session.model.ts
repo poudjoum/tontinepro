@@ -158,6 +158,18 @@ export interface RapportTourResponse {
   fondBeneficiaire: number;
   cagnotteBeneficiaire: number;
   contributeursSolidaires: ContributeurAideSociale[];
+  /** Tontine à lot : un co-bénéficiaire par ligne (vide en mode classique). */
+  partsLot?: PartLotRapport[];
+}
+
+export interface PartLotRapport {
+  membreId: string;
+  nomPrenom: string;
+  montantMensuel: number;
+  partCagnotte: number;
+  verse: boolean;
+  montantRetenue: number | null;
+  montantVerse: number | null;
 }
 
 export interface FicheMembreFinSession {

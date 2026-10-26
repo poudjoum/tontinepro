@@ -10,4 +10,7 @@ public interface PartLotRepository extends JpaRepository<PartLot, UUID> {
     List<PartLot> findAllByOrdreBeneficiaireId(UUID ordreBeneficiaireId);
 
     List<PartLot> findAllByOrdreBeneficiaireSessionId(UUID sessionId);
+
+    /** Parts déjà versées à un membre dont la retenue porte sur l'année donnée. */
+    List<PartLot> findAllByMembreIdAndVerseTrueAndAnneeRetenue(UUID membreId, Short anneeRetenue);
 }

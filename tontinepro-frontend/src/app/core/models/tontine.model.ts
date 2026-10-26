@@ -83,6 +83,17 @@ export interface UpdateTontineConfigRequest {
   moisClotureAdhesions?: number;
 }
 
+/**
+ * Part d'un co-bénéficiaire d'un tour à lot. Avant versement, retenue et montant
+ * remis sont les montants prévus ; après, ceux enregistrés.
+ */
+export interface PartLotMembre {
+  partId: string; membreId: string; nom: string; prenom: string;
+  montantMensuel: number; partCagnotte: number | null;
+  verse: boolean; dateVersement: string | null;
+  montantRetenue: number | null; montantVerse: number | null;
+}
+
 /** Aperçu de la composition des lots avant figeage. */
 export interface PartProposee {
   membreId: string; nom: string; prenom: string; montant: number; partCagnotte: number;
@@ -108,7 +119,8 @@ export interface SessionLotResponse {
     membreId: string; nom: string; prenom: string; matricule: string; montantMensuel: number;
   }>;
   lots: Array<{
-    ordreBeneficiaireId: string; ordre: number; beneficie: boolean; montantRecu: number | null;
-    membres: Array<{ membreId: string; nom: string; prenom: string; montantMensuel: number; partCagnotte: number | null }>;
+    ordreBeneficiaireId: string; ordre: number; dateTour: string | null; beneficie: boolean;
+    montantRecu: number | null; nombreVerses: number;
+    membres: PartLotMembre[];
   }>;
 }

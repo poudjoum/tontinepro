@@ -38,9 +38,23 @@ public record RapportTourResponse(
         BigDecimal cagnotteBeneficiaire, // potBrut - fondBeneficiaire
 
         // Contributeurs Aide Sociale (section bas de rapport)
-        List<ContributeurAideSociale> contributeursSolidaires
+        List<ContributeurAideSociale> contributeursSolidaires,
+
+        // Tontine à lot : une ligne par co-bénéficiaire du tour (vide en mode classique)
+        List<PartLotRapport> partsLot
 
 ) {
+    /** Part d'un co-bénéficiaire d'un tour à lot ; retenue et versé à null tant que non versée. */
+    public record PartLotRapport(
+            UUID membreId,
+            String nomPrenom,
+            BigDecimal montantMensuel,
+            BigDecimal partCagnotte,
+            boolean verse,
+            BigDecimal montantRetenue,
+            BigDecimal montantVerse
+    ) {}
+
     public record LigneRapport(
             UUID membreId,
             String nomPrenom,

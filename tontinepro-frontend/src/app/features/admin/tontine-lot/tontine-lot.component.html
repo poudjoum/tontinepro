@@ -226,24 +226,65 @@
           }
         </ng-template>
       } @else {
-        <!-- Lots constitués -->
-        <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-2">
-          <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Lots / tours ({{ l.lots.length }})</h2>
+        <!-- Tours : chaque co-bénéficiaire reçoit sa part séparément -->
+        <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+          <div class="flex items-end justify-between">
+            <div>
+              <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Tours</h2>
+              <p class="text-[11px] text-gray-500">Chaque membre d'un lot reçoit sa part, moins le reste dû de son fond de caisse.</p>
+            </div>
+            <p class="text-right">
+              <span class="text-2xl font-semibold text-gray-900 tabular-nums">{{ toursClos() }}</span>
+              <span class="text-sm text-gray-400 tabular-nums">/{{ l.lots.length }}</span>
+              <span class="block text-[11px] uppercase tracking-wide text-gray-500">clos</span>
+            </p>
+          </div>
+
           @for (lotItem of l.lots; track lotItem.ordreBeneficiaireId) {
-            <div class="border border-gray-100 rounded-lg p-3">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-primary-700">Tour {{ lotItem.ordre }}</span>
+            <div class="border rounded-lg p-3"
+                 [class.border-green-200]="lotItem.beneficie"
+                 [class.bg-green-50]="lotItem.beneficie"
+                 [class.border-gray-100]="!lotItem.beneficie">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-bold text-primary-700">
+                  Tour {{ lotItem.ordre }}
+                  @if (lotItem.dateTour) { <span class="font-normal text-gray-500">· {{ lotItem.dateTour | date:'dd/MM/yyyy' }}</span> }
+                </span>
                 @if (lotItem.beneficie) {
-                  <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded">✓ {{ lotItem.montantRecu | number:'1.0-0' }} FCFA</span>
+                  <a [routerLink]="['/rapport-tour', l.sessionId, lotItem.ordreBeneficiaireId]"
+                     class="text-[11px] font-semibold text-green-700 underline">✓ clos · rapport</a>
+                } @else if (lotItem.nombreVerses > 0) {
+                  <span class="text-[11px] font-semibold text-amber-700">{{ lotItem.nombreVerses }}/{{ lotItem.membres.length }} versé(s)</span>
                 } @else {
-                  <span class="text-[10px] text-gray-400">en attente</span>
+                  <span class="text-[11px] text-gray-400">à verser</span>
                 }
               </div>
-              <ul class="mt-1 space-y-0.5">
-                @for (p of lotItem.membres; track p.membreId) {
-                  <li class="flex justify-between text-xs text-gray-600">
-                    <span>{{ p.prenom }} {{ p.nom }} <span class="text-gray-400">({{ p.montantMensuel | number:'1.0-0' }}/mois)</span></span>
-                    <span class="font-medium">part : {{ p.partCagnotte | number:'1.0-0' }} FCFA</span>
+
+              <ul class="space-y-2">
+                @for (p of lotItem.membres; track p.partId) {
+                  <li class="flex items-center gap-2">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm text-gray-800 truncate">{{ p.prenom }} {{ p.nom }}</p>
+                      <p class="text-[11px] text-gray-500 tabular-nums">
+                        part {{ p.partCagnotte | number:'1.0-0' }}
+                        @if ((p.montantRetenue ?? 0) > 0) { <span class="text-red-600">− fond {{ p.montantRetenue | number:'1.0-0' }}</span> }
+                        @if (p.verse && p.dateVersement) { · le {{ p.dateVersement | date:'dd/MM' }} }
+                      </p>
+                    </div>
+                    <span class="text-sm font-semibold tabular-nums"
+                          [class.text-green-700]="p.verse" [class.text-gray-700]="!p.verse">
+                      {{ p.montantVerse | number:'1.0-0' }}
+                    </span>
+                    @if (p.verse) {
+                      <button type="button" (click)="annulerVersement(p)" [disabled]="saving()"
+                              [attr.aria-label]="'Annuler le versement de ' + p.prenom + ' ' + p.nom"
+                              class="text-[11px] text-gray-500 underline px-1 py-2 disabled:opacity-50">Annuler</button>
+                    } @else {
+                      <button type="button" (click)="verserPart(p)" [disabled]="saving()"
+                              class="bg-primary-600 text-white rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50">
+                        Verser
+                      </button>
+                    }
                   </li>
                 }
               </ul>

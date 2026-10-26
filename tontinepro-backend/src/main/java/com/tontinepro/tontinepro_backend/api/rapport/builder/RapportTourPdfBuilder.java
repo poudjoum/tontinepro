@@ -40,7 +40,11 @@ public class RapportTourPdfBuilder {
             doc.add(Chunk.NEWLINE);
             ajouterTableau(doc, r);
             doc.add(Chunk.NEWLINE);
-            ajouterBilan(doc, r);
+            if (r.partsLot() != null && !r.partsLot().isEmpty()) {
+                ajouterPartsLot(doc, r.partsLot());
+            } else {
+                ajouterBilan(doc, r);
+            }
             if (r.contributeursSolidaires() != null && !r.contributeursSolidaires().isEmpty()) {
                 doc.add(Chunk.NEWLINE);
                 ajouterContributeursSolidaires(doc, r.contributeursSolidaires());
@@ -187,6 +191,49 @@ public class RapportTourPdfBuilder {
         t.addCell(lbl);
         t.addCell(val);
 
+        doc.add(t);
+    }
+
+    /** Tontine à lot : chaque co-bénéficiaire du tour avec sa part, sa retenue et le montant remis. */
+    private void ajouterPartsLot(Document doc, List<RapportTourResponse.PartLotRapport> parts) throws DocumentException {
+        Font fSection = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, BLEU_FONCE);
+        Paragraph s = new Paragraph("BÉNÉFICIAIRES DU LOT", fSection);
+        s.setSpacingAfter(6f);
+        doc.add(s);
+
+        Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+        Font fData = FontFactory.getFont(FontFactory.HELVETICA, 8);
+
+        PdfPTable t = new PdfPTable(5);
+        t.setWidthPercentage(100f);
+        t.setWidths(new float[]{34f, 14f, 18f, 16f, 18f});
+        t.setHeaderRows(1);
+        t.setSpacingAfter(8f);
+        for (String h : new String[]{"Nom & Prénoms", "Mise / mois", "Part de cagnotte", "Retenue fond", "Montant remis"}) {
+            t.addCell(cellEntete(h, fEnt, BLEU_FONCE));
+        }
+
+        BigDecimal totalRemis = BigDecimal.ZERO;
+        boolean pair = false;
+        for (RapportTourResponse.PartLotRapport p : parts) {
+            Color bg = pair ? Color.WHITE : GRIS_CLAIR;
+            pair = !pair;
+            t.addCell(cellDonnee(p.nomPrenom(), fData, bg, Element.ALIGN_LEFT));
+            t.addCell(cellDonnee(fcfa(p.montantMensuel()), fData, bg, Element.ALIGN_RIGHT));
+            t.addCell(cellDonnee(fcfa(p.partCagnotte()), fData, bg, Element.ALIGN_RIGHT));
+            t.addCell(cellDonnee(p.verse() ? "- " + fcfa(p.montantRetenue()) : "—",
+                    FontFactory.getFont(FontFactory.HELVETICA, 8, ROUGE), bg, Element.ALIGN_RIGHT));
+            t.addCell(cellDonnee(p.verse() ? fcfa(p.montantVerse()) : "non versé",
+                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, p.verse() ? VERT : Color.GRAY), bg, Element.ALIGN_RIGHT));
+            if (p.verse() && p.montantVerse() != null) totalRemis = totalRemis.add(p.montantVerse());
+        }
+        Color bgTotal = new Color(44, 62, 80);
+        Font fTot = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+        t.addCell(cellDonnee("TOTAL REMIS", fTot, bgTotal, Element.ALIGN_LEFT));
+        t.addCell(cellDonnee("", fTot, bgTotal, Element.ALIGN_RIGHT));
+        t.addCell(cellDonnee("", fTot, bgTotal, Element.ALIGN_RIGHT));
+        t.addCell(cellDonnee("", fTot, bgTotal, Element.ALIGN_RIGHT));
+        t.addCell(cellDonnee(fcfa(totalRemis), fTot, bgTotal, Element.ALIGN_RIGHT));
         doc.add(t);
     }
 

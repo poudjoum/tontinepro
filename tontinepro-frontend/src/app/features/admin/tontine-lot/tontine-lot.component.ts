@@ -1,10 +1,11 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { DecimalPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { TontineService } from '../../../core/services/tontine.service';
 import { SessionService } from '../../../core/services/session.service';
 import { MembreService } from '../../../core/services/membre.service';
-import { TontineResponse, SessionLotResponse, CompositionLotsResponse } from '../../../core/models/tontine.model';
+import { TontineResponse, SessionLotResponse, CompositionLotsResponse, PartLotMembre } from '../../../core/models/tontine.model';
 import { SessionResponse } from '../../../core/models/session.model';
 import { MembreResponse } from '../../../core/models/membre.model';
 
@@ -22,7 +23,7 @@ const NON_PLACES = -2;
  */
 @Component({
   selector: 'app-tontine-lot',
-  imports: [FormsModule, DecimalPipe, NgTemplateOutlet],
+  imports: [FormsModule, DecimalPipe, DatePipe, NgTemplateOutlet, RouterLink],
   templateUrl: './tontine-lot.component.html',
 })
 export class TontineLotComponent implements OnInit {
@@ -230,6 +231,49 @@ export class TontineLotComponent implements OnInit {
       },
       error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur figeage'); this.saving.set(false); },
     });
+  }
+
+  // ── Versements (session figée) ────────────────────────────────────────────
+  toursClos = computed(() => (this.lot()?.lots ?? []).filter(t => t.beneficie).length);
+
+  verserPart(p: PartLotMembre): void {
+    const s = this.session();
+    if (!s) return;
+    const retenue = p.montantRetenue ?? 0;
+    const detail = retenue > 0
+      ? ` (part ${this.fmt(p.partCagnotte)} − fond de caisse ${this.fmt(retenue)})`
+      : '';
+    if (!confirm(`Verser ${this.fmt(p.montantVerse)} FCFA à ${p.prenom} ${p.nom}${detail} ?`)) return;
+    this.saving.set(true);
+    this.error.set('');
+    this.sessionSvc.verserPartLot(s.id, p.partId).subscribe({
+      next: l => {
+        this.lot.set(l);
+        this.success.set(`Part versée à ${p.prenom} ${p.nom}.`);
+        this.saving.set(false);
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur de versement'); this.saving.set(false); },
+    });
+  }
+
+  annulerVersement(p: PartLotMembre): void {
+    const s = this.session();
+    if (!s) return;
+    if (!confirm(`Annuler le versement fait à ${p.prenom} ${p.nom} ? Le tour sera rouvert.`)) return;
+    this.saving.set(true);
+    this.error.set('');
+    this.sessionSvc.annulerVersementPartLot(s.id, p.partId).subscribe({
+      next: l => {
+        this.lot.set(l);
+        this.success.set(`Versement à ${p.prenom} ${p.nom} annulé.`);
+        this.saving.set(false);
+      },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur d\'annulation'); this.saving.set(false); },
+    });
+  }
+
+  private fmt(n: number | null): string {
+    return (n ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
   }
 
   totalParts(parts: PartEdit[]): number {

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -42,4 +43,24 @@ public class PartLot {
     /** Fraction de la cagnotte revenant à ce membre lorsque le lot bénéficie. */
     @Column(name = "part_cagnotte", precision = 15, scale = 2)
     private BigDecimal partCagnotte;
+
+    /** Vrai une fois la part remise au membre (chaque co-bénéficiaire est payé séparément). */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean verse = false;
+
+    @Column(name = "date_versement")
+    private LocalDate dateVersement;
+
+    /** Reste dû du fond de caisse retenu sur cette part. */
+    @Column(name = "montant_retenue", precision = 15, scale = 2)
+    private BigDecimal montantRetenue;
+
+    /** Montant effectivement remis = part de cagnotte − retenue. */
+    @Column(name = "montant_verse", precision = 15, scale = 2)
+    private BigDecimal montantVerse;
+
+    /** Année du fond de caisse sur laquelle la retenue a été imputée. */
+    @Column(name = "annee_retenue")
+    private Short anneeRetenue;
 }

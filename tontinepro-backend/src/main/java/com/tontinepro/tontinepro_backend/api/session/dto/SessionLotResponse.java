@@ -25,17 +25,26 @@ public record SessionLotResponse(
 ) {
     public record Adhesion(UUID membreId, String nom, String prenom, String matricule, BigDecimal montantMensuel) {}
 
-    public record PartMembre(UUID membreId, String nom, String prenom, BigDecimal montantMensuel, BigDecimal partCagnotte) {}
+    /**
+     * Part d'un co-bénéficiaire. Avant versement, {@code montantRetenue} et
+     * {@code montantVerse} sont les montants <i>prévus</i> ; après, ceux enregistrés.
+     */
+    public record PartMembre(UUID partId, UUID membreId, String nom, String prenom,
+                             BigDecimal montantMensuel, BigDecimal partCagnotte,
+                             boolean verse, LocalDate dateVersement,
+                             BigDecimal montantRetenue, BigDecimal montantVerse) {}
 
-    public record Lot(UUID ordreBeneficiaireId, int ordre, boolean beneficie,
-                      BigDecimal montantRecu, List<PartMembre> membres) {}
+    public record Lot(UUID ordreBeneficiaireId, int ordre, LocalDate dateTour, boolean beneficie,
+                      BigDecimal montantRecu, int nombreVerses, List<PartMembre> membres) {}
 
     public static SessionLotResponse build(UUID sessionId, boolean figee, LocalDate dateFigeage,
                                            BigDecimal montantLot, BigDecimal cagnotte, Integer nombreTours,
                                            BigDecimal tresorerieLots,
                                            List<ParticipationLot> participations,
                                            List<OrdreBeneficiaire> ordres,
-                                           List<PartLot> parts) {
+                                           List<PartLot> parts,
+                                           Map<UUID, LocalDate> datesTour,
+                                           Map<UUID, BigDecimal> retenuesPrevues) {
 
         List<Adhesion> adhesions = participations.stream()
                 .map(p -> new Adhesion(p.getMembre().getId(), p.getMembre().getNom(),
@@ -46,15 +55,28 @@ public record SessionLotResponse(
                 .collect(Collectors.groupingBy(pl -> pl.getOrdreBeneficiaire().getId()));
 
         List<Lot> lots = ordres.stream()
-                .map(ob -> new Lot(
-                        ob.getId(), ob.getOrdre(), ob.isBeneficie(), ob.getMontantRecu(),
-                        parParTour.getOrDefault(ob.getId(), List.of()).stream()
-                                .map(pl -> new PartMembre(pl.getMembre().getId(), pl.getMembre().getNom(),
-                                        pl.getMembre().getPrenom(), pl.getMontantMensuel(), pl.getPartCagnotte()))
-                                .toList()))
+                .map(ob -> {
+                    List<PartLot> duTour = parParTour.getOrDefault(ob.getId(), List.of());
+                    List<PartMembre> membres = duTour.stream().map(pl -> partMembre(pl, retenuesPrevues)).toList();
+                    int verses = (int) duTour.stream().filter(PartLot::isVerse).count();
+                    return new Lot(ob.getId(), ob.getOrdre(), datesTour.get(ob.getId()), ob.isBeneficie(),
+                            ob.getMontantRecu(), verses, membres);
+                })
                 .toList();
 
         return new SessionLotResponse(sessionId, figee, dateFigeage, montantLot, cagnotte,
                 nombreTours, tresorerieLots, adhesions, lots);
+    }
+
+    private static PartMembre partMembre(PartLot pl, Map<UUID, BigDecimal> retenuesPrevues) {
+        BigDecimal retenue = pl.isVerse()
+                ? pl.getMontantRetenue()
+                : retenuesPrevues.getOrDefault(pl.getId(), BigDecimal.ZERO);
+        BigDecimal verse = pl.isVerse()
+                ? pl.getMontantVerse()
+                : (pl.getPartCagnotte() != null ? pl.getPartCagnotte().subtract(retenue) : null);
+        return new PartMembre(pl.getId(), pl.getMembre().getId(), pl.getMembre().getNom(),
+                pl.getMembre().getPrenom(), pl.getMontantMensuel(), pl.getPartCagnotte(),
+                pl.isVerse(), pl.getDateVersement(), retenue, verse);
     }
 }
