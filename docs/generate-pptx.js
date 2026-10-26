@@ -7,7 +7,7 @@ pptx.layout = 'LAYOUT_WIDE';
 pptx.author  = 'Poudjoum Leutcho Gedeon Rodrigue';
 pptx.company = 'JumpyTech';
 pptx.subject = 'TontinePro — Présentation';
-pptx.title   = 'TontinePro v1.1';
+pptx.title   = 'TontinePro v1.6';
 
 const PRIMARY = '4F46E5';
 const DARK    = '1E293B';
@@ -18,7 +18,7 @@ const AMBER   = 'F59E0B';
 const RED     = 'EF4444';
 
 function addFooter(slide, num) {
-  slide.addText(`TontinePro v1.1  ·  JumpyTech  ·  © 2026`, {
+  slide.addText(`TontinePro v1.6  ·  JumpyTech  ·  © 2026`, {
     x: 0.3, y: 6.9, w: 12, h: 0.3,
     fontSize: 8, color: '94A3B8', align: 'center',
   });
@@ -51,7 +51,7 @@ sl.addText('La plateforme digitale pour gérer votre tontine\navec simplicité, 
   x: 1, y: 3.0, w: 10.8, h: 1.0,
   fontSize: 18, color: 'C7D2FE', align: 'center',
 });
-sl.addText('Version 1.1  ·  Août 2026  ·  JumpyTech', {
+sl.addText('Version 1.6  ·  Octobre 2026  ·  JumpyTech', {
   x: 1, y: 4.2, w: 10.8, h: 0.5,
   fontSize: 13, color: '818CF8', align: 'center',
 });
@@ -123,7 +123,7 @@ const features = [
   { icon: '🔗', title: 'Invitations par lien', desc: 'SMS/WhatsApp, connexion par email ou téléphone' },
   { icon: '⏪', title: 'Reprise en cours', desc: 'Assistant de rattrapage mois par mois, tour par tour' },
   { icon: '📄', title: 'Rapports PDF', desc: 'Rapport de tour et bilan de fin de session, envoyés par email' },
-  { icon: '🎯', title: 'Tontine à lot', desc: 'Cagnotte, lots partageables, figeage automatique' },
+  { icon: '🎯', title: 'Tontine à lot', desc: 'Lots partagés, versement par part, départs gérés' },
 ];
 
 const cols = 4;
@@ -251,7 +251,49 @@ aidePoints.forEach((item, i) => {
 addFooter(sl, 6);
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 7 — Multi-tontine & Sécurité
+// SLIDE 7 — Tontine à lot
+// ═══════════════════════════════════════════════════════════════════════════
+sl = pptx.addSlide();
+sl.background = { color: 'F8FAFC' };
+
+sl.addText('TONTINE À LOT', { x: 0.5, y: 0.2, w: 12, h: 0.4, fontSize: 11, bold: true, color: PRIMARY, charSpacing: 3 });
+sl.addText('Un lot, plusieurs bénéficiaires — chacun reçoit sa juste part', { x: 0.5, y: 0.6, w: 12, h: 0.5, fontSize: 22, bold: true, color: DARK });
+
+sl.addShape(pptx.ShapeType.roundRect, { x: 0.3, y: 1.3, w: 7.5, h: 5.3, fill: { color: WHITE }, line: { color: 'E2E8F0', width: 1 } });
+sl.addText('De la mise au versement', { x: 0.5, y: 1.4, w: 7.0, h: 0.5, fontSize: 14, bold: true, color: PRIMARY });
+
+const lotSteps = [
+  { n: '1', t: 'Chaque membre choisit sa mise', d: 'Libre : 10 000, 25 000, 60 000… FCFA par mois' },
+  { n: '2', t: 'L\'application compose des lots exacts', d: '10 000 + 10 000 + 30 000 = un lot de 50 000 ; le bureau ajuste puis fige' },
+  { n: '3', t: 'Chaque part est versée séparément', d: 'Mise × nombre de tours, moins le reste dû du fond de caisse' },
+  { n: '4', t: 'Un départ ne bloque pas le groupe', d: 'Avant son tour : avoir gelé, rendu en fin de session. Après : dette suivie' },
+];
+lotSteps.forEach((s, i) => {
+  const y = 2.0 + i * 1.1;
+  sl.addShape(pptx.ShapeType.ellipse, { x: 0.5, y, w: 0.5, h: 0.5, fill: { color: PRIMARY }, line: { color: PRIMARY, width: 0 } });
+  sl.addText(s.n, { x: 0.5, y, w: 0.5, h: 0.5, fontSize: 13, bold: true, color: WHITE, align: 'center', valign: 'middle' });
+  sl.addText(s.t, { x: 1.2, y: y + 0.0, w: 6.3, h: 0.3, fontSize: 12, bold: true, color: DARK });
+  sl.addText(s.d, { x: 1.2, y: y + 0.28, w: 6.3, h: 0.4, fontSize: 10, color: GRAY });
+});
+
+sl.addShape(pptx.ShapeType.roundRect, { x: 8.1, y: 1.3, w: 4.5, h: 5.3, fill: { color: 'EEF2FF' }, line: { color: 'C7D2FE', width: 1 } });
+sl.addText('Ce que le bureau maîtrise', { x: 8.3, y: 1.4, w: 4.1, h: 0.5, fontSize: 13, bold: true, color: '4338CA' });
+const lotPoints = [
+  '✅  Composition ajustable avant figeage',
+  '✅  Aucune mise perdue en trésorerie',
+  '✅  Retenue du fond membre par membre',
+  '✅  Rapport de tour par bénéficiaire',
+  '✅  Avoirs gelés et dettes suivis',
+  '✅  Trésorerie de la session en direct',
+];
+lotPoints.forEach((item, i) => {
+  sl.addText(item, { x: 8.3, y: 2.1 + i * 0.7, w: 4.1, h: 0.6, fontSize: 11, color: '3730A3' });
+});
+
+addFooter(sl, 7);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SLIDE 8 — Multi-tontine & Sécurité
 // ═══════════════════════════════════════════════════════════════════════════
 sl = pptx.addSlide();
 sl.background = { color: 'FFFFFF' };
@@ -286,10 +328,10 @@ sl.addText('Un même compte peut appartenir à plusieurs tontines. L\'écran « 
   x: 0.6, y: 5.5, w: 12.0, h: 0.8, fontSize: 11, color: '166534',
 });
 
-addFooter(sl, 7);
+addFooter(sl, 8);
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SLIDE 8 — Contact & CTA
+// SLIDE 9 — Contact & CTA
 // ═══════════════════════════════════════════════════════════════════════════
 sl = pptx.addSlide();
 sl.background = { color: '1E1B4B' };
