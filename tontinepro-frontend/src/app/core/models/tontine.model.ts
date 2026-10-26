@@ -90,7 +90,7 @@ export interface UpdateTontineConfigRequest {
 export interface PartLotMembre {
   partId: string; membreId: string; nom: string; prenom: string;
   montantMensuel: number; partCagnotte: number | null;
-  verse: boolean; dateVersement: string | null;
+  verse: boolean; annulee: boolean; dateVersement: string | null;
   montantRetenue: number | null; montantVerse: number | null;
 }
 
@@ -117,10 +117,31 @@ export interface SessionLotResponse {
   tresorerieLots: number;
   adhesions: Array<{
     membreId: string; nom: string; prenom: string; matricule: string; montantMensuel: number;
+    abandonnee: boolean;
   }>;
   lots: Array<{
     ordreBeneficiaireId: string; ordre: number; dateTour: string | null; beneficie: boolean;
     montantRecu: number | null; nombreVerses: number;
     membres: PartLotMembre[];
   }>;
+  abandons: AbandonLot[];
+  tresorerie: SuiviTresorerieLot;
+}
+
+export type StatutAbandonLot = 'AVOIR_GELE' | 'AVOIR_RESTITUE' | 'DETTE' | 'DETTE_SOLDEE' | 'SOLDE_NUL';
+
+/** Départ d'un membre : solde = cotisé − reçu (positif = avoir gelé, négatif = dette). */
+export interface AbandonLot {
+  abandonId: string; membreId: string; nom: string; prenom: string;
+  dateAbandon: string; motif: string | null; moisCotises: number;
+  totalCotise: number; totalRecu: number; solde: number;
+  statut: StatutAbandonLot; dateRestitution: string | null;
+  montantRembourse: number; resteARembourser: number;
+}
+
+/** Trésorerie de la session ; solde négatif = ce que la trésorerie avance. */
+export interface SuiviTresorerieLot {
+  misesEncaissees: number; remboursementsDettes: number;
+  partsVersees: number; avoirsRestitues: number; solde: number;
+  avoirsGelesARestituer: number; dettesARecouvrer: number;
 }

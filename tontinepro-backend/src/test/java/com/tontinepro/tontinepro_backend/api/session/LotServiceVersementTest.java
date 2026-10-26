@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.session;
 
+import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.session.*;
@@ -35,7 +36,8 @@ class LotServiceVersementTest {
     @BeforeEach
     void setUp() {
         service = new LotService(mock(SessionTontineRepository.class), mock(ParticipationLotRepository.class),
-                obRepo, partRepo, mock(MembreRepository.class), retenue, mock(PeriodiciteService.class));
+                obRepo, partRepo, mock(MembreRepository.class), retenue, mock(PeriodiciteService.class),
+                mock(AbandonLotRepository.class), mock(CotisationRepository.class));
         tontine = new Tontine();
         tontine.setId(UUID.randomUUID());
         tontine.setMode(Tontine.ModeTontine.A_LOT);

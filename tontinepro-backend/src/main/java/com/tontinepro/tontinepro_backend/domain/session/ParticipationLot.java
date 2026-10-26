@@ -44,6 +44,11 @@ public class ParticipationLot {
     @Builder.Default
     private LocalDate dateAdhesion = LocalDate.now();
 
+    /** Vrai si le membre a abandonné la session (voir {@link AbandonLot}). */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean abandonnee = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

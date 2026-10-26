@@ -2,6 +2,8 @@ package com.tontinepro.tontinepro_backend.api.session;
 
 import com.tontinepro.tontinepro_backend.api.session.dto.AdhererLotRequest;
 import com.tontinepro.tontinepro_backend.api.session.dto.CompositionLotsResponse;
+import com.tontinepro.tontinepro_backend.api.session.dto.DeclarerAbandonRequest;
+import com.tontinepro.tontinepro_backend.api.session.dto.RemboursementDetteRequest;
 import com.tontinepro.tontinepro_backend.api.session.dto.FigerLotRequest;
 import com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +24,7 @@ public class LotController {
 
     private final LotService lotService;
     private final SessionService sessionService;
+    private final AbandonLotService abandonLotService;
 
     @GetMapping
     @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
@@ -63,6 +66,41 @@ public class LotController {
     @Operation(summary = "Annuler le versement d'une part (correction)")
     public SessionLotResponse annulerVersementPart(@PathVariable UUID sessionId, @PathVariable UUID partId) {
         lotService.annulerVersementPart(sessionId, partId);
+        return lotService.getLotView(sessionId);
+    }
+
+    @PostMapping("/abandons")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Déclarer l'abandon d'un membre : avoir gelé (cotisé − reçu) ou dette")
+    public SessionLotResponse declarerAbandon(@PathVariable UUID sessionId,
+                                              @Valid @RequestBody DeclarerAbandonRequest request) {
+        abandonLotService.declarer(sessionId, request.membreId(), request.dateAbandon(), request.motif());
+        return lotService.getLotView(sessionId);
+    }
+
+    @PostMapping("/abandons/{abandonId}/restituer")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Restituer l'avoir gelé d'un membre parti (fin de session)")
+    public SessionLotResponse restituerAvoir(@PathVariable UUID sessionId, @PathVariable UUID abandonId) {
+        abandonLotService.restituer(sessionId, abandonId);
+        return lotService.getLotView(sessionId);
+    }
+
+    @PostMapping("/abandons/{abandonId}/remboursements")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Enregistrer un remboursement sur la dette d'un membre parti après son tour")
+    public SessionLotResponse rembourserDette(@PathVariable UUID sessionId, @PathVariable UUID abandonId,
+                                              @Valid @RequestBody RemboursementDetteRequest request) {
+        abandonLotService.rembourser(sessionId, abandonId, request.montant());
+        return lotService.getLotView(sessionId);
+    }
+
+    @DeleteMapping("/abandons/{abandonId}")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#sessionId))")
+    @Operation(summary = "Annuler un abandon saisi par erreur")
+    public SessionLotResponse annulerAbandon(@PathVariable UUID sessionId, @PathVariable UUID abandonId) {
+        abandonLotService.annuler(sessionId, abandonId);
         return lotService.getLotView(sessionId);
     }
 

@@ -2,10 +2,11 @@ import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Observable } from 'rxjs';
 import { TontineService } from '../../../core/services/tontine.service';
 import { SessionService } from '../../../core/services/session.service';
 import { MembreService } from '../../../core/services/membre.service';
-import { TontineResponse, SessionLotResponse, CompositionLotsResponse, PartLotMembre } from '../../../core/models/tontine.model';
+import { TontineResponse, SessionLotResponse, CompositionLotsResponse, PartLotMembre, AbandonLot } from '../../../core/models/tontine.model';
 import { SessionResponse } from '../../../core/models/session.model';
 import { MembreResponse } from '../../../core/models/membre.model';
 
@@ -230,6 +231,67 @@ export class TontineLotComponent implements OnInit {
         this.saving.set(false);
       },
       error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur figeage'); this.saving.set(false); },
+    });
+  }
+
+  // ── Départs en cours de session ───────────────────────────────────────────
+  formDepart = signal(false);
+  departMembreId = '';
+  departDate = new Date().toISOString().slice(0, 10);
+  departMotif = '';
+  /** Montant saisi pour un remboursement, par abandon. */
+  remboursements: Record<string, number | null> = {};
+
+  inscritsActifs = computed(() => (this.lot()?.adhesions ?? []).filter(a => !a.abandonnee));
+  tousToursVerses = computed(() => {
+    const l = this.lot();
+    return !!l && l.figee && l.lots.every(t => t.beneficie);
+  });
+
+  declarerDepart(): void {
+    const s = this.session();
+    if (!s || !this.departMembreId) { this.error.set('Choisissez le membre qui part.'); return; }
+    const a = this.inscritsActifs().find(x => x.membreId === this.departMembreId);
+    if (!confirm(`Enregistrer le départ de ${a?.prenom} ${a?.nom} ? Ses parts non versées seront annulées `
+      + `et ses cotisations à venir supprimées. Son solde (cotisé − reçu) sera calculé.`)) return;
+    this.executer(
+      this.sessionSvc.declarerAbandonLot(s.id, this.departMembreId, this.departDate || null, this.departMotif || null),
+      `Départ de ${a?.prenom} ${a?.nom} enregistré.`,
+      () => { this.formDepart.set(false); this.departMembreId = ''; this.departMotif = ''; });
+  }
+
+  restituer(a: AbandonLot): void {
+    const s = this.session();
+    if (!s) return;
+    if (!confirm(`Restituer ${this.fmt(a.solde)} FCFA à ${a.prenom} ${a.nom} ?`)) return;
+    this.executer(this.sessionSvc.restituerAvoirLot(s.id, a.abandonId), `Avoir restitué à ${a.prenom} ${a.nom}.`);
+  }
+
+  rembourser(a: AbandonLot): void {
+    const s = this.session();
+    const montant = Number(this.remboursements[a.abandonId]);
+    if (!s) return;
+    if (!montant || montant <= 0) { this.error.set('Saisissez le montant remboursé.'); return; }
+    this.executer(this.sessionSvc.rembourserDetteLot(s.id, a.abandonId, montant),
+      `Remboursement de ${this.fmt(montant)} FCFA enregistré.`,
+      () => { this.remboursements[a.abandonId] = null; });
+  }
+
+  annulerDepart(a: AbandonLot): void {
+    const s = this.session();
+    if (!s) return;
+    if (!confirm(`Annuler le départ de ${a.prenom} ${a.nom} ? Ses parts seront rétablies ; `
+      + `pensez à régénérer ses cotisations à venir.`)) return;
+    this.executer(this.sessionSvc.annulerAbandonLot(s.id, a.abandonId), `Départ de ${a.prenom} ${a.nom} annulé.`);
+  }
+
+  private executer(appel: Observable<SessionLotResponse>, message: string, apres?: () => void): void {
+    this.saving.set(true);
+    this.error.set('');
+    this.success.set('');
+    appel.subscribe({
+      next: l => { this.lot.set(l); this.success.set(message); this.saving.set(false); apres?.(); },
+      error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Opération impossible'); this.saving.set(false); },
     });
   }
 

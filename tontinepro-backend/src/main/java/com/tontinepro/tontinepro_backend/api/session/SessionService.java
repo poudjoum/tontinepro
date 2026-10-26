@@ -21,6 +21,8 @@ import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.pret.Pret;
 import com.tontinepro.tontinepro_backend.domain.pret.PretRepository;
+import com.tontinepro.tontinepro_backend.domain.session.AbandonLot;
+import com.tontinepro.tontinepro_backend.domain.session.AbandonLotRepository;
 import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaire;
 import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaireRepository;
 import com.tontinepro.tontinepro_backend.domain.session.ParticipationLot;
@@ -63,6 +65,7 @@ public class SessionService {
     private final LotService lotService;
     private final ParticipationLotRepository participationLotRepository;
     private final PartLotRepository partLotRepository;
+    private final AbandonLotRepository abandonLotRepository;
 
     @Transactional
     public SessionResponse creerSession(CreerSessionRequest request) {
@@ -699,7 +702,8 @@ public class SessionService {
         Map<UUID, BigDecimal> miseParMembre = new HashMap<>();
         List<Membre> cotisants;
         if (tontine.getMode() == Tontine.ModeTontine.A_LOT) {
-            List<ParticipationLot> participations = participationLotRepository.findAllBySessionId(sessionId);
+            List<ParticipationLot> participations = participationLotRepository.findAllBySessionId(sessionId)
+                    .stream().filter(p -> !p.isAbandonnee()).toList();
             participations.forEach(p -> miseParMembre.put(p.getMembre().getId(), p.getMontantMensuel()));
             cotisants = participations.stream().map(ParticipationLot::getMembre).toList();
         } else {
@@ -941,6 +945,14 @@ public class SessionService {
             throw new IllegalStateException(
                     nonBeneficies + " membre(s) n'ont pas encore bénéficié. "
                     + "Utilisez forcer=true pour clôturer quand même.");
+        }
+
+        // Tontine à lot : les avoirs gelés des membres partis se rendent en fin de session
+        long avoirsGeles = abandonLotRepository.findAllBySessionIdOrderByDateAbandon(sessionId).stream()
+                .filter(a -> a.getStatut() == AbandonLot.Statut.AVOIR_GELE).count();
+        if (avoirsGeles > 0 && !forcer) {
+            throw new IllegalStateException(avoirsGeles + " avoir(s) gelé(s) de membres partis restent à restituer "
+                    + "(écran Tontine à lot). Forcez la clôture pour passer outre.");
         }
 
         session.setStatut(SessionTontine.Statut.TERMINEE);

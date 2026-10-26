@@ -283,14 +283,18 @@ export class SessionsComponent implements OnInit {
     });
   }
 
+  /** Session dont la clôture a été refusée mais peut être forcée. */
+  clotureForcable = signal<string | null>(null);
+
   cloturerSession(session: SessionResponse, forcer = false): void {
     const msg = forcer
-      ? 'Forcer la clôture même si des membres n\'ont pas bénéficié ?'
+      ? 'Forcer la clôture malgré les points signalés ?'
       : 'Clôturer définitivement cette session ?';
     if (!confirm(msg)) return;
     this.saving.set(true); this.error.set('');
     this.sessionSvc.cloturerSession(session.id, forcer).subscribe({
       next: updated => {
+        this.clotureForcable.set(null);
         this.sessions.update(list => list.map(s => s.id === updated.id ? updated : s));
         this.sessionOuverte.set(updated);
         this.success.set(`Session n°${updated.numero} clôturée.`);
@@ -299,8 +303,9 @@ export class SessionsComponent implements OnInit {
       error: e => {
         const msg = e.error?.detail ?? e.error?.message ?? 'Erreur clôture';
         // Si erreur "membres pas encore bénéficiés", proposer le forçage
-        if (msg.includes('bénéficié') && !forcer) {
+        if ((msg.includes('bénéficié') || msg.includes('avoir(s) gelé')) && !forcer) {
           this.error.set(msg + ' — Cliquez sur "Forcer la clôture" pour ignorer.');
+          this.clotureForcable.set(session.id);
         } else {
           this.error.set(msg);
         }

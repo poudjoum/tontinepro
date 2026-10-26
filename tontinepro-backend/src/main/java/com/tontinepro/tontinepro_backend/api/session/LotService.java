@@ -2,6 +2,8 @@ package com.tontinepro.tontinepro_backend.api.session;
 
 import com.tontinepro.tontinepro_backend.api.session.dto.CompositionLotsResponse;
 import com.tontinepro.tontinepro_backend.api.session.dto.FigerLotRequest;
+import com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation;
+import com.tontinepro.tontinepro_backend.domain.cotisation.CotisationRepository;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.session.*;
@@ -32,6 +34,8 @@ public class LotService {
     private final MembreRepository membreRepository;
     private final RetenueFondCaisse retenueFondCaisse;
     private final PeriodiciteService periodiciteService;
+    private final AbandonLotRepository abandonLotRepository;
+    private final CotisationRepository cotisationRepository;
 
     /** Inscrit (ou met à jour) la mise mensuelle d'un membre dans une session à lot. */
     @Transactional
@@ -54,6 +58,9 @@ public class LotService {
         ParticipationLot p = participationLotRepository
                 .findBySessionIdAndMembreId(sessionId, membreId)
                 .orElseGet(() -> ParticipationLot.builder().session(session).membre(membre).build());
+        if (p.isAbandonnee()) {
+            throw new IllegalStateException("Ce membre a abandonné la session : annulez d'abord son abandon");
+        }
         p.setMontantMensuel(montantMensuel);
         return participationLotRepository.save(p);
     }
@@ -68,7 +75,7 @@ public class LotService {
                 .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
         exigerModeLot(session);
         BigDecimal lot = montantLot(session);
-        List<ParticipationLot> participations = participationLotRepository.findAllBySessionId(sessionId);
+        List<ParticipationLot> participations = actives(participationLotRepository.findAllBySessionId(sessionId));
         Map<UUID, Membre> membres = membresParId(participations);
 
         CompositionLots.Proposition p = CompositionLots.proposer(mises(participations), lot, new Random());
@@ -99,7 +106,7 @@ public class LotService {
         }
 
         BigDecimal lot = montantLot(session);
-        List<ParticipationLot> participations = participationLotRepository.findAllBySessionId(sessionId);
+        List<ParticipationLot> participations = actives(participationLotRepository.findAllBySessionId(sessionId));
         if (participations.isEmpty()) {
             throw new IllegalStateException("Aucune adhésion à figer pour cette session");
         }
@@ -174,16 +181,18 @@ public class LotService {
         // Retenue prévue sur les parts pas encore versées (affichée avant le versement)
         Map<UUID, BigDecimal> retenuesPrevues = new HashMap<>();
         for (PartLot p : parts) {
-            if (!p.isVerse()) {
+            if (!p.isVerse() && !p.isAnnulee()) {
                 short annee = (short) datesTour.get(p.getOrdreBeneficiaire().getId()).getYear();
                 retenuesPrevues.put(p.getId(), retenuePrevue(session.getTontine(), p, annee));
             }
         }
+        List<AbandonLot> abandons = abandonLotRepository.findAllBySessionIdOrderByDateAbandon(sessionId);
         return com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.build(
                 sessionId, session.isFigee(), session.getDateFigeage(),
                 session.getTontine().getMontantLot(), session.getCagnotte(),
                 session.isFigee() ? ordres.size() : null,
-                session.getTresorerieLots(), participations, ordres, parts, datesTour, retenuesPrevues);
+                session.getTresorerieLots(), participations, ordres, parts, datesTour, retenuesPrevues,
+                abandons, suiviTresorerie(session, participations, parts, abandons));
     }
 
     // ── Versements (une part = un co-bénéficiaire payé séparément) ────────────
@@ -197,6 +206,9 @@ public class LotService {
         PartLot part = partDeLaSession(sessionId, partId);
         if (part.isVerse()) {
             throw new IllegalStateException(nomComplet(part.getMembre()) + " a déjà reçu sa part pour ce tour");
+        }
+        if (part.isAnnulee()) {
+            throw new IllegalStateException("Part annulée : " + nomComplet(part.getMembre()) + " a abandonné la session");
         }
         OrdreBeneficiaire ob = part.getOrdreBeneficiaire();
         short annee = (short) dateTour(ob).getYear();
@@ -228,7 +240,7 @@ public class LotService {
     public void verserTour(UUID sessionId, UUID ordreBeneficiaireId) {
         OrdreBeneficiaire ob = tourDeLaSession(sessionId, ordreBeneficiaireId);
         List<PartLot> restantes = partLotRepository.findAllByOrdreBeneficiaireId(ob.getId()).stream()
-                .filter(p -> !p.isVerse()).toList();
+                .filter(p -> !p.isVerse() && !p.isAnnulee()).toList();
         if (restantes.isEmpty()) {
             throw new IllegalStateException("Toutes les parts de ce tour ont déjà été versées");
         }
@@ -262,15 +274,70 @@ public class LotService {
         return reste.min(part.getPartCagnotte());
     }
 
-    /** Le tour est clos (bénéficié) quand toutes ses parts sont versées. */
-    private void majTour(OrdreBeneficiaire ob) {
-        List<PartLot> parts = partLotRepository.findAllByOrdreBeneficiaireId(ob.getId());
-        boolean complet = !parts.isEmpty() && parts.stream().allMatch(PartLot::isVerse);
+    /**
+     * Le tour est clos (bénéficié) quand toutes ses parts actives sont versées. Un tour
+     * dont toutes les parts ont été annulées par des abandons est clos à 0.
+     */
+    void majTour(OrdreBeneficiaire ob) {
+        List<PartLot> actives = partLotRepository.findAllByOrdreBeneficiaireId(ob.getId()).stream()
+                .filter(p -> !p.isAnnulee()).toList();
+        boolean complet = actives.stream().allMatch(PartLot::isVerse);
         ob.setBeneficie(complet);
         ob.setMontantRecu(complet
-                ? parts.stream().map(PartLot::getMontantVerse).reduce(BigDecimal.ZERO, BigDecimal::add)
+                ? actives.stream().map(PartLot::getMontantVerse).reduce(BigDecimal.ZERO, BigDecimal::add)
                 : null);
         ordreBeneficiaireRepository.save(ob);
+    }
+
+    /**
+     * Trésorerie de la session : encaissé (mises payées + remboursements de dettes)
+     * − décaissé (parts versées, brut + avoirs restitués). Négatif = la trésorerie avance.
+     */
+    private com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.SuiviTresorerie suiviTresorerie(
+            SessionTontine session, List<ParticipationLot> participations,
+            List<PartLot> parts, List<AbandonLot> abandons) {
+        Set<UUID> inscrits = new HashSet<>();
+        participations.forEach(p -> inscrits.add(p.getMembre().getId()));
+        BigDecimal mises = cotisationRepository.findAllByTontineId(session.getTontine().getId()).stream()
+                .filter(c -> c.getStatut() == Cotisation.Statut.PAYEE
+                        && inscrits.contains(c.getMembre().getId())
+                        && dansSession(session, c, null))
+                .map(c -> c.getMontant() != null ? c.getMontant() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal versees = parts.stream().filter(PartLot::isVerse)
+                .map(p -> p.getPartCagnotte() != null ? p.getPartCagnotte() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal rembourse = abandons.stream().map(AbandonLot::getMontantRembourse)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal restitue = somme(abandons, AbandonLot.Statut.AVOIR_RESTITUE, AbandonLot::getSolde);
+        BigDecimal avoirsGeles = somme(abandons, AbandonLot.Statut.AVOIR_GELE, AbandonLot::getSolde);
+        BigDecimal dettes = abandons.stream().filter(a -> a.getStatut() == AbandonLot.Statut.DETTE)
+                .map(AbandonLot::resteARembourser).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal solde = mises.add(rembourse).subtract(versees).subtract(restitue);
+        return new com.tontinepro.tontinepro_backend.api.session.dto.SessionLotResponse.SuiviTresorerie(
+                mises, rembourse, versees, restitue, solde, avoirsGeles, dettes);
+    }
+
+    private static BigDecimal somme(List<AbandonLot> abandons, AbandonLot.Statut statut,
+                                    java.util.function.Function<AbandonLot, BigDecimal> valeur) {
+        return abandons.stream().filter(a -> a.getStatut() == statut).map(valeur)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * La cotisation tombe-t-elle dans la session (de son mois de début à son mois de
+     * fin) et, si {@code jusqua} est donné, au plus tard le mois de cette date ?
+     */
+    static boolean dansSession(SessionTontine session, Cotisation c, LocalDate jusqua) {
+        java.time.YearMonth ym = java.time.YearMonth.of(c.getAnnee(), c.getMois());
+        java.time.YearMonth debut = java.time.YearMonth.from(session.getDateDebut());
+        if (ym.isBefore(debut)) return false;
+        if (session.getDateFin() != null && ym.isAfter(java.time.YearMonth.from(session.getDateFin()))) return false;
+        return jusqua == null || !ym.isAfter(java.time.YearMonth.from(jusqua));
+    }
+
+    private static List<ParticipationLot> actives(List<ParticipationLot> participations) {
+        return participations.stream().filter(p -> !p.isAbandonnee()).toList();
     }
 
     private void reinitialiser(PartLot part) {

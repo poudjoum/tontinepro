@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.api.session.dto;
 
+import com.tontinepro.tontinepro_backend.domain.session.AbandonLot;
 import com.tontinepro.tontinepro_backend.domain.session.OrdreBeneficiaire;
 import com.tontinepro.tontinepro_backend.domain.session.ParticipationLot;
 import com.tontinepro.tontinepro_backend.domain.session.PartLot;
@@ -21,9 +22,26 @@ public record SessionLotResponse(
         Integer nombreTours,
         BigDecimal tresorerieLots,
         List<Adhesion> adhesions,
-        List<Lot> lots
+        List<Lot> lots,
+        List<Abandon> abandons,
+        SuiviTresorerie tresorerie
 ) {
-    public record Adhesion(UUID membreId, String nom, String prenom, String matricule, BigDecimal montantMensuel) {}
+    public record Adhesion(UUID membreId, String nom, String prenom, String matricule,
+                           BigDecimal montantMensuel, boolean abandonnee) {}
+
+    /** Abandon d'un membre : solde = cotisé − reçu (positif = avoir gelé, négatif = dette). */
+    public record Abandon(UUID abandonId, UUID membreId, String nom, String prenom, LocalDate dateAbandon,
+                          String motif, int moisCotises, BigDecimal totalCotise, BigDecimal totalRecu,
+                          BigDecimal solde, AbandonLot.Statut statut, LocalDate dateRestitution,
+                          BigDecimal montantRembourse, BigDecimal resteARembourser) {}
+
+    /**
+     * Trésorerie de la session. {@code solde} = encaissé − décaissé ; négatif, c'est ce
+     * que la trésorerie avance en attendant que les tours des membres partis arrivent.
+     */
+    public record SuiviTresorerie(BigDecimal misesEncaissees, BigDecimal remboursementsDettes,
+                                  BigDecimal partsVersees, BigDecimal avoirsRestitues, BigDecimal solde,
+                                  BigDecimal avoirsGelesARestituer, BigDecimal dettesARecouvrer) {}
 
     /**
      * Part d'un co-bénéficiaire. Avant versement, {@code montantRetenue} et
@@ -31,7 +49,7 @@ public record SessionLotResponse(
      */
     public record PartMembre(UUID partId, UUID membreId, String nom, String prenom,
                              BigDecimal montantMensuel, BigDecimal partCagnotte,
-                             boolean verse, LocalDate dateVersement,
+                             boolean verse, boolean annulee, LocalDate dateVersement,
                              BigDecimal montantRetenue, BigDecimal montantVerse) {}
 
     public record Lot(UUID ordreBeneficiaireId, int ordre, LocalDate dateTour, boolean beneficie,
@@ -44,11 +62,14 @@ public record SessionLotResponse(
                                            List<OrdreBeneficiaire> ordres,
                                            List<PartLot> parts,
                                            Map<UUID, LocalDate> datesTour,
-                                           Map<UUID, BigDecimal> retenuesPrevues) {
+                                           Map<UUID, BigDecimal> retenuesPrevues,
+                                           List<AbandonLot> abandons,
+                                           SuiviTresorerie tresorerie) {
 
         List<Adhesion> adhesions = participations.stream()
                 .map(p -> new Adhesion(p.getMembre().getId(), p.getMembre().getNom(),
-                        p.getMembre().getPrenom(), p.getMembre().getMatricule(), p.getMontantMensuel()))
+                        p.getMembre().getPrenom(), p.getMembre().getMatricule(), p.getMontantMensuel(),
+                        p.isAbandonnee()))
                 .toList();
 
         Map<UUID, List<PartLot>> parParTour = parts.stream()
@@ -64,19 +85,26 @@ public record SessionLotResponse(
                 })
                 .toList();
 
+        List<Abandon> vueAbandons = abandons.stream()
+                .map(a -> new Abandon(a.getId(), a.getMembre().getId(), a.getMembre().getNom(),
+                        a.getMembre().getPrenom(), a.getDateAbandon(), a.getMotif(), a.getMoisCotises(),
+                        a.getTotalCotise(), a.getTotalRecu(), a.getSolde(), a.getStatut(),
+                        a.getDateRestitution(), a.getMontantRembourse(), a.resteARembourser()))
+                .toList();
+
         return new SessionLotResponse(sessionId, figee, dateFigeage, montantLot, cagnotte,
-                nombreTours, tresorerieLots, adhesions, lots);
+                nombreTours, tresorerieLots, adhesions, lots, vueAbandons, tresorerie);
     }
 
     private static PartMembre partMembre(PartLot pl, Map<UUID, BigDecimal> retenuesPrevues) {
         BigDecimal retenue = pl.isVerse()
                 ? pl.getMontantRetenue()
-                : retenuesPrevues.getOrDefault(pl.getId(), BigDecimal.ZERO);
+                : pl.isAnnulee() ? null : retenuesPrevues.getOrDefault(pl.getId(), BigDecimal.ZERO);
         BigDecimal verse = pl.isVerse()
                 ? pl.getMontantVerse()
-                : (pl.getPartCagnotte() != null ? pl.getPartCagnotte().subtract(retenue) : null);
+                : (pl.getPartCagnotte() != null && retenue != null ? pl.getPartCagnotte().subtract(retenue) : null);
         return new PartMembre(pl.getId(), pl.getMembre().getId(), pl.getMembre().getNom(),
                 pl.getMembre().getPrenom(), pl.getMontantMensuel(), pl.getPartCagnotte(),
-                pl.isVerse(), pl.getDateVersement(), retenue, verse);
+                pl.isVerse(), pl.isAnnulee(), pl.getDateVersement(), retenue, verse);
     }
 }

@@ -73,8 +73,11 @@
           <ul class="divide-y divide-gray-100 text-sm">
             @for (a of l.adhesions; track a.membreId) {
               <li class="flex justify-between py-1.5">
-                <span>{{ a.prenom }} {{ a.nom }}</span>
-                <span class="font-medium">{{ a.montantMensuel | number:'1.0-0' }} FCFA</span>
+                <span [class.text-gray-400]="a.abandonnee">{{ a.prenom }} {{ a.nom }}</span>
+                <span class="font-medium" [class.text-gray-400]="a.abandonnee">
+                  @if (a.abandonnee) { <span class="text-[10px] font-normal">parti · </span> }
+                  {{ a.montantMensuel | number:'1.0-0' }} FCFA
+                </span>
               </li>
             } @empty {
               <li class="py-2 text-xs text-gray-400">Inscrivez la mise de chaque membre pour pouvoir composer les lots.</li>
@@ -271,15 +274,19 @@
                         @if (p.verse && p.dateVersement) { · le {{ p.dateVersement | date:'dd/MM' }} }
                       </p>
                     </div>
+                    @if (p.annulee) {
+                      <span class="text-[11px] text-gray-400">annulée · départ</span>
+                    } @else {
                     <span class="text-sm font-semibold tabular-nums"
                           [class.text-green-700]="p.verse" [class.text-gray-700]="!p.verse">
                       {{ p.montantVerse | number:'1.0-0' }}
                     </span>
-                    @if (p.verse) {
+                    }
+                    @if (!p.annulee && p.verse) {
                       <button type="button" (click)="annulerVersement(p)" [disabled]="saving()"
                               [attr.aria-label]="'Annuler le versement de ' + p.prenom + ' ' + p.nom"
                               class="text-[11px] text-gray-500 underline px-1 py-2 disabled:opacity-50">Annuler</button>
-                    } @else {
+                    } @else if (!p.annulee) {
                       <button type="button" (click)="verserPart(p)" [disabled]="saving()"
                               class="bg-primary-600 text-white rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50">
                         Verser
@@ -292,6 +299,154 @@
           }
         </section>
       }
+
+      <!-- Trésorerie de la session -->
+      @if (l.figee || l.abandons.length > 0) {
+        <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-2">
+          <div class="flex items-end justify-between">
+            <div>
+              <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Trésorerie de la session</h2>
+              <p class="text-[11px] text-gray-500">Mises encaissées − parts versées.</p>
+            </div>
+            <div class="text-right">
+              <p class="text-2xl font-semibold tabular-nums"
+                 [class.text-green-700]="l.tresorerie.solde >= 0" [class.text-amber-700]="l.tresorerie.solde < 0">
+                {{ l.tresorerie.solde | number:'1.0-0' }}
+              </p>
+              <p class="text-[11px] uppercase tracking-wide"
+                 [class.text-gray-500]="l.tresorerie.solde >= 0" [class.text-amber-700]="l.tresorerie.solde < 0">
+                {{ l.tresorerie.solde < 0 ? '⚠ avancé par la trésorerie' : 'en caisse' }}
+              </p>
+            </div>
+          </div>
+          <dl class="text-xs space-y-1 tabular-nums">
+            <div class="flex justify-between"><dt class="text-gray-500">Mises encaissées</dt><dd>{{ l.tresorerie.misesEncaissees | number:'1.0-0' }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Parts versées (brut)</dt><dd>− {{ l.tresorerie.partsVersees | number:'1.0-0' }}</dd></div>
+            @if (l.tresorerie.remboursementsDettes > 0) {
+              <div class="flex justify-between"><dt class="text-gray-500">Dettes remboursées</dt><dd>{{ l.tresorerie.remboursementsDettes | number:'1.0-0' }}</dd></div>
+            }
+            @if (l.tresorerie.avoirsRestitues > 0) {
+              <div class="flex justify-between"><dt class="text-gray-500">Avoirs restitués</dt><dd>− {{ l.tresorerie.avoirsRestitues | number:'1.0-0' }}</dd></div>
+            }
+            @if (l.tresorerie.avoirsGelesARestituer > 0) {
+              <div class="flex justify-between border-t border-gray-100 pt-1"><dt class="text-gray-500">Avoirs gelés à restituer en fin de session</dt><dd class="font-semibold">{{ l.tresorerie.avoirsGelesARestituer | number:'1.0-0' }}</dd></div>
+            }
+            @if (l.tresorerie.dettesARecouvrer > 0) {
+              <div class="flex justify-between"><dt class="text-gray-500">Dettes à recouvrer</dt><dd class="font-semibold text-red-700">{{ l.tresorerie.dettesARecouvrer | number:'1.0-0' }}</dd></div>
+            }
+          </dl>
+        </section>
+      }
+
+      <!-- Départs en cours de session -->
+      <section class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Départs ({{ l.abandons.length }})</h2>
+            <p class="text-[11px] text-gray-500">Avant son tour : avoir gelé, rendu en fin de session. Après : dette.</p>
+          </div>
+          @if (!formDepart() && inscritsActifs().length > 0) {
+            <button type="button" (click)="formDepart.set(true)"
+                    class="border border-gray-200 text-gray-700 rounded-lg px-3 py-2 text-xs font-semibold">
+              Déclarer un départ
+            </button>
+          }
+        </div>
+
+        @if (formDepart()) {
+          <div class="rounded-lg bg-gray-50 p-3 space-y-2">
+            <select [(ngModel)]="departMembreId" aria-label="Membre qui part"
+                    class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+              <option value="">— Membre qui part —</option>
+              @for (a of inscritsActifs(); track a.membreId) {
+                <option [value]="a.membreId">{{ a.prenom }} {{ a.nom }} ({{ a.montantMensuel | number:'1.0-0' }}/mois)</option>
+              }
+            </select>
+            <div class="grid grid-cols-[140px_1fr] gap-2">
+              <label class="text-[10px] text-gray-500">
+                Date du départ
+                <input type="date" [(ngModel)]="departDate"
+                       class="mt-0.5 w-full border border-gray-200 rounded-lg px-2 py-2 text-xs" />
+              </label>
+              <label class="text-[10px] text-gray-500">
+                Motif (facultatif)
+                <input type="text" [(ngModel)]="departMotif" maxlength="500"
+                       class="mt-0.5 w-full border border-gray-200 rounded-lg px-2 py-2 text-xs" />
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" (click)="formDepart.set(false)"
+                      class="border border-gray-200 rounded-lg py-2 text-xs text-gray-600">Annuler</button>
+              <button type="button" (click)="declarerDepart()" [disabled]="saving() || !departMembreId"
+                      class="bg-gray-800 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">
+                Enregistrer le départ
+              </button>
+            </div>
+          </div>
+        }
+
+        @for (a of l.abandons; track a.abandonId) {
+          <div class="border rounded-lg p-3 space-y-1"
+               [class.border-red-200]="a.statut === 'DETTE'"
+               [class.border-gray-100]="a.statut !== 'DETTE'">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-gray-800">{{ a.prenom }} {{ a.nom }}</p>
+                <p class="text-[11px] text-gray-500 tabular-nums">
+                  parti le {{ a.dateAbandon | date:'dd/MM/yyyy' }} · {{ a.moisCotises }} mois cotisé(s)
+                  @if (a.motif) { · {{ a.motif }} }
+                </p>
+              </div>
+              @switch (a.statut) {
+                @case ('AVOIR_GELE') { <span class="shrink-0 text-[11px] font-semibold text-amber-700">❄ avoir gelé</span> }
+                @case ('AVOIR_RESTITUE') { <span class="shrink-0 text-[11px] font-semibold text-green-700">✓ restitué le {{ a.dateRestitution | date:'dd/MM' }}</span> }
+                @case ('DETTE') { <span class="shrink-0 text-[11px] font-semibold text-red-700">⚠ dette</span> }
+                @case ('DETTE_SOLDEE') { <span class="shrink-0 text-[11px] font-semibold text-green-700">✓ dette soldée</span> }
+                @default { <span class="shrink-0 text-[11px] text-gray-500">solde nul</span> }
+              }
+            </div>
+            <dl class="grid grid-cols-3 gap-2 text-[11px] tabular-nums">
+              <div><dt class="text-gray-500">Cotisé</dt><dd class="font-medium">{{ a.totalCotise | number:'1.0-0' }}</dd></div>
+              <div><dt class="text-gray-500">Reçu</dt><dd class="font-medium">{{ a.totalRecu | number:'1.0-0' }}</dd></div>
+              <div>
+                <dt class="text-gray-500">{{ a.solde < 0 ? 'Doit' : 'À rendre' }}</dt>
+                <dd class="font-semibold" [class.text-red-700]="a.solde < 0">
+                  {{ (a.solde < 0 ? a.resteARembourser : a.solde) | number:'1.0-0' }}
+                </dd>
+              </div>
+            </dl>
+
+            @if (a.statut === 'AVOIR_GELE') {
+              <button type="button" (click)="restituer(a)" [disabled]="saving() || !tousToursVerses()"
+                      class="w-full bg-primary-600 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-40">
+                Restituer {{ a.solde | number:'1.0-0' }} FCFA
+              </button>
+              @if (!tousToursVerses()) {
+                <p class="text-[10px] text-gray-500">Restituable en fin de session, quand tous les tours sont versés.</p>
+              }
+            }
+            @if (a.statut === 'DETTE') {
+              <div class="grid grid-cols-[1fr_auto] gap-2">
+                <input type="number" [(ngModel)]="remboursements[a.abandonId]" min="1" [max]="a.resteARembourser"
+                       [attr.aria-label]="'Montant remboursé par ' + a.prenom + ' ' + a.nom" placeholder="Montant remboursé"
+                       class="border border-gray-200 rounded-lg px-3 py-2 text-xs text-right tabular-nums" />
+                <button type="button" (click)="rembourser(a)" [disabled]="saving()"
+                        class="bg-gray-800 text-white rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50">
+                  Enregistrer
+                </button>
+              </div>
+            }
+            @if (a.statut === 'AVOIR_GELE' || a.statut === 'SOLDE_NUL' || (a.statut === 'DETTE' && a.montantRembourse === 0)) {
+              <button type="button" (click)="annulerDepart(a)" [disabled]="saving()"
+                      class="text-[11px] text-gray-500 underline py-1 disabled:opacity-50">Annuler ce départ</button>
+            }
+          </div>
+        } @empty {
+          @if (!formDepart()) {
+            <p class="text-xs text-gray-400">Aucun départ. Si un membre arrête de cotiser, déclarez son départ ici.</p>
+          }
+        }
+      </section>
     }
   }
 </div>

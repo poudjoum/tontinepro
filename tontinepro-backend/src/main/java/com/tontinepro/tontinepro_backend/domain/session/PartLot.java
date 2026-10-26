@@ -60,6 +60,11 @@ public class PartLot {
     @Column(name = "montant_verse", precision = 15, scale = 2)
     private BigDecimal montantVerse;
 
+    /** Part annulée par l'abandon du membre : elle ne sera pas versée. */
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean annulee = false;
+
     /** Année du fond de caisse sur laquelle la retenue a été imputée. */
     @Column(name = "annee_retenue")
     private Short anneeRetenue;

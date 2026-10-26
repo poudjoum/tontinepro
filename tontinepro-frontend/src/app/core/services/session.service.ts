@@ -91,6 +91,24 @@ export class SessionService {
     return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/parts/${partId}/annuler-versement`, {});
   }
 
+  /** Départ d'un membre en cours de session à lot. */
+  declarerAbandonLot(sessionId: string, membreId: string, dateAbandon: string | null, motif: string | null) {
+    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/abandons`, { membreId, dateAbandon, motif });
+  }
+
+  restituerAvoirLot(sessionId: string, abandonId: string) {
+    return this.http.post<SessionLotResponse>(`${this.api}/${sessionId}/lot/abandons/${abandonId}/restituer`, {});
+  }
+
+  rembourserDetteLot(sessionId: string, abandonId: string, montant: number) {
+    return this.http.post<SessionLotResponse>(
+      `${this.api}/${sessionId}/lot/abandons/${abandonId}/remboursements`, { montant });
+  }
+
+  annulerAbandonLot(sessionId: string, abandonId: string) {
+    return this.http.delete<SessionLotResponse>(`${this.api}/${sessionId}/lot/abandons/${abandonId}`);
+  }
+
   /** Composition proposée (combinaisons exactes), non enregistrée. */
   getCompositionLot(sessionId: string) {
     return this.http.get<CompositionLotsResponse>(`${this.api}/${sessionId}/lot/composition`);
