@@ -7,7 +7,7 @@ pptx.layout = 'LAYOUT_WIDE';
 pptx.author  = 'Poudjoum Leutcho Gedeon Rodrigue';
 pptx.company = 'JumpyTech';
 pptx.subject = 'TontinePro — Présentation';
-pptx.title   = 'TontinePro v1.6';
+pptx.title   = 'TontinePro v1.7';
 
 const PRIMARY = '4F46E5';
 const DARK    = '1E293B';
@@ -18,7 +18,7 @@ const AMBER   = 'F59E0B';
 const RED     = 'EF4444';
 
 function addFooter(slide, num) {
-  slide.addText(`TontinePro v1.6  ·  JumpyTech  ·  © 2026`, {
+  slide.addText(`TontinePro v1.7  ·  JumpyTech  ·  © 2026`, {
     x: 0.3, y: 6.9, w: 12, h: 0.3,
     fontSize: 8, color: '94A3B8', align: 'center',
   });
@@ -51,7 +51,7 @@ sl.addText('La plateforme digitale pour gérer votre tontine\navec simplicité, 
   x: 1, y: 3.0, w: 10.8, h: 1.0,
   fontSize: 18, color: 'C7D2FE', align: 'center',
 });
-sl.addText('Version 1.6  ·  Octobre 2026  ·  JumpyTech', {
+sl.addText('Version 1.7  ·  Octobre 2026  ·  JumpyTech', {
   x: 1, y: 4.2, w: 10.8, h: 0.5,
   fontSize: 13, color: '818CF8', align: 'center',
 });
@@ -266,7 +266,7 @@ const lotSteps = [
   { n: '1', t: 'Chaque membre choisit sa mise', d: 'Libre : 10 000, 25 000, 60 000… FCFA par mois' },
   { n: '2', t: 'L\'application compose des lots exacts', d: '10 000 + 10 000 + 30 000 = un lot de 50 000 ; le bureau ajuste puis fige' },
   { n: '3', t: 'Chaque part est versée séparément', d: 'Mise × nombre de tours, moins le reste dû du fond de caisse' },
-  { n: '4', t: 'Un départ ne bloque pas le groupe', d: 'Avant son tour : avoir gelé, rendu en fin de session. Après : dette suivie' },
+  { n: '4', t: 'Un départ ne bloque pas le groupe', d: 'Avant son tour : avoir gelé, rendu au tour de remboursement. Après : dette suivie' },
 ];
 lotSteps.forEach((s, i) => {
   const y = 2.0 + i * 1.1;
@@ -284,10 +284,11 @@ const lotPoints = [
   '✅  Retenue du fond membre par membre',
   '✅  Rapport de tour par bénéficiaire',
   '✅  Avoirs gelés et dettes suivis',
+  '✅  Tour de remboursement des partis',
   '✅  Trésorerie de la session en direct',
 ];
 lotPoints.forEach((item, i) => {
-  sl.addText(item, { x: 8.3, y: 2.1 + i * 0.7, w: 4.1, h: 0.6, fontSize: 11, color: '3730A3' });
+  sl.addText(item, { x: 8.3, y: 2.1 + i * 0.62, w: 4.1, h: 0.6, fontSize: 11, color: '3730A3' });
 });
 
 addFooter(sl, 7);

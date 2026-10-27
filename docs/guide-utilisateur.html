@@ -125,7 +125,7 @@
     <div class="cover-logo">T</div>
     <h1>TontinePro</h1>
     <p class="subtitle">Guide Utilisateur Complet</p>
-    <span class="version">Version 1.6 — Octobre 2026</span>
+    <span class="version">Version 1.7 — Octobre 2026</span>
   </div>
 
   <!-- Table des matières -->
@@ -145,7 +145,7 @@
       <li><a href="#historique">Rattrapage historique — Import Excel</a></li>
       <li><a href="#multi-tontine">Plusieurs tontines — choisir sa tontine courante</a></li>
       <li><a href="#outils-bureau">Outils du bureau — reprise, fond de caisse antérieur, tontine à lot, import des membres</a></li>
-      <li><a href="#tontine-lot">Tontine à lot — lots partagés, versements, départs</a></li>
+      <li><a href="#tontine-lot">Tontine à lot — lots partagés, versements, départs, remboursement</a></li>
     </ol>
   </div>
 
@@ -746,6 +746,17 @@
       </div>
     </div>
 
+    <h3>Payer un tour : montant remis, correction, avance</h3>
+    <ul>
+      <li><strong>Montant remis</strong> — au moment de « Valider le bénéfice », le bureau peut saisir le montant
+        réellement remis au bénéficiaire. Laissé vide, il est calculé : Σ cotisations + Σ repas − fond annuel.</li>
+      <li><strong>Corriger un tour payé</strong> — « ✎ Corriger le montant » sur un tour bénéficié remplace le montant
+        enregistré (session en cours). Le rapport déjà envoyé aux membres n'est pas renvoyé.</li>
+      <li><strong>Avance sur un tour à venir</strong> — « ＋ Avance sur ce tour » enregistre une somme versée avant la
+        date, avec sa date. Elle reste visible sur le tour (modifiable ou supprimable) et le montant remis le jour
+        du tour l'inclut, avec la mention « dont avance ».</li>
+    </ul>
+
     <h3>Rapport de fin de session</h3>
     <p>À tout moment — et automatiquement à la <strong>clôture</strong> d'une session — le secrétaire peut générer un <strong>bilan financier complet</strong> via le bouton <strong>📑 Rapport de fin de session</strong>. Ce document est consultable par tous les membres et constitue un historique vérifiable de la session.</p>
     <ul>
@@ -956,7 +967,7 @@
   <div class="section" id="tontine-lot">
     <div class="section-header">
       <div class="section-icon icon-purple">🎲</div>
-      <h2>14. Tontine à lot — lots partagés, versements, départs</h2>
+      <h2>14. Tontine à lot — lots partagés, versements, départs, remboursement</h2>
     </div>
 
     <p>Dans une tontine à lot, le <strong>lot</strong> est un montant fixe (par exemple 50 000 FCFA) et chaque membre
@@ -1024,8 +1035,8 @@
       dans la session − les parts qu'il a déjà reçues</strong>.</p>
     <ul>
       <li><strong>Il n'avait pas encore eu son tour</strong> : son argent est un <strong>avoir gelé</strong>
-        (sa mise × les mois cotisés), rendu en fin de session. Le bouton « Restituer » s'active quand tous les tours
-        sont versés.</li>
+        (sa mise × les mois cotisés), rendu en fin de session par le <a href="#tour-remboursement">tour de
+        remboursement</a>, ou un à un avec le bouton « Restituer » quand tous les tours sont versés.</li>
       <li><strong>Il avait déjà eu son tour</strong> : il a une <strong>dette</strong> envers le groupe (ce qu'il a
         reçu − ce qu'il a cotisé). Le bureau enregistre ses remboursements au fur et à mesure, jusqu'à « dette soldée ».</li>
       <li>Ses parts pas encore versées sont annulées ; <strong>les autres membres de son lot gardent la leur</strong>.
@@ -1034,6 +1045,7 @@
       <li>Un départ saisi par erreur peut être annulé tant qu'aucun argent n'a été rendu ou remboursé.
         Pense ensuite à régénérer ses cotisations du mois.</li>
     </ul>
+
 
     <div class="tip">
       <div class="tip-title">💡 Pourquoi rendre l'avoir en fin de session</div>
@@ -1044,10 +1056,49 @@
         groupe</strong> ; le rendre plus tôt demanderait de l'argent en plus.</p>
     </div>
 
-    <h3>5. Trésorerie de la session</h3>
+    <h4 style="margin:14px 0 6px;font-size:14px;">Session pas encore figée (tours tenus à l'ancienne)</h4>
+    <p>Une session reprise en cours, qui tourne encore avec un tour par membre, n'a pas de mises inscrites
+      fiables. Le bureau saisit alors lui-même, lors du départ, le <strong>nombre de mois</strong> et le
+      <strong>montant réellement cotisés</strong> par le membre ; ce qu'il a reçu reprend ses tours déjà payés.</p>
+    <ul>
+      <li>Ses tours <strong>pas encore payés</strong> sont retirés de l'ordre ; annuler le départ les remet en place.</li>
+      <li>La carte <strong>« Cagnotte après les départs »</strong> montre la cagnotte par tour une fois retirées les
+        mises des membres partis, les tours déjà payés et ceux à venir.</li>
+    </ul>
+
+    <h3 id="tour-remboursement">5. Le tour de remboursement</h3>
+    <p>Quand des membres sont partis avec un avoir gelé, le bureau programme un <strong>dernier tour</strong>, à sa
+      propre date, qui sert à leur rendre leur argent. Les membres choisis par le bureau y cotisent ; à la clôture,
+      <strong>tous les avoirs gelés sont rendus en une fois</strong>.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-content">
+        <div class="step-title">Touche « Programmer le tour de remboursement »</div>
+        <div class="step-desc">Choisis la date (proposée : un mois après le dernier tour) et coche les membres qui
+          cotisent. L'application coche d'office ceux qui ont reçu le plus gros multiple de leur mise (par exemple
+          ×12). Chacun verse sa mise, modifiable. La collecte prévue s'affiche face aux avoirs à rendre.</div></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-content">
+        <div class="step-title">Encaisse chaque cotisant</div>
+        <div class="step-desc">Touche « Encaisser » quand un membre a payé ; un encaissement fait par erreur s'annule.
+          Tant que le tour n'est pas clos, « Modifier » change la date, les cotisants ou les montants
+          (un montant changé est à réencaisser) et « Supprimer » l'efface.</div></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-content">
+        <div class="step-title">Touche « Rendre X FCFA aux membres partis »</div>
+        <div class="step-desc">Possible quand tous les autres tours sont payés et chaque cotisant encaissé (retire du
+          tour celui qui ne paiera pas). Chaque avoir gelé passe à « restitué ». « Rouvrir le tour » annule la
+          clôture : les avoirs redeviennent gelés.</div></div></div>
+    </div>
+    <div class="tip">
+      <div class="tip-title">💡 Collecte et avoirs ne tombent pas juste</div>
+      <p>Les avoirs sont toujours rendus en entier. Si la collecte est plus faible, la trésorerie
+        <strong>avance le manque</strong> ; si elle est plus forte, la trésorerie <strong>garde le surplus</strong>.
+        L'écart est affiché avant la clôture et rappelé dans la confirmation.</p>
+    </div>
+
+    <h3>6. Trésorerie de la session</h3>
     <p>La carte <strong>« Trésorerie de la session »</strong> montre les mises encaissées moins les parts versées.
       Un solde négatif signale ce que la trésorerie <strong>avance</strong> en attendant le tour d'un membre parti.
-      Elle affiche aussi les avoirs gelés à rendre et les dettes à recouvrer.</p>
+      Elle affiche aussi les avoirs gelés à rendre, les dettes à recouvrer et ce que le tour de remboursement a
+      encaissé.</p>
 
     <div class="warning">
       <div class="warning-title">⚠️ Clôture de la session</div>
@@ -1058,7 +1109,7 @@
 
   <!-- Footer -->
   <div style="text-align:center;padding:32px 0 16px;color:#94a3b8;font-size:12px;border-top:1px solid #e2e8f0;margin-top:16px;">
-    <div style="font-weight:700;font-size:14px;color:#4f46e5;margin-bottom:4px;">TontinePro v1.6</div>
+    <div style="font-weight:700;font-size:14px;color:#4f46e5;margin-bottom:4px;">TontinePro v1.7</div>
     <div style="margin-bottom:10px;">tontinepro.tontinepro.uk · Octobre 2026</div>
     <div style="background:#f8fafc;border-radius:12px;padding:14px 20px;display:inline-block;text-align:left;margin-bottom:10px;">
       <div style="font-weight:700;font-size:12px;color:#1e293b;margin-bottom:6px;">Auteur &amp; Contact</div>
