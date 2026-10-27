@@ -161,6 +161,11 @@ export class SessionService {
       `${this.api}/${sessionId}/beneficiaires/${ordreBeneficiaireId}/montant-recu`, { montantRecu });
   }
 
+  /** Caisse globale de la tontine à l'ouverture de la session. */
+  enregistrerSoldeReporte(sessionId: string, montant: number) {
+    return this.http.patch<SessionResponse>(`${this.api}/${sessionId}/solde-reporte`, { montant });
+  }
+
   /** Avance sur un tour pas encore payé ; montant 0 = supprimer l'avance. */
   enregistrerAvance(sessionId: string, ordreBeneficiaireId: string, montant: number, dateAvance: string | null) {
     return this.http.patch<SessionResponse>(

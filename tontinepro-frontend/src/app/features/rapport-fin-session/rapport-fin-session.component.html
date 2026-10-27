@@ -55,6 +55,12 @@
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-4 space-y-2 print-card">
         <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Récapitulatif financier</h2>
 
+        @if (r.soldeReporte > 0) {
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500">Solde reporté (caisse à l'ouverture)</span>
+            <span class="font-medium text-gray-800">{{ fcfa(r.soldeReporte) }}</span>
+          </div>
+        }
         <div class="flex justify-between text-sm">
           <span class="text-gray-500">Σ Cotisations collectées</span>
           <span class="font-medium text-gray-800">{{ fcfa(r.totalCotisations) }}</span>
@@ -93,6 +99,12 @@
             <p class="text-[11px] text-gray-500">Prêts en cours (montant restant)</p>
             <p class="text-sm font-bold text-gray-800">{{ fcfa(r.pretsEnCours) }}</p>
           </div>
+          @if (r.arrieresRestants > 0) {
+            <div class="bg-red-50 border border-red-200 rounded-lg px-3 py-2 col-span-2">
+              <p class="text-[11px] text-red-600">Arriérés des membres restant dus</p>
+              <p class="text-sm font-bold text-red-800">{{ fcfa(r.arrieresRestants) }}</p>
+            </div>
+          }
         </div>
       </div>
 

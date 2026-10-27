@@ -18,6 +18,7 @@ public record SessionResponse(
         int nombreMembres,
         Integer cibleMembres,
         BigDecimal potReserve,
+        BigDecimal soldeReporte,
         List<OrdreBeneficiaireResponse> beneficiaires
 ) {
     public static SessionResponse from(SessionTontine s, List<OrdreBeneficiaireResponse> beneficiaires) {
@@ -32,6 +33,7 @@ public record SessionResponse(
                 s.getNombreMembres(),
                 s.getCibleMembres(),
                 s.getPotReserve(),
+                s.getSoldeReporte(),
                 beneficiaires
         );
     }

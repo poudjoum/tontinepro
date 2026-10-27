@@ -56,6 +56,11 @@ public class SessionTontine {
     @Builder.Default
     private BigDecimal potReserve = BigDecimal.ZERO;
 
+    /** Caisse globale de la tontine à l'ouverture de la session, saisie par le bureau. */
+    @Column(name = "solde_reporte", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal soldeReporte = BigDecimal.ZERO;
+
     // ── Mode « tontine à lot » ────────────────────────────────────────────────
 
     /** Cagnotte (pot versé à chaque tour) figée au moment de la clôture des adhésions. */

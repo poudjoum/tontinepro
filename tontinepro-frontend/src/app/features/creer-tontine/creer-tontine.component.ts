@@ -4,6 +4,7 @@ import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TontineService } from '../../core/services/tontine.service';
 import { AuthService } from '../../core/services/auth.service';
+import { TontineContextService } from '../../core/services/tontine-context.service';
 
 type Etape = 'tontine' | 'compte' | 'confirmation';
 
@@ -16,6 +17,7 @@ export class CreerTontineComponent {
   private tontineSvc = inject(TontineService);
   private authSvc    = inject(AuthService);
   private router     = inject(Router);
+  private ctx        = inject(TontineContextService);
 
   etape      = signal<Etape>('tontine');
   submitting = signal(false);
@@ -71,8 +73,12 @@ export class CreerTontineComponent {
         membreNom: this.membre.nom,
         membrePrenom: this.membre.prenom,
       }).subscribe({
-        next: () => {
+        next: t => {
           this.submitting.set(false);
+          // La nouvelle tontine devient la tontine courante : recharger la liste du compte
+          this.ctx.reset();
+          this.ctx.selectionner(t.id);
+          this.ctx.init();
           this.router.navigate(['/admin/onboarding']);
         },
         error: e => { this.error.set(e.error?.detail ?? e.error?.message ?? 'Erreur création'); this.submitting.set(false); },

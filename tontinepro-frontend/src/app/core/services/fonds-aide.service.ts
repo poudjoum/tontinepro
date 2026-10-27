@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { VersementsAnterieursRequest, VersementsAnterieursResponse } from '../models/aide.model';
+import { ArriereMembre, VersementsAnterieursRequest, VersementsAnterieursResponse } from '../models/aide.model';
 
 /**
  * Fonds d'aide (trésorerie de solidarité) : enregistrement du paiement des
@@ -26,6 +26,29 @@ export class FondsAideService {
   getVersementsAnterieurs(tontineId: string, annee: number) {
     return this.http.get<VersementsAnterieursResponse>(
       `${this.api}/${tontineId}/versements-anterieurs`, { params: { annee } });
+  }
+
+  /** Arriérés des membres (fonds non cotisé avant l'application). */
+  getArrieres(tontineId: string) {
+    return this.http.get<ArriereMembre[]>(`${this.api}/${tontineId}/arrieres`);
+  }
+
+  creerArriere(tontineId: string, req: { membreId: string; libelle: string | null; montant: number; dateConstat: string | null }) {
+    return this.http.post<ArriereMembre[]>(`${this.api}/${tontineId}/arrieres`, req);
+  }
+
+  supprimerArriere(tontineId: string, arriereId: string) {
+    return this.http.delete<ArriereMembre[]>(`${this.api}/${tontineId}/arrieres/${arriereId}`);
+  }
+
+  reglerArriere(tontineId: string, arriereId: string, montant: number, dateReglement: string | null) {
+    return this.http.post<ArriereMembre[]>(
+      `${this.api}/${tontineId}/arrieres/${arriereId}/reglements`, { montant, dateReglement });
+  }
+
+  annulerReglementArriere(tontineId: string, arriereId: string, reglementId: string) {
+    return this.http.delete<ArriereMembre[]>(
+      `${this.api}/${tontineId}/arrieres/${arriereId}/reglements/${reglementId}`);
   }
 
   enregistrerVersementsAnterieurs(tontineId: string, req: VersementsAnterieursRequest) {

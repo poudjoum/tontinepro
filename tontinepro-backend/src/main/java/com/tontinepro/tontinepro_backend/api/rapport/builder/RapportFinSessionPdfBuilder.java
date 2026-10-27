@@ -92,6 +92,9 @@ public class RapportFinSessionPdfBuilder {
         try { t.setWidths(new float[]{62f, 38f}); } catch (DocumentException ignored) {}
         t.setSpacingAfter(8f);
 
+        if (r.soldeReporte() != null && r.soldeReporte().signum() > 0) {
+            ligne(t, "Solde reporté (caisse à l'ouverture)", fcfa(r.soldeReporte()), fLabel, fValeur, GRIS_CLAIR);
+        }
         ligne(t, "Σ Cotisations collectées (part tontine)", fcfa(r.totalCotisations()), fLabel, fValeur, GRIS_CLAIR);
         ligne(t, "Σ Repas collectés", fcfa(r.totalRepas()), fLabel, fValeur, GRIS_CLAIR);
         ligne(t, "Σ Fonds d'aide collecté", fcfa(r.totalFondAide()), fLabel,
@@ -106,6 +109,9 @@ public class RapportFinSessionPdfBuilder {
         ligne(t, "Intérêts générés par les prêts (soldés)", fcfa(r.pretsInteretsGeneres()), fLabel,
                 FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, VERT), new Color(232, 245, 233));
         ligne(t, "Prêts en cours (montant restant)", fcfa(r.pretsEnCours()), fLabel, fValeur, GRIS_CLAIR);
+        if (r.arrieresRestants() != null && r.arrieresRestants().signum() > 0) {
+            ligne(t, "Arriérés des membres restant dus", fcfa(r.arrieresRestants()), fLabel, fValeur, GRIS_CLAIR);
+        }
 
         doc.add(t);
     }

@@ -27,6 +27,8 @@ export interface SessionResponse {
   nombreMembres: number;
   cibleMembres: number | null;
   potReserve: number;
+  /** Caisse globale de la tontine à l'ouverture de la session. */
+  soldeReporte: number;
   beneficiaires: OrdreBeneficiaireResponse[];
 }
 
@@ -209,6 +211,8 @@ export interface RapportFinSessionResponse {
   pretsTotalDecaisse: number;
   pretsInteretsGeneres: number;
   pretsEnCours: number;
+  soldeReporte: number;
+  arrieresRestants: number;
   fiches: FicheMembreFinSession[];
 }
 

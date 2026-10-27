@@ -178,6 +178,23 @@ export class SessionsComponent implements OnInit {
       () => this.avanceId.set(null));
   }
 
+  // ── Solde reporté (caisse globale à l'ouverture) ──────────────────────────
+  editionSoldeReporte = signal(false);
+  soldeReporteSaisi: number | null = null;
+
+  ouvrirSoldeReporte(session: SessionResponse): void {
+    this.soldeReporteSaisi = session.soldeReporte || null;
+    this.editionSoldeReporte.set(true);
+  }
+
+  enregistrerSoldeReporte(session: SessionResponse): void {
+    const montant = Number(this.soldeReporteSaisi ?? 0);
+    if (isNaN(montant) || montant < 0) { this.error.set('Saisissez un solde reporté positif ou nul.'); return; }
+    this.appliquer(this.sessionSvc.enregistrerSoldeReporte(session.id, montant),
+      `Solde reporté enregistré : ${montant.toLocaleString('fr-FR')} FCFA.`,
+      () => this.editionSoldeReporte.set(false));
+  }
+
   private appliquer(appel: ReturnType<SessionService['corrigerMontantRecu']>, message: string, apres: () => void): void {
     this.saving.set(true);
     this.error.set('');

@@ -1,11 +1,11 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, effect, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TontineService } from '../../../core/services/tontine.service';
 import { DemandeService } from '../../../core/services/demande.service';
 import { SessionService } from '../../../core/services/session.service';
 import { MembreService } from '../../../core/services/membre.service';
 import { FondsAideService } from '../../../core/services/fonds-aide.service';
 import { TontineResponse } from '../../../core/models/tontine.model';
+import { TontineContextService } from '../../../core/services/tontine-context.service';
 
 interface Etape {
   id: string;
@@ -24,7 +24,6 @@ interface Etape {
   templateUrl: './onboarding.component.html',
 })
 export class OnboardingComponent implements OnInit {
-  private tontSvc = inject(TontineService);
   private demSvc  = inject(DemandeService);
   private sesSvc  = inject(SessionService);
   private mbrSvc  = inject(MembreService);
@@ -41,16 +40,19 @@ export class OnboardingComponent implements OnInit {
     return total ? Math.round(this.etapesCompletes() / total * 100) : 0;
   });
 
-  ngOnInit(): void {
-    this.tontSvc.getAll().subscribe({
-      next: list => {
-        const t = list[0];
-        if (!t) { this.loading.set(false); return; }
-        this.tontine.set(t);
-        this.verifierEtapes(t);
-      },
-      error: () => this.loading.set(false),
+  private ctx = inject(TontineContextService);
+
+  constructor() {
+    // Étapes de la tontine courante (et non de la première de la liste)
+    effect(() => {
+      const t = this.ctx.tontineCourante();
+      if (t) untracked(() => { this.tontine.set(t); this.loading.set(true); this.verifierEtapes(t); });
     });
+  }
+
+  ngOnInit(): void {
+    this.ctx.init();
+    if (!this.ctx.chargement() && !this.ctx.tontineCourante()) this.loading.set(false);
   }
 
   private verifierEtapes(t: TontineResponse): void {

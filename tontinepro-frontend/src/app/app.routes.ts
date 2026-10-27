@@ -273,6 +273,11 @@ export const routes: Routes = [
               import('./features/admin/fonds-caisse-anterieur/fonds-caisse-anterieur.component').then(m => m.FondsCaisseAnterieurComponent),
           },
           {
+            path: 'arrieres',
+            loadComponent: () =>
+              import('./features/admin/arrieres/arrieres.component').then(m => m.ArrieresComponent),
+          },
+          {
             path: 'bareme-aide',
             loadComponent: () =>
               import('./features/admin/bareme-aide/bareme-aide.component').then(m => m.BaremeAideComponent),

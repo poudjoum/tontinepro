@@ -56,6 +56,10 @@ public class MouvementFondsAide {
         /** Fond de caisse versé avant l'application, déclaré à la reprise. */
         REPRISE,
         /** Déclaration de reprise revue à la baisse. */
-        REPRISE_CORRECTION
+        REPRISE_CORRECTION,
+        /** Règlement d'un arriéré (fonds non cotisé avant l'application). */
+        ARRIERE,
+        /** Règlement d'arriéré annulé. */
+        ARRIERE_CORRECTION
     }
 }

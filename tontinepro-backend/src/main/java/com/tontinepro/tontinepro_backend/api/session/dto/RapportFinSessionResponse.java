@@ -34,6 +34,8 @@ public record RapportFinSessionResponse(
         BigDecimal pretsTotalDecaisse,      // Σ principal des prêts décaissés
         BigDecimal pretsInteretsGeneres,    // Σ (total − principal) des prêts soldés
         BigDecimal pretsEnCours,            // Σ montant restant des prêts en cours
+        BigDecimal soldeReporte,            // caisse globale à l'ouverture de la session
+        BigDecimal arrieresRestants,        // Σ reste dû des arriérés des membres
 
         // ── Fiche individuelle par membre ───────────────────────────────────
         List<FicheMembre> fiches

@@ -155,6 +155,14 @@ export interface SuppressionAideResponse {
 }
 
 /** Fond de caisse versé par un membre avant l'arrivée de la tontine dans l'application. */
+/** Arriéré d'un membre : fonds non cotisé avant l'application, et ses règlements. */
+export interface ArriereMembre {
+  id: string; membreId: string; matricule: string; nom: string; prenom: string;
+  libelle: string; montant: number; dateConstat: string;
+  regle: number; resteDu: number;
+  reglements: Array<{ id: string; montant: number; dateReglement: string }>;
+}
+
 export interface LigneVersementAnterieur {
   membreId: string;
   matricule: string;

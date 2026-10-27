@@ -151,6 +151,13 @@ export class AdminComponent {
       color: 'bg-amber-50',
     },
     {
+      title: 'Arriérés',
+      desc: 'Fonds non cotisé par un membre avant l\'application',
+      route: '/admin/arrieres',
+      icon: '🧾',
+      color: 'bg-red-50',
+    },
+    {
       title: 'Barème des aides',
       desc: 'Rubriques et montants du règlement intérieur',
       route: '/admin/bareme-aide',

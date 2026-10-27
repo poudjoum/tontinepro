@@ -1,6 +1,9 @@
 package com.tontinepro.tontinepro_backend.api.aide;
 
+import com.tontinepro.tontinepro_backend.api.aide.dto.ArriereRequest;
+import com.tontinepro.tontinepro_backend.api.aide.dto.ArriereResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ContributionFondsAideResponse;
+import com.tontinepro.tontinepro_backend.api.aide.dto.ReglementArriereRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.EncaisserRattrapageRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.FondsAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.MouvementFondsAideResponse;
@@ -28,6 +31,46 @@ import java.util.UUID;
 public class FondsAideController {
 
     private final FondsAideService fondsAideService;
+    private final ArriereService arriereService;
+
+    @GetMapping("/{tontineId}/arrieres")
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, #tontineId)")
+    @Operation(summary = "Arriérés des membres (fonds non cotisé avant l'application) et leurs règlements")
+    public List<ArriereResponse> listerArrieres(@PathVariable UUID tontineId) {
+        return arriereService.lister(tontineId);
+    }
+
+    @PostMapping("/{tontineId}/arrieres")
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
+    @Operation(summary = "Enregistrer l'arriéré d'un membre")
+    public List<ArriereResponse> creerArriere(@PathVariable UUID tontineId,
+                                              @Valid @RequestBody ArriereRequest request) {
+        return arriereService.creer(tontineId, request.membreId(), request.libelle(), request.montant(),
+                request.dateConstat());
+    }
+
+    @DeleteMapping("/{tontineId}/arrieres/{arriereId}")
+    @PreAuthorize("@sec.gere(authentication.name, #tontineId)")
+    @Operation(summary = "Supprimer un arriéré saisi par erreur (sans règlement)")
+    public List<ArriereResponse> supprimerArriere(@PathVariable UUID tontineId, @PathVariable UUID arriereId) {
+        return arriereService.supprimer(tontineId, arriereId);
+    }
+
+    @PostMapping("/{tontineId}/arrieres/{arriereId}/reglements")
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, #tontineId)")
+    @Operation(summary = "Encaisser un règlement d'arriéré (crédite le fonds d'aide)")
+    public List<ArriereResponse> reglerArriere(@PathVariable UUID tontineId, @PathVariable UUID arriereId,
+                                               @Valid @RequestBody ReglementArriereRequest request) {
+        return arriereService.regler(tontineId, arriereId, request.montant(), request.dateReglement());
+    }
+
+    @DeleteMapping("/{tontineId}/arrieres/{arriereId}/reglements/{reglementId}")
+    @PreAuthorize("@sec.bureauEncaisse(authentication.name, #tontineId)")
+    @Operation(summary = "Annuler un règlement d'arriéré (débite le fonds d'aide)")
+    public List<ArriereResponse> annulerReglementArriere(@PathVariable UUID tontineId, @PathVariable UUID arriereId,
+                                                         @PathVariable UUID reglementId) {
+        return arriereService.annulerReglement(tontineId, arriereId, reglementId);
+    }
 
     @GetMapping("/{tontineId}")
     @PreAuthorize("@sec.gere(authentication.name, #tontineId) "

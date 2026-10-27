@@ -535,6 +535,33 @@
           </div>
         }
 
+        <!-- Solde reporté : caisse globale à l'ouverture de la session -->
+        <div class="bg-gray-50 rounded-lg px-3 py-2 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs text-gray-600 font-medium">Solde reporté (caisse à l'ouverture)</span>
+            <span class="flex items-center gap-2">
+              <span class="text-sm font-bold text-gray-800 tabular-nums">{{ session.soldeReporte | number:'1.0-0' }} FCFA</span>
+              @if (session.statut === 'EN_COURS' && !editionSoldeReporte()) {
+                <button type="button" (click)="ouvrirSoldeReporte(session)"
+                        class="text-[10px] text-gray-500 hover:text-primary-700 underline">✎ Modifier</button>
+              }
+            </span>
+          </div>
+          @if (editionSoldeReporte()) {
+            <label class="block text-[10px] text-gray-500">
+              Argent détenu par la tontine avant cette session, toutes rubriques confondues
+              <input type="number" min="0" [(ngModel)]="soldeReporteSaisi"
+                     class="mt-0.5 w-full border border-gray-300 rounded-lg px-2 py-2 text-sm text-right tabular-nums" />
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" (click)="editionSoldeReporte.set(false)"
+                      class="border border-gray-200 rounded-lg py-2 text-xs text-gray-600">Annuler</button>
+              <button type="button" (click)="enregistrerSoldeReporte(session)" [disabled]="saving()"
+                      class="bg-gray-800 text-white rounded-lg py-2 text-xs font-semibold disabled:opacity-50">Enregistrer</button>
+            </div>
+          }
+        </div>
+
         <!-- Pot de réserve -->
         <div class="bg-blue-50 rounded-lg px-3 py-2 flex items-center justify-between">
           <span class="text-xs text-blue-700 font-medium">Pot de réserve</span>

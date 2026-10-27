@@ -108,6 +108,15 @@ public class SessionController {
         return sessionService.enregistrerAvance(id, ordreBeneficiaireId, request.montant(), request.dateAvance());
     }
 
+    @PatchMapping("/{id}/solde-reporte")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
+    @Operation(summary = "Enregistrer le solde reporte : caisse globale de la tontine a l'ouverture de la session")
+    public SessionResponse enregistrerSoldeReporte(
+            @PathVariable UUID id,
+            @Valid @RequestBody SoldeReporteRequest request) {
+        return sessionService.enregistrerSoldeReporte(id, request.montant());
+    }
+
     @PatchMapping("/{id}/beneficiaires/reordonner")
     @PreAuthorize("@sec.gere(authentication.name, @tontineDe.session(#id))")
     @Operation(summary = "Reordonner la liste des beneficiaires d'une session")

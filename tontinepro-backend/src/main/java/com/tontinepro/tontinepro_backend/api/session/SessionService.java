@@ -66,6 +66,7 @@ public class SessionService {
     private final ParticipationLotRepository participationLotRepository;
     private final PartLotRepository partLotRepository;
     private final AbandonLotRepository abandonLotRepository;
+    private final com.tontinepro.tontinepro_backend.api.aide.ArriereService arriereService;
 
     @Transactional
     public SessionResponse creerSession(CreerSessionRequest request) {
@@ -496,6 +497,22 @@ public class SessionService {
             ob.setDateAvance(date);
         }
         ordreBeneficiaireRepository.save(ob);
+        return getById(sessionId);
+    }
+
+    /** Caisse globale de la tontine à l'ouverture de la session (argent détenu avant). */
+    @Transactional
+    public SessionResponse enregistrerSoldeReporte(UUID sessionId, BigDecimal montant) {
+        SessionTontine session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session introuvable : " + sessionId));
+        if (session.getStatut() != SessionTontine.Statut.EN_COURS) {
+            throw new IllegalStateException("La session n'est plus en cours : son solde reporté ne se modifie plus");
+        }
+        if (montant == null || montant.signum() < 0) {
+            throw new IllegalArgumentException("Le solde reporté doit être positif ou nul");
+        }
+        session.setSoldeReporte(montant);
+        sessionRepository.save(session);
         return getById(sessionId);
     }
 
@@ -1295,6 +1312,10 @@ public class SessionService {
                 totalCotisations, totalRepas, totalFondAide, totalRedistribue,
                 soldeFondsSolidarite, totalEpargne,
                 pretsTotalDecaisse, pretsInteretsGeneres, pretsEnCours,
+                safe(session.getSoldeReporte()),
+                arriereService.lister(tontineId).stream()
+                        .map(com.tontinepro.tontinepro_backend.api.aide.dto.ArriereResponse::resteDu)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add),
                 fiches);
     }
 
