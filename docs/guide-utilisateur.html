@@ -125,7 +125,7 @@
     <div class="cover-logo">T</div>
     <h1>TontinePro</h1>
     <p class="subtitle">Guide Utilisateur Complet</p>
-    <span class="version">Version 1.7 — Octobre 2026</span>
+    <span class="version">Version 1.8 — Octobre 2026</span>
   </div>
 
   <!-- Table des matières -->
@@ -144,7 +144,7 @@
       <li><a href="#admin">Administration (Secrétaire / Président / Super admin)</a></li>
       <li><a href="#historique">Rattrapage historique — Import Excel</a></li>
       <li><a href="#multi-tontine">Plusieurs tontines — choisir sa tontine courante</a></li>
-      <li><a href="#outils-bureau">Outils du bureau — reprise, fond de caisse antérieur, tontine à lot, import des membres</a></li>
+      <li><a href="#outils-bureau">Outils du bureau — reprise, fond de caisse antérieur, arriérés, tontine à lot, import des membres</a></li>
       <li><a href="#tontine-lot">Tontine à lot — lots partagés, versements, départs, remboursement</a></li>
     </ol>
   </div>
@@ -636,6 +636,7 @@
           <li>🧮 <strong>Collecte des aides</strong> — Matrice membres × aides, encaissement des parts</li>
           <li>🤝 <strong>Fonds d'aide</strong> — Fonds collectés mois par mois, aides imputées, encaissement du rattrapage</li>
           <li>💰 <strong>Fond de caisse antérieur</strong> — Fond déjà versé par chaque membre avant l'application</li>
+          <li>🧾 <strong>Arriérés</strong> — Fonds non cotisé par un membre avant l'application, et ses règlements</li>
           <li>📊 <strong>Rapports</strong> — Export PDF/Excel</li>
           <li>📤 <strong>Rattrapage</strong> — Import historique Excel</li>
         </ul>
@@ -754,13 +755,19 @@
         enregistré (session en cours). Le rapport déjà envoyé aux membres n'est pas renvoyé.</li>
       <li><strong>Avance sur un tour à venir</strong> — « ＋ Avance sur ce tour » enregistre une somme versée avant la
         date, avec sa date. Elle reste visible sur le tour (modifiable ou supprimable) et le montant remis le jour
-        du tour l'inclut, avec la mention « dont avance ».</li>
+        du tour l'inclut, avec la mention «&nbsp;dont avance&nbsp;».</li>
     </ul>
+
+    <h3>Solde reporté</h3>
+    <p>Une tontine qui détenait déjà de l'argent avant la session (caisse globale, toutes rubriques confondues)
+      le déclare sur la carte de la session : <strong>« Solde reporté (caisse à l'ouverture) » → ✎ Modifier</strong>.
+      Le montant est modifiable tant que la session est en cours et figure en tête du rapport de fin de session.
+      Il ne change ni le pot des tours ni le solde du fonds d'aide.</p>
 
     <h3>Rapport de fin de session</h3>
     <p>À tout moment — et automatiquement à la <strong>clôture</strong> d'une session — le secrétaire peut générer un <strong>bilan financier complet</strong> via le bouton <strong>📑 Rapport de fin de session</strong>. Ce document est consultable par tous les membres et constitue un historique vérifiable de la session.</p>
     <ul>
-      <li><strong>Récapitulatif global</strong> : total des cotisations, repas et fonds d'aide collectés, montants redistribués aux bénéficiaires, solde du fond de solidarité, épargne totale, prêts décaissés / intérêts générés / en cours</li>
+      <li><strong>Récapitulatif global</strong> : solde reporté (s'il a été saisi), total des cotisations, repas et fonds d'aide collectés, montants redistribués aux bénéficiaires, solde du fond de solidarité, épargne totale, prêts décaissés / intérêts générés / en cours, arriérés des membres restant dus</li>
       <li><strong>Fiche individuelle par membre</strong> : ce que chacun a cotisé, reçu, épargné et son encours de prêt</li>
       <li><strong>Export PDF</strong> prêt à partager avec le groupe ou à présenter à une banque</li>
       <li><strong>Email automatique</strong> : à la clôture, le bilan PDF est envoyé à tous les membres</li>
@@ -907,7 +914,7 @@
   <div class="section" id="outils-bureau">
     <div class="section-header">
       <div class="section-icon icon-orange">🛠️</div>
-      <h2>13. Outils du bureau — reprise, fond de caisse antérieur, tontine à lot, import des membres</h2>
+      <h2>13. Outils du bureau — reprise, fond de caisse antérieur, arriérés, tontine à lot, import des membres</h2>
     </div>
 
     <h3>Assistant de reprise d'une tontine en cours</h3>
@@ -939,6 +946,17 @@
         seconde fois</strong>. Exemple : fond annuel 24 000 FCFA, 10 000 déclarés et 6 000 payés avec les
         cotisations → 8 000 FCFA retenus.</p>
     </div>
+
+    <h3>Arriérés d'un membre</h3>
+    <p>Un membre qui <strong>n'avait pas cotisé tout son fonds</strong> avant l'arrivée de la tontine dans
+      l'application a un arriéré. Dans <strong>Administration → 🧾 Arriérés</strong>, le bureau touche
+      « ＋ Nouvel arriéré », choisit le membre, le motif (par défaut « Fonds non cotisé »), le montant et la date.</p>
+    <ul>
+      <li><strong>« Encaisser un règlement »</strong> enregistre un paiement, en une ou plusieurs fois, sans dépasser
+        le reste dû. Chaque règlement est <strong>versé au fonds d'aide</strong> et apparaît dans l'historique de ses mouvements.</li>
+      <li>Un règlement saisi par erreur s'annule : le fonds d'aide est débité d'autant.</li>
+      <li>Un arriéré sans règlement peut être supprimé. Le total restant dû figure dans le rapport de fin de session.</li>
+    </ul>
 
     <h3>Tontine à lot</h3>
     <p>En complément de la tontine à tour classique, le mode <strong>tontine à lot</strong> gère une cagnotte dont les lots peuvent être partagés entre plusieurs membres. Composition des lots, versement de chaque part et départ d'un membre en cours de session : tout est détaillé au <a href="#tontine-lot">chapitre 14</a>.</p>
@@ -1109,7 +1127,7 @@
 
   <!-- Footer -->
   <div style="text-align:center;padding:32px 0 16px;color:#94a3b8;font-size:12px;border-top:1px solid #e2e8f0;margin-top:16px;">
-    <div style="font-weight:700;font-size:14px;color:#4f46e5;margin-bottom:4px;">TontinePro v1.7</div>
+    <div style="font-weight:700;font-size:14px;color:#4f46e5;margin-bottom:4px;">TontinePro v1.8</div>
     <div style="margin-bottom:10px;">tontinepro.tontinepro.uk · Octobre 2026</div>
     <div style="background:#f8fafc;border-radius:12px;padding:14px 20px;display:inline-block;text-align:left;margin-bottom:10px;">
       <div style="font-weight:700;font-size:12px;color:#1e293b;margin-bottom:6px;">Auteur &amp; Contact</div>

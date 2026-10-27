@@ -7,7 +7,7 @@ pptx.layout = 'LAYOUT_WIDE';
 pptx.author  = 'Poudjoum Leutcho Gedeon Rodrigue';
 pptx.company = 'JumpyTech';
 pptx.subject = 'TontinePro — Présentation';
-pptx.title   = 'TontinePro v1.7';
+pptx.title   = 'TontinePro v1.8';
 
 const PRIMARY = '4F46E5';
 const DARK    = '1E293B';
@@ -18,7 +18,7 @@ const AMBER   = 'F59E0B';
 const RED     = 'EF4444';
 
 function addFooter(slide, num) {
-  slide.addText(`TontinePro v1.7  ·  JumpyTech  ·  © 2026`, {
+  slide.addText(`TontinePro v1.8  ·  JumpyTech  ·  © 2026`, {
     x: 0.3, y: 6.9, w: 12, h: 0.3,
     fontSize: 8, color: '94A3B8', align: 'center',
   });
@@ -51,7 +51,7 @@ sl.addText('La plateforme digitale pour gérer votre tontine\navec simplicité, 
   x: 1, y: 3.0, w: 10.8, h: 1.0,
   fontSize: 18, color: 'C7D2FE', align: 'center',
 });
-sl.addText('Version 1.7  ·  Octobre 2026  ·  JumpyTech', {
+sl.addText('Version 1.8  ·  Octobre 2026  ·  JumpyTech', {
   x: 1, y: 4.2, w: 10.8, h: 0.5,
   fontSize: 13, color: '818CF8', align: 'center',
 });
