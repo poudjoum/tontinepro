@@ -30,6 +30,15 @@ public class SessionController {
     private final RapportFinSessionPdfBuilder rapportFinSessionPdfBuilder;
     private final com.tontinepro.tontinepro_backend.api.rapport.builder.FondsAideMensuelPdfBuilder fondsAideMensuelPdfBuilder;
 
+    @PostMapping("/simuler-tirage")
+    @PreAuthorize("@sec.gere(authentication.name, #request.tontineId())")
+    @Operation(summary = "Simuler un tirage au sort pour une session de tontine classique sans persister. "
+            + "Permet de previsualiser l'ordre aleatoire des beneficiaires avant la creation de la session. "
+            + "Le tirage peut etre relance autant de fois que souhaite avant la creation effective.")
+    public SimulationTirageResponse simulerTirage(@Valid @RequestBody SimulationTirageRequest request) {
+        return sessionService.simulerTirage(request);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("@sec.gere(authentication.name, #request.tontineId())")

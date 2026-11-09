@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, inject, computed, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, NgIf } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../../core/services/session.service';
 import { CotisationService } from '../../../core/services/cotisation.service';
 import { TontineService } from '../../../core/services/tontine.service';
@@ -20,7 +20,7 @@ import {
 
 @Component({
   selector: 'app-sessions',
-  imports: [FormsModule, DatePipe, DecimalPipe],
+  imports: [FormsModule, DatePipe, DecimalPipe, RouterLink],
   templateUrl: './sessions.component.html',
 })
 export class SessionsComponent implements OnInit {

@@ -1,0 +1,98 @@
+<div class="tirage-simulation">
+  <div class="header">
+    <button class="btn-back" (click)="retourner()">&#8592; Retour</button>
+    <h1>🎲 Simulation du tirage au sort</h1>
+    <p class="subtitle">
+      {{ tontine?.nom }} — Prévisualisez l'ordre aléatoire des bénéficiaires avant de créer la session.
+    </p>
+  </div>
+
+  <!-- Message d'erreur global -->
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <!-- Message si tontine non classique -->
+  <div *ngIf="tontine?.mode !== 'CLASSIQUE'" class="alert alert-warning">
+    La simulation de tirage au sort n'est disponible que pour les tontines classiques.
+  </div>
+
+  <!-- Formulaire de simulation -->
+  <div class="form-card">
+    <div class="form-row">
+      <label for="dateDebut">Date de début de la session</label>
+      <input
+        id="dateDebut"
+        type="date"
+        [(ngModel)]="dateDebut"
+        [disabled]="loading || (result?.dejaFige ?? false)"
+      />
+    </div>
+
+    <div class="form-info">
+      <p>📋 Nombre de membres actifs : <strong>{{ result?.nombreMembres ?? '—' }}</strong></p>
+      <p>📅 Session prévue : <strong>{{ result?.prochainNumeroSession ?? '—' }}</strong></p>
+    </div>
+
+    <button
+      class="btn-primary btn-tirage"
+      (click)="lancerTirage()"
+      [disabled]="loading || !dateDebut || tontine?.mode !== 'CLASSIQUE' || (result?.dejaFige ?? false)"
+    >
+      <span *ngIf="!loading">🎲 Lancer le tirage au sort</span>
+      <span *ngIf="loading">⏳ Tirage en cours...</span>
+    </button>
+
+    <p *ngIf="result?.dejaFige === true" class="warning-text">
+      ⚠️ Un tirage a déjà été figé pour cette session. Impossible de relancer.
+    </p>
+  </div>
+
+  <!-- Résultats du tirage -->
+  <div *ngIf="result" class="result-card">
+    <div class="result-header">
+      <h2>📋 Résultat du tirage — Session {{ result.prochainNumeroSession }}</h2>
+      <div class="result-meta">
+        <span>Début : {{ formatDate(result.dateDebut) }}</span>
+        <span>Fin : {{ formatDate(result.dateFin) }}</span>
+        <span>{{ result.nombreMembres }} membres</span>
+      </div>
+    </div>
+
+    <button class="btn-secondary btn-relancer" (click)="lancerTirage()" [disabled]="result.dejaFige">
+      🔄 Relancer le tirage
+    </button>
+
+    <table class="ordre-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Ordre</th>
+          <th>Membre</th>
+          <th>Matricule</th>
+          <th>Date de bénéfice</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let b of result.beneficiaires; let i = index" [class.highlight]="i === 0">
+          <td>{{ i + 1 }}</td>
+          <td>
+            <span class="ordre-badge" [class.premier]="i === 0">{{ b.ordre }}</span>
+          </td>
+          <td>
+            <strong>{{ b.membrePrenom }} {{ b.membreNom }}</strong>
+          </td>
+          <td>{{ b.membreMatricule }}</td>
+          <td>{{ formatDate(b.dateBenefice) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="result-footer">
+      <p class="disclaimer">
+        ℹ️ Ceci est une <strong>simulation</strong>. L'ordre ne sera définitif que lors de la création de la session.
+        Vous pouvez relancer le tirage autant de fois que souhaité.
+      </p>
+    </div>
+  </div>
+</div>

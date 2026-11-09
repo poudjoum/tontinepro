@@ -1857,4 +1857,84 @@ public class SessionService {
 
         return ordonne;
     }
+
+    /**
+     * Simule un tirage au sort pour une session de tontine classique sans persister.
+     * Retourne l'ordre aléatoire des bénéficiaires avec les dates calculées.
+     * Le tirage peut être relancé autant de fois que souhaité avant la création effective de la session.
+     */
+    @Transactional(readOnly = true)
+    public SimulationTirageResponse simulerTirage(SimulationTirageRequest request) {
+        Tontine tontine = tontineRepository.findById(request.tontineId())
+                .orElseThrow(() -> new IllegalArgumentException("Tontine introuvable : " + request.tontineId()));
+
+        // Vérifier que la tontine est en mode CLASSIQUE
+        if (tontine.getMode() != Tontine.ModeTontine.CLASSIQUE) {
+            throw new IllegalStateException("La simulation de tirage au sort n'est disponible que pour les tontines classiques");
+        }
+
+        // Récupérer uniquement les membres TONTINE actifs
+        List<Membre> membresActifs = membreRepository.findAllByTontineIdAndStatutAndTypeParticipation(
+                tontine.getId(), Membre.Statut.ACTIF, Membre.TypeParticipation.TONTINE);
+
+        if (membresActifs.isEmpty()) {
+            throw new IllegalStateException("Aucun membre actif dans la tontine");
+        }
+
+        int nombreMembres = membresActifs.size();
+
+        // Déterminer le prochain numéro de session
+        int prochainNumero = sessionRepository.findTopByTontineIdOrderByNumeroDesc(tontine.getId())
+                .map(s -> s.getNumero() + 1)
+                .orElse(1);
+
+        // Vérifier si une session avec ce numéro existe déjà et a des bénéficiaires figés
+        boolean dejaFigé = sessionRepository.existsByTontineIdAndNumero(tontine.getId(), prochainNumero);
+
+        // Calculer dateFin
+        LocalDate dateFin = periodiciteService.calculerDateFin(tontine, request.dateDebut(), nombreMembres);
+
+        // Tirage au sort aléatoire
+        List<Membre> ordreMelange = new ArrayList<>(membresActifs);
+        Collections.shuffle(ordreMelange);
+
+        // Calculer les dates de bénéfice
+        List<LocalDate> datesBenefice = periodiciteService.calculerDatesBenefice(
+                tontine, request.dateDebut(), nombreMembres);
+
+        // Construire la réponse de simulation
+        List<OrdreBeneficiaireResponse> beneficiaires = new ArrayList<>();
+        for (int i = 0; i < ordreMelange.size(); i++) {
+            Membre membre = ordreMelange.get(i);
+            beneficiaires.add(new OrdreBeneficiaireResponse(
+                    null,  // pas d'ID car non persisté
+                    membre.getId(),
+                    membre.getNom(),
+                    membre.getPrenom(),
+                    membre.getMatricule(),
+                    membre.getStatut().name(),
+                    i + 1,
+                    i < datesBenefice.size() ? datesBenefice.get(i) : null,
+                    null,  // montantRecu
+                    false, // beneficie
+                    null,  // montantAvance
+                    null,  // dateAvance
+                    null,  // montantCash
+                    null,  // montantOm
+                    null,  // montantMomo
+                    null,  // refOm
+                    null   // refMomo
+            ));
+        }
+
+        return new SimulationTirageResponse(
+                tontine.getId(),
+                prochainNumero,
+                request.dateDebut(),
+                dateFin,
+                nombreMembres,
+                beneficiaires,
+                dejaFigé
+        );
+    }
 }

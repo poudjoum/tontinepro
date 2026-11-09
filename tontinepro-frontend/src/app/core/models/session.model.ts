@@ -310,6 +310,25 @@ export interface LignePaiementMembre {
   paye: boolean;
 }
 
+/** Requête de simulation de tirage au sort (sans persister). */
+export interface SimulationTirageRequest {
+  tontineId: string;
+  dateDebut: string;
+  cibleMembres?: number;
+}
+
+/** Résultat d'une simulation de tirage au sort pour une session classique. */
+export interface SimulationTirageResponse {
+  tontineId: string;
+  prochainNumeroSession: number;
+  dateDebut: string;
+  dateFin: string | null;
+  nombreMembres: number;
+  beneficiaires: OrdreBeneficiaireResponse[];
+  /** true si un tirage a déjà été figé pour cette session. */
+  dejaFige: boolean;
+}
+
 export interface SessionBilanResponse {
   sessionId: string;
   sessionNumero: number;

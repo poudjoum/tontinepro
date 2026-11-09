@@ -17,6 +17,8 @@ import {
   MiseAJourDateRequest,
   ValiderBeneficeRequest,
   ReordonnerBeneficiairesRequest,
+  SimulationTirageRequest,
+  SimulationTirageResponse,
 } from '../models/session.model';
 import { CotisationResponse } from '../models/cotisation.model';
 import { SessionLotResponse, CompositionLotsResponse, SaisieDepart } from '../models/tontine.model';
@@ -29,6 +31,11 @@ export class SessionService {
 
   creerSession(request: CreerSessionRequest) {
     return this.http.post<SessionResponse>(this.api, request);
+  }
+
+  /** Simule un tirage au sort sans persister — pour prévisualisation avant création de session. */
+  simulerTirage(request: SimulationTirageRequest) {
+    return this.http.post<SimulationTirageResponse>(`${this.api}/simuler-tirage`, request);
   }
 
   listerSessions(tontineId: string) {

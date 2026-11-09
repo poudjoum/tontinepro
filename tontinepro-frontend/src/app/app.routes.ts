@@ -238,6 +238,12 @@ export const routes: Routes = [
               import('./features/admin/sessions/sessions.component').then(m => m.SessionsComponent),
           },
           {
+            path: 'tirage-simulation/:id',
+            canActivate: [adminGuard],
+            loadComponent: () =>
+              import('./features/tirage-simulation/tirage-simulation.component').then(m => m.TirageSimulationComponent),
+          },
+          {
             path: 'documents-tontine',
             loadComponent: () =>
               import('./features/admin/documents-tontine/documents-tontine.component').then(m => m.DocumentsTontineComponent),

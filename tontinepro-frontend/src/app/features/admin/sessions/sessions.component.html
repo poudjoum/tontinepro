@@ -39,6 +39,11 @@
         <button (click)="creerSession()" [disabled]="saving()" class="btn-primary w-full">
           @if (saving()) { Création… } @else { Lancer la session }
         </button>
+        <a [routerLink]="'/admin/tirage-simulation/' + tontineId()"
+           class="block w-full text-center py-2 text-sm font-medium rounded-lg border border-purple-300
+                  text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors">
+          🎲 Simuler le tirage au sort
+        </a>
       </section>
     }
 
