@@ -49,7 +49,7 @@ public class SanctionController {
     }
 
     @PatchMapping("/{id}/payer")
-    @PreAuthorize("@sec.gere(authentication.name, @sanctionDe.id(#id))")
+    @PreAuthorize("@sec.gere(authentication.name, @tontineDe.sanction(#id))")
     @Operation(summary = "Marquer une sanction comme payée (Secrétaire / Président)")
     public SanctionResponse marquerPayee(
             @PathVariable UUID id,
