@@ -35,6 +35,14 @@ public record AideResponse(
         OffsetDateTime dateValidation,
         /** Date limite de recouvrement, fixée à l'activation (null avant). */
         LocalDate dateEcheanceRecouvrement,
+
+        // ── Moyens de paiement du versement ──
+        BigDecimal montantCash,
+        BigDecimal montantOm,
+        BigDecimal montantMomo,
+        String refOm,
+        String refMomo,
+
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
@@ -63,6 +71,11 @@ public record AideResponse(
                 a.getValidePar() != null ? a.getValidePar().getEmail() : null,
                 a.getDateValidation(),
                 a.getDateEcheanceRecouvrement(),
+                a.getMontantCash(),
+                a.getMontantOm(),
+                a.getMontantMomo(),
+                a.getRefOm(),
+                a.getRefMomo(),
                 a.getCreatedAt(),
                 a.getUpdatedAt()
         );

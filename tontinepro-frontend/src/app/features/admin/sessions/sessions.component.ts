@@ -140,6 +140,16 @@ export class SessionsComponent implements OnInit {
   // ── Montants saisis par le bureau ─────────────────────────────────────────
   /** Montant remis saisi à la validation d'un tour (vide = calcul automatique). */
   montantValidation: { [obId: string]: number | null } = {};
+  /** Montant cash saisi à la validation d'un tour. */
+  montantCashValidation: { [obId: string]: number | null } = {};
+  /** Montant OM saisi à la validation d'un tour. */
+  montantOmValidation: { [obId: string]: number | null } = {};
+  /** Montant MoMo saisi à la validation d'un tour. */
+  montantMomoValidation: { [obId: string]: number | null } = {};
+  /** Référence OM saisi à la validation d'un tour. */
+  refOmValidation: { [obId: string]: string | null } = {};
+  /** Référence MoMo saisi à la validation d'un tour. */
+  refMomoValidation: { [obId: string]: string | null } = {};
   /** Tour dont on corrige le montant reçu / saisit une avance. */
   correctionId = signal<string | null>(null);
   avanceId = signal<string | null>(null);
@@ -212,9 +222,19 @@ export class SessionsComponent implements OnInit {
 
   validerBenefice(session: SessionResponse, ob: OrdreBeneficiaireResponse): void {
     const saisi = this.montantValidation[ob.id];
+    const cash = this.montantCashValidation[ob.id];
+    const om = this.montantOmValidation[ob.id];
+    const momo = this.montantMomoValidation[ob.id];
+    const refOm = this.refOmValidation[ob.id];
+    const refMomo = this.refMomoValidation[ob.id];
     this.saving.set(true);
-    this.sessionSvc.validerBenefice(session.id, ob.id,
-      saisi != null && String(saisi) !== '' ? { montantRecu: Number(saisi) } : {}).subscribe({
+    const req: any = saisi != null && String(saisi) !== '' ? { montantRecu: Number(saisi) } : {};
+    if (cash != null) req.montantCash = cash;
+    if (om != null) req.montantOm = om;
+    if (momo != null) req.montantMomo = momo;
+    if (refOm) req.refOm = refOm;
+    if (refMomo) req.refMomo = refMomo;
+    this.sessionSvc.validerBenefice(session.id, ob.id, req).subscribe({
       next: updated => {
         this.sessions.update(list => list.map(s => s.id === updated.id ? updated : s));
         this.sessionOuverte.set(updated);

@@ -19,7 +19,14 @@ public record OrdreBeneficiaireResponse(
         BigDecimal montantRecu,
         boolean beneficie,
         BigDecimal montantAvance,
-        LocalDate dateAvance
+        LocalDate dateAvance,
+
+        // ── Moyens de paiement du versement ──
+        BigDecimal montantCash,
+        BigDecimal montantOm,
+        BigDecimal montantMomo,
+        String refOm,
+        String refMomo
 ) {
     public static OrdreBeneficiaireResponse from(OrdreBeneficiaire ob) {
         return new OrdreBeneficiaireResponse(
@@ -34,7 +41,12 @@ public record OrdreBeneficiaireResponse(
                 ob.getMontantRecu(),
                 ob.isBeneficie(),
                 ob.getMontantAvance(),
-                ob.getDateAvance()
+                ob.getDateAvance(),
+                ob.getMontantCash(),
+                ob.getMontantOm(),
+                ob.getMontantMomo(),
+                ob.getRefOm(),
+                ob.getRefMomo()
         );
     }
 }

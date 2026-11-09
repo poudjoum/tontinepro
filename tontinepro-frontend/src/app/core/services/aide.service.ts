@@ -55,8 +55,8 @@ export class AideService {
     return this.http.patch<AideResponse>(`${this.api}/demandes/${id}/rejeter`, { motifRejet });
   }
 
-  marquerPayee(id: string) {
-    return this.http.patch<AideResponse>(`${this.api}/demandes/${id}/payer`, {});
+  marquerPayee(id: string, request: { montantCash?: number|null; montantOm?: number|null; montantMomo?: number|null; refOm?: string|null; refMomo?: string|null }) {
+    return this.http.patch<AideResponse>(`${this.api}/demandes/${id}/payer`, request);
   }
 
   /** Suppression définitive par le Président — annule aussi les effets sur le fonds. */
@@ -69,8 +69,8 @@ export class AideService {
     return this.http.post<AideResponse>(`${this.api}/demandes/${id}/activer`, {}, { params });
   }
 
-  verser(id: string) {
-    return this.http.post<AideResponse>(`${this.api}/demandes/${id}/verser`, {});
+  verser(id: string, request: { montantCash?: number|null; montantOm?: number|null; montantMomo?: number|null; refOm?: string|null; refMomo?: string|null }) {
+    return this.http.post<AideResponse>(`${this.api}/demandes/${id}/verser`, request);
   }
 
   getSuivi(id: string) {

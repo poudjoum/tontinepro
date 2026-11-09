@@ -9,6 +9,7 @@ import com.tontinepro.tontinepro_backend.api.aide.dto.SaisirAidePourMembreReques
 import com.tontinepro.tontinepro_backend.api.aide.dto.SimulationAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SuppressionAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ValiderAideRequest;
+import com.tontinepro.tontinepro_backend.api.aide.dto.VerserAideRequest;
 import com.tontinepro.tontinepro_backend.api.notification.NotificationService;
 import com.tontinepro.tontinepro_backend.domain.aide.*;
 import com.tontinepro.tontinepro_backend.domain.membre.Membre;
@@ -373,7 +374,7 @@ public class AideService {
     }
 
     @Transactional
-    public AideResponse marquerPayee(UUID id) {
+    public AideResponse marquerPayee(UUID id, VerserAideRequest request) {
         Aide aide = aideRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Demande d'aide introuvable : " + id));
 
@@ -385,6 +386,24 @@ public class AideService {
         if (aide.getStatut() != Aide.Statut.VALIDEE) {
             throw new IllegalArgumentException("Seules les demandes à l'état VALIDEE peuvent être marquées payées");
         }
+
+        // ── Validation des moyens de paiement ──
+        BigDecimal cash = request.montantCash() != null ? request.montantCash() : BigDecimal.ZERO;
+        BigDecimal om   = request.montantOm() != null ? request.montantOm() : BigDecimal.ZERO;
+        BigDecimal momo = request.montantMomo() != null ? request.montantMomo() : BigDecimal.ZERO;
+        BigDecimal totalPaiements = cash.add(om).add(momo);
+
+        if (totalPaiements.compareTo(aide.getMontantAccorde()) != 0) {
+            throw new IllegalArgumentException(
+                    "La somme des moyens de paiement (" + totalPaiements.toPlainString()
+                    + ") ne correspond pas au montant accordé (" + aide.getMontantAccorde().toPlainString() + ")");
+        }
+
+        aide.setMontantCash(request.montantCash());
+        aide.setMontantOm(request.montantOm());
+        aide.setMontantMomo(request.montantMomo());
+        aide.setRefOm(request.refOm());
+        aide.setRefMomo(request.refMomo());
 
         Tontine tontine = aide.getMembre().getTontine();
         Tontine.ModeContributionAide mode = tontine.getModeContributionAide();
@@ -851,9 +870,10 @@ public class AideService {
     /**
      * Verse au bénéficiaire une aide du barème approuvée mais non préfinancée
      * (état VALIDEE) : décaisse le total du fonds sans régénérer de contributions.
+     * Enregistre le détail des moyens de paiement (cash, OM, MoMo).
      */
     @Transactional
-    public AideResponse verserAide(UUID id) {
+    public AideResponse verserAide(UUID id, VerserAideRequest request) {
         Aide aide = aideRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Demande d'aide introuvable : " + id));
 
@@ -863,6 +883,24 @@ public class AideService {
         if (aide.getStatut() != Aide.Statut.VALIDEE) {
             throw new IllegalArgumentException("Seule une aide approuvée (non préfinancée) peut être versée");
         }
+
+        // ── Validation des moyens de paiement ──
+        BigDecimal cash = request.montantCash() != null ? request.montantCash() : BigDecimal.ZERO;
+        BigDecimal om   = request.montantOm() != null ? request.montantOm() : BigDecimal.ZERO;
+        BigDecimal momo = request.montantMomo() != null ? request.montantMomo() : BigDecimal.ZERO;
+        BigDecimal totalPaiements = cash.add(om).add(momo);
+
+        if (totalPaiements.compareTo(aide.getMontantAccorde()) != 0) {
+            throw new IllegalArgumentException(
+                    "La somme des moyens de paiement (" + totalPaiements.toPlainString()
+                    + ") ne correspond pas au montant accordé (" + aide.getMontantAccorde().toPlainString() + ")");
+        }
+
+        aide.setMontantCash(request.montantCash());
+        aide.setMontantOm(request.montantOm());
+        aide.setMontantMomo(request.montantMomo());
+        aide.setRefOm(request.refOm());
+        aide.setRefMomo(request.refMomo());
 
         Tontine tontine = aide.getMembre().getTontine();
         FondsAide fonds = fondsAideRepository.findByTontineId(tontine.getId())

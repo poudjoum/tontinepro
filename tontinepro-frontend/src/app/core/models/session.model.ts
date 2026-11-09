@@ -14,6 +14,12 @@ export interface OrdreBeneficiaireResponse {
   /** Avance versée avant l'échéance ; comprise dans montantRecu une fois le tour payé. */
   montantAvance: number | null;
   dateAvance: string | null;
+  // ── Moyens de paiement du versement ──
+  montantCash: number | null;
+  montantOm: number | null;
+  montantMomo: number | null;
+  refOm: string | null;
+  refMomo: string | null;
 }
 
 export interface SessionResponse {
@@ -43,8 +49,16 @@ export interface MiseAJourDateRequest {
   dateProchaineTontine: string;
 }
 
-/** montantRecu : total remis au bénéficiaire (avance comprise) ; absent = calculé. */
-export interface ValiderBeneficeRequest { montantRecu?: number | null; }
+/** montantRecu : total remis au bénéficiaire (avance comprise) ; absent = calculé.
+ * Les moyens de paiement détaillent comment le montant a été versé. */
+export interface ValiderBeneficeRequest {
+  montantRecu?: number | null;
+  montantCash?: number | null;
+  montantOm?: number | null;
+  montantMomo?: number | null;
+  refOm?: string | null;
+  refMomo?: string | null;
+}
 
 export interface ReordonnerBeneficiairesRequest {
   ordreMembreIds: string[];

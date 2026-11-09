@@ -208,6 +208,12 @@ export interface AideResponse {
   dateValidation: string | null;
   /** Date limite de recouvrement, fixée à l'activation (null avant). */
   dateEcheanceRecouvrement: string | null;
+  // ── Moyens de paiement du versement ──
+  montantCash: number | null;
+  montantOm: number | null;
+  montantMomo: number | null;
+  refOm: string | null;
+  refMomo: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -424,16 +424,67 @@
           <!-- Action VALIDEE → versement -->
           @if (a.statut === 'VALIDEE') {
             <div class="border-t pt-3">
-              @if (a.rubriqueId) {
-                <button (click)="verser(a.id)" [disabled]="submitting()"
-                        class="btn-primary text-sm py-2 w-full">
-                  💳 Verser au bénéficiaire
-                </button>
+              @if (versementId() === a.id) {
+                <div class="space-y-2">
+                  <p class="text-[11px] text-gray-500">
+                    Montant à verser : <span class="font-semibold">{{ fcfa(a.montantAccorde) }}</span>
+                  </p>
+                  <div class="grid grid-cols-3 gap-2">
+                    <label class="text-[9px] text-gray-500">
+                      💵 Cash
+                      <input type="number" min="0" [(ngModel)]="versementCash" placeholder="0"
+                             class="mt-0.5 w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs text-right tabular-nums" />
+                    </label>
+                    <label class="text-[9px] text-gray-500">
+                      🟠 OM
+                      <input type="number" min="0" [(ngModel)]="versementOm" placeholder="0"
+                             class="mt-0.5 w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs text-right tabular-nums" />
+                    </label>
+                    <label class="text-[9px] text-gray-500">
+                      🟡 MoMo
+                      <input type="number" min="0" [(ngModel)]="versementMomo" placeholder="0"
+                             class="mt-0.5 w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs text-right tabular-nums" />
+                    </label>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <label class="text-[9px] text-gray-500">
+                      Ref OM
+                      <input type="text" [(ngModel)]="versementRefOm" placeholder="n° transaction"
+                             class="mt-0.5 w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs" />
+                    </label>
+                    <label class="text-[9px] text-gray-500">
+                      Ref MoMo
+                      <input type="text" [(ngModel)]="versementRefMomo" placeholder="n° transaction"
+                             class="mt-0.5 w-full border border-gray-300 rounded px-1.5 py-1.5 text-xs" />
+                    </label>
+                  </div>
+                  <div class="flex gap-2">
+                    @if (a.rubriqueId) {
+                      <button (click)="verser(a.id)" [disabled]="submitting()"
+                              class="btn-primary text-sm py-2 flex-1">
+                        {{ submitting() ? 'Traitement…' : '💳 Confirmer le versement' }}
+                      </button>
+                    } @else {
+                      <button (click)="marquerPayee(a.id)" [disabled]="submitting()"
+                              class="btn-primary text-sm py-2 flex-1">
+                        {{ submitting() ? 'Traitement…' : '💳 Confirmer le versement' }}
+                      </button>
+                    }
+                    <button (click)="versementId.set(null)" class="btn-secondary text-sm py-2 px-4">Annuler</button>
+                  </div>
+                </div>
               } @else {
-                <button (click)="marquerPayee(a.id)" [disabled]="submitting()"
-                        class="btn-primary text-sm py-2 w-full">
-                  💳 Marquer comme versée
-                </button>
+                @if (a.rubriqueId) {
+                  <button (click)="ouvrirVersement(a.id)" [disabled]="submitting()"
+                          class="btn-primary text-sm py-2 w-full">
+                    💳 Verser au bénéficiaire
+                  </button>
+                } @else {
+                  <button (click)="ouvrirVersement(a.id)" [disabled]="submitting()"
+                          class="btn-primary text-sm py-2 w-full">
+                    💳 Marquer comme versée
+                  </button>
+                }
               }
             </div>
           }

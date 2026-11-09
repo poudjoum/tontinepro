@@ -103,6 +103,28 @@ public class Aide {
     @Builder.Default
     private boolean relanceRecouvrementEnvoyee = false;
 
+    // ── Détail des moyens de paiement du versement ──────────────────────────
+
+    /** Montant remis en espèces au bénéficiaire. */
+    @Column(name = "montant_cash", precision = 15, scale = 2)
+    private BigDecimal montantCash;
+
+    /** Montant versé par Orange Money au bénéficiaire. */
+    @Column(name = "montant_om", precision = 15, scale = 2)
+    private BigDecimal montantOm;
+
+    /** Montant versé par MTN MoMo au bénéficiaire. */
+    @Column(name = "montant_momo", precision = 15, scale = 2)
+    private BigDecimal montantMomo;
+
+    /** Référence de la transaction Orange Money. */
+    @Column(name = "ref_om", length = 100)
+    private String refOm;
+
+    /** Référence de la transaction MTN MoMo. */
+    @Column(name = "ref_momo", length = 100)
+    private String refMomo;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

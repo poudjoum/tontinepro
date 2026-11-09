@@ -517,4 +517,4 @@ Cette architecture fournit une base **scalable, maintenable et sécurisée** pou
 ---
 
 *Version : 2.0 — Mise à jour suite aux choix d'implémentation*
-*Dernière mise à jour : Mai 2026*
+*Dernière mise à jour : Août 2026*

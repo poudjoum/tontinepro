@@ -253,14 +253,6 @@ export class AidesComponent implements OnInit {
     });
   }
 
-  marquerPayee(id: string): void {
-    this.submitting.set(true);
-    this.svc.marquerPayee(id).subscribe({
-      next: u => { this.aides.update(l => l.map(a => a.id === id ? u : a)); this.submitting.set(false); },
-      error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
-    });
-  }
-
   ouvrirActivation(id: string): void {
     this.activationId.set(id);
     this.prefinancer.set(false);
@@ -280,10 +272,49 @@ export class AidesComponent implements OnInit {
     });
   }
 
-  verser(id: string): void {
+  // ── Versement avec moyens de paiement ─────────────────────────────────────
+  versementId = signal<string | null>(null);
+  versementCash: number | null = null;
+  versementOm: number | null = null;
+  versementMomo: number | null = null;
+  versementRefOm: string | null = null;
+  versementRefMomo: string | null = null;
+
+  marquerPayee(id: string): void {
+    const req = {
+      montantCash: this.versementCash,
+      montantOm: this.versementOm,
+      montantMomo: this.versementMomo,
+      refOm: this.versementRefOm,
+      refMomo: this.versementRefMomo,
+    };
     this.submitting.set(true);
-    this.svc.verser(id).subscribe({
-      next: u => { this.aides.update(l => l.map(a => a.id === id ? u : a)); this.submitting.set(false); },
+    this.svc.marquerPayee(id, req).subscribe({
+      next: u => { this.aides.update(l => l.map(a => a.id === id ? u : a)); this.versementId.set(null); this.submitting.set(false); },
+      error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
+    });
+  }
+
+  ouvrirVersement(id: string): void {
+    this.versementId.set(id);
+    this.versementCash = null;
+    this.versementOm = null;
+    this.versementMomo = null;
+    this.versementRefOm = null;
+    this.versementRefMomo = null;
+  }
+
+  verser(id: string): void {
+    const req = {
+      montantCash: this.versementCash,
+      montantOm: this.versementOm,
+      montantMomo: this.versementMomo,
+      refOm: this.versementRefOm,
+      refMomo: this.versementRefMomo,
+    };
+    this.submitting.set(true);
+    this.svc.verser(id, req).subscribe({
+      next: u => { this.aides.update(l => l.map(a => a.id === id ? u : a)); this.versementId.set(null); this.submitting.set(false); },
       error: e => { this.error.set(e.error?.detail ?? e.message ?? 'Erreur'); this.submitting.set(false); },
     });
   }

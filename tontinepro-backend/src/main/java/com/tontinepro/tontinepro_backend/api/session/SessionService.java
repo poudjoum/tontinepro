@@ -187,7 +187,12 @@ public class SessionService {
                     ob.getMontantRecu(),
                     ob.isBeneficie(),
                     ob.getMontantAvance(),
-                    ob.getDateAvance()
+                    ob.getDateAvance(),
+                    ob.getMontantCash(),
+                    ob.getMontantOm(),
+                    ob.getMontantMomo(),
+                    ob.getRefOm(),
+                    ob.getRefMomo()
             ));
         }
 
@@ -345,6 +350,27 @@ public class SessionService {
         if (ob.getMontantAvance() != null && montantRecu.compareTo(ob.getMontantAvance()) < 0) {
             throw new IllegalArgumentException("Le montant du tour (" + montantRecu.toPlainString()
                     + ") est inférieur à l'avance déjà versée (" + ob.getMontantAvance().toPlainString() + ")");
+        }
+
+        // ── Validation des moyens de paiement ──
+        if (request != null) {
+            BigDecimal cash = request.montantCash() != null ? request.montantCash() : BigDecimal.ZERO;
+            BigDecimal om   = request.montantOm() != null ? request.montantOm() : BigDecimal.ZERO;
+            BigDecimal momo = request.montantMomo() != null ? request.montantMomo() : BigDecimal.ZERO;
+            BigDecimal totalPaiements = cash.add(om).add(momo);
+
+            if (totalPaiements.compareTo(BigDecimal.ZERO) > 0
+                    && totalPaiements.compareTo(montantRecu) != 0) {
+                throw new IllegalArgumentException(
+                        "La somme des moyens de paiement (" + totalPaiements.toPlainString()
+                        + ") ne correspond pas au montant reçu (" + montantRecu.toPlainString() + ")");
+            }
+
+            ob.setMontantCash(request.montantCash());
+            ob.setMontantOm(request.montantOm());
+            ob.setMontantMomo(request.montantMomo());
+            ob.setRefOm(request.refOm());
+            ob.setRefMomo(request.refMomo());
         }
 
         ob.setBeneficie(true);

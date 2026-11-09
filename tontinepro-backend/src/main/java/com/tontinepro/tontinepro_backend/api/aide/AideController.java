@@ -8,6 +8,7 @@ import com.tontinepro.tontinepro_backend.api.aide.dto.RejeterAideRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SaisirAidePourMembreRequest;
 import com.tontinepro.tontinepro_backend.api.aide.dto.SuppressionAideResponse;
 import com.tontinepro.tontinepro_backend.api.aide.dto.ValiderAideRequest;
+import com.tontinepro.tontinepro_backend.api.aide.dto.VerserAideRequest;
 import com.tontinepro.tontinepro_backend.domain.aide.Aide;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -115,9 +116,11 @@ public class AideController {
 
     @PatchMapping("/demandes/{id}/payer")
     @PreAuthorize("@sec.gere(authentication.name, @tontineDe.aide(#id))")
-    @Operation(summary = "Marquer une aide (libre) comme payée")
-    public AideResponse marquerPayee(@PathVariable UUID id) {
-        return aideService.marquerPayee(id);
+    @Operation(summary = "Marquer une aide (libre) comme payée avec détail des moyens de paiement")
+    public AideResponse marquerPayee(
+            @PathVariable UUID id,
+            @Valid @RequestBody VerserAideRequest request) {
+        return aideService.marquerPayee(id, request);
     }
 
     @PostMapping("/demandes/{id}/activer")
@@ -134,8 +137,10 @@ public class AideController {
     @PostMapping("/demandes/{id}/verser")
     @PreAuthorize("@sec.gere(authentication.name, @tontineDe.aide(#id))")
     @Operation(summary = "Verser au bénéficiaire une aide du barème approuvée non préfinancée")
-    public AideResponse verser(@PathVariable UUID id) {
-        return aideService.verserAide(id);
+    public AideResponse verser(
+            @PathVariable UUID id,
+            @Valid @RequestBody VerserAideRequest request) {
+        return aideService.verserAide(id, request);
     }
 
     @GetMapping("/demandes/{id}/suivi")
