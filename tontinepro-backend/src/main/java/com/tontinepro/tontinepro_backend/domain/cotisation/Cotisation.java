@@ -72,6 +72,14 @@ public class Cotisation {
     @Column(name = "moyen_paiement", length = 20)
     private MoyenPaiement moyenPaiement;
 
+    /** Partie payée en espèces. */
+    @Column(name = "montant_cash", precision = 15, scale = 2)
+    private BigDecimal montantCash;
+
+    /** Partie payée par mobile money (OM + MoMo regroupés). */
+    @Column(name = "montant_mobile_money", precision = 15, scale = 2)
+    private BigDecimal montantMobileMoney;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();

@@ -76,6 +76,8 @@ export interface MembreCotisationStatut {
   montantFondAide: number | null;
   montantRepas: number | null;
   referencePaiement: string | null;
+  montantCash: number | null;
+  montantMobileMoney: number | null;
 }
 
 export interface SessionCotisationsStatutResponse {

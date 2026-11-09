@@ -1021,6 +1021,25 @@ public class SessionService {
                     ? pm.datePaiement() : java.time.OffsetDateTime.now());
             cot.setReferencePaiement(pm.referencePaiement());
             if (pm.moyenPaiement() != null)    cot.setMoyenPaiement(pm.moyenPaiement());
+
+            // Enregistrer les montants par moyen de paiement (cash / mobile money)
+            if (pm.montantCash() != null)              cot.setMontantCash(pm.montantCash());
+            else if (pm.montantCash() == null)         cot.setMontantCash(null);
+            if (pm.montantMobileMoney() != null)       cot.setMontantMobileMoney(pm.montantMobileMoney());
+            else if (pm.montantMobileMoney() == null)  cot.setMontantMobileMoney(null);
+
+            // Valider que cash + mobile_money = total payé (si au moins un montant saisi)
+            BigDecimal totalPaye = cot.getMontant().add(safe(cot.getMontantFondAide())).add(safe(cot.getMontantRepas()));
+            BigDecimal cash = cot.getMontantCash() != null ? cot.getMontantCash() : BigDecimal.ZERO;
+            BigDecimal mobileMoney = cot.getMontantMobileMoney() != null ? cot.getMontantMobileMoney() : BigDecimal.ZERO;
+            BigDecimal sommeMoyens = cash.add(mobileMoney);
+            if (!sommeMoyens.equals(BigDecimal.ZERO) && sommeMoyens.compareTo(totalPaye) != 0) {
+                throw new IllegalArgumentException(
+                    "Pour " + cot.getMembre().getPrenom() + " " + cot.getMembre().getNom()
+                    + " : Cash (" + cash + ") + Mobile Money (" + mobileMoney + ") = " + sommeMoyens
+                    + " ≠ Total (" + totalPaye + ")");
+            }
+
             cotisationRepository.save(cot);
 
             totalTontine  = totalTontine.add(cot.getMontant());

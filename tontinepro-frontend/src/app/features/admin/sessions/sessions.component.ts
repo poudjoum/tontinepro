@@ -67,7 +67,7 @@ export class SessionsComponent implements OnInit {
 
   // Saisie de séance
   afficherSaisie = signal(false);
-  saisieData: Record<string, { montantTontine: number; montantFondAide: number; montantRepas: number; ref: string }> = {};
+  saisieData: Record<string, { montantTontine: number; montantFondAide: number; montantRepas: number; ref: string; montantCash: number; montantMobileMoney: number }> = {};
   saisieResultat = signal<{ totalEnregistres: number; montantTontineCollecte: number; montantFondAideCollecte: number } | null>(null);
 
 
@@ -458,6 +458,8 @@ export class SessionsComponent implements OnInit {
               montantFondAide: m.montantFondAide ?? (dejaPaye ? 0 : defFond),
               montantRepas:    m.montantRepas    ?? 0,
               ref:             m.referencePaiement ?? '',
+              montantCash:     m.montantCash ?? 0,
+              montantMobileMoney: m.montantMobileMoney ?? 0,
             };
           }
         });
@@ -494,6 +496,8 @@ export class SessionsComponent implements OnInit {
           montantFondAide:   d?.montantFondAide != null ? d.montantFondAide : undefined,
           montantRepas:      d?.montantRepas != null ? d.montantRepas : undefined,
           referencePaiement: d?.ref || undefined,
+          montantCash:       d?.montantCash != null ? d.montantCash : undefined,
+          montantMobileMoney: d?.montantMobileMoney != null ? d.montantMobileMoney : undefined,
         };
       });
 

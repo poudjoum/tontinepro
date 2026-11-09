@@ -23,6 +23,10 @@ public record SaisirPaiementsSeanceRequest(
             BigDecimal montantFondAide,
             BigDecimal montantRepas,
             OffsetDateTime datePaiement,
-            com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation.MoyenPaiement moyenPaiement
+            com.tontinepro.tontinepro_backend.domain.cotisation.Cotisation.MoyenPaiement moyenPaiement,
+            /** Partie payée en espèces. */
+            BigDecimal montantCash,
+            /** Partie payée par mobile money (OM + MoMo regroupés). */
+            BigDecimal montantMobileMoney
     ) {}
 }
