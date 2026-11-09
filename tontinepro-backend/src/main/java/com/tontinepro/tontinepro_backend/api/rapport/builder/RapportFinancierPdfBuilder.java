@@ -248,6 +248,16 @@ public class RapportFinancierPdfBuilder {
         BigDecimal taux = nbTotal == 0 ? BigDecimal.ZERO :
                 BigDecimal.valueOf(nbPayees * 100L).divide(BigDecimal.valueOf(nbTotal), 1, RoundingMode.HALF_UP);
 
+        // Totaux par moyen de paiement
+        BigDecimal totalCash = cotisations.stream()
+                .filter(c -> c.getStatut() == Cotisation.Statut.PAYEE)
+                .map(Cotisation::getMontantCash).filter(v -> v != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalMobileMoney = cotisations.stream()
+                .filter(c -> c.getStatut() == Cotisation.Statut.PAYEE)
+                .map(Cotisation::getMontantMobileMoney).filter(v -> v != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         Font fLabel  = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY);
         Font fValeur = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BLEU_FONCE);
 
@@ -257,6 +267,11 @@ public class RapportFinancierPdfBuilder {
         t.addCell(statCell("Total attendu",    fcfa(totalAttendu),  fLabel, fValeur));
         t.addCell(statCell("Total collecté",   fcfa(totalCollecte), fLabel, fValeur));
         t.addCell(statCell("Taux global",      taux + " %",         fLabel, fValeur));
+        t.addCell(statCell("En cash",          fcfa(totalCash), fLabel,
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, VERT)));
+        t.addCell(statCell("Mobile Money",     fcfa(totalMobileMoney), fLabel,
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(230, 126, 34))));
+        t.addCell(statCell("—", "", fLabel, fValeur));
         doc.add(t);
 
         // Résumé par mois

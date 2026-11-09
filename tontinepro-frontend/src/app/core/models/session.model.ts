@@ -221,6 +221,8 @@ export interface RapportFinSessionResponse {
   totalCotisations: number;
   totalRepas: number;
   totalFondAide: number;
+  totalCash: number;
+  totalMobileMoney: number;
   totalRedistribue: number;
   soldeFondsSolidarite: number;
   totalEpargne: number;

@@ -96,6 +96,10 @@ public class RapportFinSessionPdfBuilder {
             ligne(t, "Solde reporté (caisse à l'ouverture)", fcfa(r.soldeReporte()), fLabel, fValeur, GRIS_CLAIR);
         }
         ligne(t, "Σ Cotisations collectées (part tontine)", fcfa(r.totalCotisations()), fLabel, fValeur, GRIS_CLAIR);
+        ligne(t, "  ↳ En cash", fcfa(r.totalCash()), fLabel,
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, VERT), new Color(232, 245, 233));
+        ligne(t, "  ↳ Mobile Money", fcfa(r.totalMobileMoney()), fLabel,
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(230, 126, 34)), new Color(255, 243, 230));
         ligne(t, "Σ Repas collectés", fcfa(r.totalRepas()), fLabel, fValeur, GRIS_CLAIR);
         ligne(t, "Σ Fonds d'aide collecté", fcfa(r.totalFondAide()), fLabel,
                 FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(63, 81, 181)),

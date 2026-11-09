@@ -54,12 +54,13 @@ public class RapportCotisationsExcelBuilder {
         Cell cellTitre = rowTitre.createCell(0);
         cellTitre.setCellValue("RAPPORT COTISATIONS — " + tontine.getNom().toUpperCase());
         cellTitre.setCellStyle(styleTitre);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 9));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 11));
 
         // En-têtes
         CellStyle styleEntete = styleEntete(wb);
         String[] headers = {"N°", "Matricule", "Nom", "Prénom", "Mois", "Année",
-                            "Montant (FCFA)", "Statut", "Date Paiement", "Référence"};
+                            "Montant (FCFA)", "Statut", "Date Paiement", "Référence",
+                            "Cash (FCFA)", "Mobile Money (FCFA)"};
         Row rowHeader = sheet.createRow(1);
         rowHeader.setHeight((short) 450);
         for (int i = 0; i < headers.length; i++) {
@@ -109,6 +110,16 @@ public class RapportCotisationsExcelBuilder {
                     cot.getDatePaiement() != null ? cot.getDatePaiement().format(FMT) : "");
             row.createCell(9).setCellValue(
                     cot.getReferencePaiement() != null ? cot.getReferencePaiement() : "");
+
+            Cell cCash = row.createCell(10);
+            if (cot.getMontantCash() != null) cCash.setCellValue(cot.getMontantCash().doubleValue());
+            else cCash.setCellValue("");
+            cCash.setCellStyle(cs);
+
+            Cell cMm = row.createCell(11);
+            if (cot.getMontantMobileMoney() != null) cMm.setCellValue(cot.getMontantMobileMoney().doubleValue());
+            else cMm.setCellValue("");
+            cMm.setCellStyle(cs);
 
             // Appliquer style aux cellules non-statut
             for (int col : new int[]{1, 2, 3, 4, 5, 6, 8, 9}) {

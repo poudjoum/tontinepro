@@ -111,7 +111,17 @@ public class RapportMensuelPdfBuilder {
         BigDecimal taux = nbTotal == 0 ? BigDecimal.ZERO :
                 BigDecimal.valueOf(nbPayees * 100L).divide(BigDecimal.valueOf(nbTotal), 1, RoundingMode.HALF_UP);
 
-        doc.add(tableauStats(attendu, collecte, taux, nbPayees, nbRetard, nbAttente));
+        // Totaux par moyen de paiement (cotisations PAYEE uniquement)
+        BigDecimal totalCash = cotisations.stream()
+                .filter(c -> c.getStatut() == Cotisation.Statut.PAYEE)
+                .map(Cotisation::getMontantCash).filter(v -> v != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalMobileMoney = cotisations.stream()
+                .filter(c -> c.getStatut() == Cotisation.Statut.PAYEE)
+                .map(Cotisation::getMontantMobileMoney).filter(v -> v != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        doc.add(tableauStats(attendu, collecte, taux, nbPayees, nbRetard, nbAttente, totalCash, totalMobileMoney));
         doc.add(Chunk.NEWLINE);
 
         // Tableau détail
@@ -124,7 +134,8 @@ public class RapportMensuelPdfBuilder {
     }
 
     private PdfPTable tableauStats(BigDecimal attendu, BigDecimal collecte, BigDecimal taux,
-                                    long payees, long retard, long attente) throws DocumentException {
+                                    long payees, long retard, long attente,
+                                    BigDecimal totalCash, BigDecimal totalMobileMoney) throws DocumentException {
         Font fLabel = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.DARK_GRAY);
         Font fValeur = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BLEU_FONCE);
 
@@ -139,6 +150,11 @@ public class RapportMensuelPdfBuilder {
         t.addCell(statCell("Payées", String.valueOf(payees), fLabel, fValeur, new Color(232, 245, 233)));
         t.addCell(statCell("En retard", String.valueOf(retard), fLabel, fValeur, new Color(253, 235, 236)));
         t.addCell(statCell("En attente", String.valueOf(attente), fLabel, fValeur, new Color(255, 249, 230)));
+        t.addCell(statCell("En cash", fcfa(totalCash), fLabel,
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, VERT), new Color(232, 245, 233)));
+        t.addCell(statCell("Mobile Money", fcfa(totalMobileMoney), fLabel,
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(230, 126, 34)), new Color(255, 243, 230)));
+        t.addCell(statCell("—", "", fLabel, fValeur, GRIS_CLAIR));
 
         return t;
     }
@@ -160,12 +176,12 @@ public class RapportMensuelPdfBuilder {
         Font fEnt  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
         Font fData = FontFactory.getFont(FontFactory.HELVETICA, 8);
 
-        PdfPTable t = new PdfPTable(6);
+        PdfPTable t = new PdfPTable(8);
         t.setWidthPercentage(100f);
-        t.setWidths(new float[]{12f, 16f, 16f, 15f, 16f, 25f});
+        t.setWidths(new float[]{10f, 13f, 13f, 12f, 13f, 13f, 13f, 13f});
         t.setHeaderRows(1);
 
-        for (String h : new String[]{"Matricule", "Nom", "Prénom", "Statut", "Montant", "Date paiement"}) {
+        for (String h : new String[]{"Matricule", "Nom", "Prénom", "Statut", "Montant", "Date", "Cash", "M. Money"}) {
             t.addCell(cellEntete(h, fEnt, BLEU_FONCE));
         }
 
@@ -187,6 +203,8 @@ public class RapportMensuelPdfBuilder {
             t.addCell(cellDonnee(fcfa(c.getMontant()), fData, bg));
             t.addCell(cellDonnee(
                     c.getDatePaiement() != null ? c.getDatePaiement().format(FMT_DATE) : "—", fData, bg));
+            t.addCell(cellDonnee(c.getMontantCash() != null ? fcfa(c.getMontantCash()) : "—", fData, bg));
+            t.addCell(cellDonnee(c.getMontantMobileMoney() != null ? fcfa(c.getMontantMobileMoney()) : "—", fData, bg));
         }
         return t;
     }

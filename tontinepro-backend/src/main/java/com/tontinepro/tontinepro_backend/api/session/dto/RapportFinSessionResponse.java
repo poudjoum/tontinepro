@@ -28,6 +28,8 @@ public record RapportFinSessionResponse(
         BigDecimal totalCotisations,        // Σ part tontine collectée (PAYEE) sur la période
         BigDecimal totalRepas,              // Σ repas collectés
         BigDecimal totalFondAide,           // Σ fonds d'aide collecté
+        BigDecimal totalCash,               // Σ cash collecté (moyen de paiement des cotisations)
+        BigDecimal totalMobileMoney,        // Σ mobile money collecté (moyen de paiement des cotisations)
         BigDecimal totalRedistribue,        // Σ montants reçus par les bénéficiaires
         BigDecimal soldeFondsSolidarite,    // solde du fonds de solidarité (snapshot à la clôture)
         BigDecimal totalEpargne,            // Σ soldes des comptes épargne (snapshot)

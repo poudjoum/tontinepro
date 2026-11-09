@@ -65,6 +65,16 @@
           <span class="text-gray-500">Σ Cotisations collectées</span>
           <span class="font-medium text-gray-800">{{ fcfa(r.totalCotisations) }}</span>
         </div>
+        <div class="ml-4 space-y-1 border-l-2 border-green-200 pl-3">
+          <div class="flex justify-between text-xs">
+            <span class="text-green-600">↳ En cash</span>
+            <span class="font-semibold text-green-700">{{ fcfa(r.totalCash) }}</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-orange-600">↳ Mobile Money</span>
+            <span class="font-semibold text-orange-700">{{ fcfa(r.totalMobileMoney) }}</span>
+          </div>
+        </div>
         <div class="flex justify-between text-sm">
           <span class="text-gray-500">Σ Repas collectés</span>
           <span class="font-medium text-gray-800">{{ fcfa(r.totalRepas) }}</span>

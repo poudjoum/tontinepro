@@ -1281,6 +1281,12 @@ public class SessionService {
                 .map(c -> safe(c.getMontantRepas())).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalFondAide = cotisations.stream()
                 .map(c -> safe(c.getMontantFondAide())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCash = cotisations.stream()
+                .map(Cotisation::getMontantCash).filter(v -> v != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalMobileMoney = cotisations.stream()
+                .map(Cotisation::getMontantMobileMoney).filter(v -> v != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Agrégats de cotisation par membre
         Map<UUID, BigDecimal> cotiseParMembre = new HashMap<>();
@@ -1354,7 +1360,7 @@ public class SessionService {
                 sessionId, session.getNumero(), tontine.getNom(),
                 debut, session.getDateFin(), session.getStatut().name(),
                 session.getNombreMembres(), nbToursRealises, nbToursTotal,
-                totalCotisations, totalRepas, totalFondAide, totalRedistribue,
+                totalCotisations, totalRepas, totalFondAide, totalCash, totalMobileMoney, totalRedistribue,
                 soldeFondsSolidarite, totalEpargne,
                 pretsTotalDecaisse, pretsInteretsGeneres, pretsEnCours,
                 safe(session.getSoldeReporte()),
