@@ -56,6 +56,8 @@
                 <th class="px-2 py-2 text-right font-semibold">Fond</th>
                 <th class="px-2 py-2 text-right font-semibold">Repas</th>
                 <th class="px-2 py-2 text-right font-semibold">Sanctions</th>
+                <th class="px-2 py-2 text-right font-semibold">Cash</th>
+                <th class="px-2 py-2 text-right font-semibold">M. Money</th>
                 <th class="px-2 py-2 text-center font-semibold">✓</th>
               </tr>
             </thead>
@@ -69,6 +71,12 @@
                   <td class="px-2 py-2 text-right"
                       [class]="l.sanctions > 0 ? 'text-red-600 font-semibold' : 'text-gray-400'">
                     {{ l.sanctions > 0 ? (l.sanctions | number:'1.0-0') : '—' }}
+                  </td>
+                  <td class="px-2 py-2 text-right text-green-700">
+                    {{ l.montantCash != null ? (l.montantCash | number:'1.0-0') : '—' }}
+                  </td>
+                  <td class="px-2 py-2 text-right text-orange-600">
+                    {{ l.montantMobileMoney != null ? (l.montantMobileMoney | number:'1.0-0') : '—' }}
                   </td>
                   <td class="px-2 py-2 text-center">
                     @if (l.paye) { <span class="text-green-600 font-bold">✓</span> }
@@ -85,6 +93,8 @@
                 <td class="px-2 py-2 text-right font-bold">{{ r.totalFond | number:'1.0-0' }}</td>
                 <td class="px-2 py-2 text-right font-bold">{{ r.totalRepas | number:'1.0-0' }}</td>
                 <td class="px-2 py-2 text-right font-bold">{{ r.totalSanctions | number:'1.0-0' }}</td>
+                <td class="px-2 py-2 text-right font-bold">{{ r.totalCash | number:'1.0-0' }}</td>
+                <td class="px-2 py-2 text-right font-bold">{{ r.totalMobileMoney | number:'1.0-0' }}</td>
                 <td></td>
               </tr>
             </tfoot>

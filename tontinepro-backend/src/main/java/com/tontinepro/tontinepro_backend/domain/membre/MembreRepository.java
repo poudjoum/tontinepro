@@ -1,5 +1,6 @@
 package com.tontinepro.tontinepro_backend.domain.membre;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -33,6 +34,10 @@ public interface MembreRepository extends JpaRepository<Membre, UUID> {
     }
 
     List<Membre> findAllByTontineId(UUID tontineId);
+
+    /** Charge les membres avec leur utilisateur (JOIN FETCH) pour usage hors transaction. */
+    @EntityGraph(attributePaths = {"user"})
+    List<Membre> findAllByTontineIdWithUser(UUID tontineId);
 
     List<Membre> findAllByTontineIdAndStatut(UUID tontineId, Membre.Statut statut);
 

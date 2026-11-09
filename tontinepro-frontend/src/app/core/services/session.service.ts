@@ -185,6 +185,8 @@ export class SessionService {
     montantTontine?: number;
     montantFondAide?: number;
     montantRepas?: number;
+    montantCash?: number;
+    montantMobileMoney?: number;
   }>, autoriserCorrection = false) {
     return this.http.post<{
       totalDemandes: number;

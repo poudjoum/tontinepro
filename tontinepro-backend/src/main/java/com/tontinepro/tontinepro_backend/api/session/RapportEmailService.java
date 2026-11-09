@@ -48,7 +48,7 @@ public class RapportEmailService {
 
     @Async("notificationExecutor")
     public void envoyerRapportTour(UUID tontineId, RapportTourResponse rapport) {
-        List<Membre> membres = membreRepository.findAllByTontineId(tontineId);
+        List<Membre> membres = membreRepository.findAllByTontineIdWithUser(tontineId);
         if (membres.isEmpty()) return;
 
         byte[] pdf;
@@ -88,7 +88,7 @@ public class RapportEmailService {
     @Async("notificationExecutor")
     public void envoyerRapportFinSession(UUID tontineId, RapportFinSessionResponse rapport) {
         if (mailSender == null) return;
-        List<Membre> membres = membreRepository.findAllByTontineId(tontineId);
+        List<Membre> membres = membreRepository.findAllByTontineIdWithUser(tontineId);
         if (membres.isEmpty()) return;
 
         byte[] pdf;
