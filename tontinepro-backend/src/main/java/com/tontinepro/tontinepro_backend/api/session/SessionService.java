@@ -936,6 +936,7 @@ public class SessionService {
             UUID cotId = null;
             BigDecimal montantTontine = null, montantFondAide = null, montantRepas = null;
             String referencePaiement = null;
+            BigDecimal montantCash = null, montantMobileMoney = null;
             if (cot == null) {
                 statut = "ABSENTE";
                 nbAbsents++;
@@ -946,6 +947,8 @@ public class SessionService {
                 montantFondAide   = cot.getMontantFondAide();
                 montantRepas      = cot.getMontantRepas();
                 referencePaiement = cot.getReferencePaiement();
+                montantCash       = cot.getMontantCash();
+                montantMobileMoney = cot.getMontantMobileMoney();
                 switch (cot.getStatut()) {
                     case PAYEE -> nbPayes++;
                     case EN_RETARD -> nbEnRetard++;
@@ -954,7 +957,8 @@ public class SessionService {
             }
             membres.add(new SessionCotisationsStatutResponse.MembreCotisationStatut(
                     m.getId(), m.getNom(), m.getPrenom(), m.getMatricule(), statut, cotId,
-                    montantTontine, montantFondAide, montantRepas, referencePaiement));
+                    montantTontine, montantFondAide, montantRepas, referencePaiement,
+                    montantCash, montantMobileMoney));
         }
 
         int total = ordres.size();

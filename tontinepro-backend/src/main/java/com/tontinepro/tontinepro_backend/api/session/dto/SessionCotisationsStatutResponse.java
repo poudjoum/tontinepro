@@ -33,6 +33,10 @@ public record SessionCotisationsStatutResponse(
             java.math.BigDecimal montantTontine,
             java.math.BigDecimal montantFondAide,
             java.math.BigDecimal montantRepas,
-            String referencePaiement
+            String referencePaiement,
+            /** Montant payé en espèces (null si non saisi). */
+            java.math.BigDecimal montantCash,
+            /** Montant payé par mobile money (null si non saisi). */
+            java.math.BigDecimal montantMobileMoney
     ) {}
 }

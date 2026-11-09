@@ -453,6 +453,8 @@ export class SessionsComponent implements OnInit {
         (s.membres ?? []).forEach(m => {
           if (m.cotisationId) {
             const dejaPaye = m.statutCotisation === 'PAYEE';
+            // Pré-remplir cash et mobile money avec les valeurs existantes en base
+            // (null = non saisi → afficher 0 ; valeur > 0 = déjà saisi)
             this.saisieData[m.cotisationId] = {
               montantTontine:  m.montantTontine  ?? (dejaPaye ? 0 : defCot),
               montantFondAide: m.montantFondAide ?? (dejaPaye ? 0 : defFond),
@@ -489,15 +491,16 @@ export class SessionsComponent implements OnInit {
       .filter(m => m.cotisationId)
       .map(m => {
         const d = this.saisieData[m.cotisationId!];
+        // Pour cash et mobile money : envoyer toujours la valeur (y compris 0) si la ligne existe,
+        // afin que le backend mette à jour correctement ces champs.
         return {
           cotisationId:      m.cotisationId!,
-          // Envoyer les montants même à 0 (undefined = utiliser la valeur déjà sur la cotisation)
           montantTontine:    d?.montantTontine != null ? d.montantTontine : undefined,
           montantFondAide:   d?.montantFondAide != null ? d.montantFondAide : undefined,
           montantRepas:      d?.montantRepas != null ? d.montantRepas : undefined,
           referencePaiement: d?.ref || undefined,
-          montantCash:       d?.montantCash != null ? d.montantCash : undefined,
-          montantMobileMoney: d?.montantMobileMoney != null ? d.montantMobileMoney : undefined,
+          montantCash:       d !== undefined ? (d.montantCash ?? 0) : undefined,
+          montantMobileMoney: d !== undefined ? (d.montantMobileMoney ?? 0) : undefined,
         };
       });
 
