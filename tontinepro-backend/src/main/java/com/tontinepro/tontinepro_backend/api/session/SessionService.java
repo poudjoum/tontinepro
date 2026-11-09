@@ -1190,15 +1190,21 @@ public class SessionService {
             BigDecimal repas  = payee ? safe(cot.getMontantRepas())      : BigDecimal.ZERO;
             BigDecimal sanct  = sanctionsParMembre.getOrDefault(m.getId(), BigDecimal.ZERO);
             Cotisation.MoyenPaiement moyen = payee ? cot.getMoyenPaiement() : null;
+            BigDecimal cash = payee ? cot.getMontantCash() : null;
+            BigDecimal mobileMoney = payee ? cot.getMontantMobileMoney() : null;
             return new RapportTourResponse.LigneRapport(
                     m.getId(), m.getPrenom() + " " + m.getNom(), m.getMatricule(),
-                    cotis, fond, repas, sanct, payee, moyen);
+                    cotis, fond, repas, sanct, payee, moyen, cash, mobileMoney);
         }).toList();
 
         BigDecimal totalCotis  = lignes.stream().map(RapportTourResponse.LigneRapport::cotisation).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalFond   = lignes.stream().map(RapportTourResponse.LigneRapport::fond).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalRepas  = lignes.stream().map(RapportTourResponse.LigneRapport::repas).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalSanct  = lignes.stream().map(RapportTourResponse.LigneRapport::sanctions).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCash   = lignes.stream().map(RapportTourResponse.LigneRapport::montantCash)
+                .filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalMobileMoney = lignes.stream().map(RapportTourResponse.LigneRapport::montantMobileMoney)
+                .filter(v -> v != null).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Bilan bénéficiaire
         BigDecimal potBrut = totalCotis.add(totalRepas);
@@ -1261,7 +1267,7 @@ public class SessionService {
                 beneficiaireNom,
                 ob.getMembre().getMatricule(),
                 lignes,
-                totalCotis, totalFond, totalRepas, totalSanct,
+                totalCotis, totalFond, totalRepas, totalSanct, totalCash, totalMobileMoney,
                 potBrut, fondBeneficiaire, cagnotte,
                 contributeurs, partsLot);
     }

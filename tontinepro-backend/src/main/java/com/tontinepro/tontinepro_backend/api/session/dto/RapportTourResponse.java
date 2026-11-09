@@ -31,6 +31,8 @@ public record RapportTourResponse(
         BigDecimal totalFond,
         BigDecimal totalRepas,
         BigDecimal totalSanctions,
+        BigDecimal totalCash,
+        BigDecimal totalMobileMoney,
 
         // Bilan bénéficiaire
         BigDecimal potBrut,              // Σcotisations + Σrepas
@@ -64,7 +66,9 @@ public record RapportTourResponse(
             BigDecimal repas,
             BigDecimal sanctions,
             boolean paye,
-            Cotisation.MoyenPaiement moyenPaiement
+            Cotisation.MoyenPaiement moyenPaiement,
+            BigDecimal montantCash,
+            BigDecimal montantMobileMoney
     ) {}
 
     public record ContributeurAideSociale(

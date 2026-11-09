@@ -108,13 +108,13 @@ public class RapportTourPdfBuilder {
         Font fData = FontFactory.getFont(FontFactory.HELVETICA, 8);
         Font fBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
 
-        PdfPTable t = new PdfPTable(6);
+        PdfPTable t = new PdfPTable(8);
         t.setWidthPercentage(100f);
-        t.setWidths(new float[]{30f, 14f, 14f, 14f, 14f, 6f});
+        t.setWidths(new float[]{26f, 12f, 12f, 12f, 12f, 10f, 6f});
         t.setHeaderRows(1);
         t.setSpacingAfter(8f);
 
-        for (String h : new String[]{"Nom & Prénoms", "Cotisation", "Fond d'aide", "Repas", "Sanctions", "✓"}) {
+        for (String h : new String[]{"Nom & Prénoms", "Cotisation", "Fond d'aide", "Repas", "Sanctions", "Cash", "M. Money", "✓"}) {
             t.addCell(cellEntete(h, fEnt, BLEU_FONCE));
         }
 
@@ -128,6 +128,8 @@ public class RapportTourPdfBuilder {
             t.addCell(cellDonnee(fcfa(l.repas()), fData, bg, Element.ALIGN_RIGHT));
             Color fSanct = l.sanctions().compareTo(BigDecimal.ZERO) > 0 ? ROUGE : Color.GRAY;
             t.addCell(cellDonnee(fcfa(l.sanctions()), FontFactory.getFont(FontFactory.HELVETICA, 8, fSanct), bg, Element.ALIGN_RIGHT));
+            t.addCell(cellDonnee(l.montantCash() != null ? fcfa(l.montantCash()) : "—", fData, bg, Element.ALIGN_RIGHT));
+            t.addCell(cellDonnee(l.montantMobileMoney() != null ? fcfa(l.montantMobileMoney()) : "—", fData, bg, Element.ALIGN_RIGHT));
             t.addCell(cellDonnee(l.paye() ? "✓" : "—",
                     FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, l.paye() ? VERT : Color.GRAY), bg, Element.ALIGN_CENTER));
         }
@@ -140,6 +142,8 @@ public class RapportTourPdfBuilder {
         t.addCell(cellDonnee(fcfa(r.totalFond()), fTot, bgTotal, Element.ALIGN_RIGHT));
         t.addCell(cellDonnee(fcfa(r.totalRepas()), fTot, bgTotal, Element.ALIGN_RIGHT));
         t.addCell(cellDonnee(fcfa(r.totalSanctions()), fTot, bgTotal, Element.ALIGN_RIGHT));
+        t.addCell(cellDonnee(fcfa(r.totalCash()), fTot, bgTotal, Element.ALIGN_RIGHT));
+        t.addCell(cellDonnee(fcfa(r.totalMobileMoney()), fTot, bgTotal, Element.ALIGN_RIGHT));
         t.addCell(cellDonnee("", fTot, bgTotal, Element.ALIGN_CENTER));
 
         doc.add(t);
@@ -161,6 +165,10 @@ public class RapportTourPdfBuilder {
         t.setSpacingAfter(8f);
 
         lignesBilan(t, "Σ Cotisations collectées", fcfa(r.totalCotisations()), fLabel, fValeur, GRIS_CLAIR);
+        lignesBilan(t, "  ↳ En cash", fcfa(r.totalCash()), fLabel,
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, VERT), new Color(232, 245, 233));
+        lignesBilan(t, "  ↳ Mobile Money", fcfa(r.totalMobileMoney()), fLabel,
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(230, 126, 34)), new Color(255, 243, 230));
         lignesBilan(t, "Σ Repas collectés", fcfa(r.totalRepas()), fLabel, fValeur, GRIS_CLAIR);
         lignesBilan(t, "Pot brut (cotisations + repas)", fcfa(r.potBrut()), fLabel,
                 FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BLEU_MOYEN),
