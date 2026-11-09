@@ -293,22 +293,25 @@
             </div>
 
             <!-- En-têtes colonnes -->
-            <div class="px-4 grid grid-cols-[1fr_64px_64px_64px_52px_64px_64px] gap-1.5 text-[10px] font-semibold text-primary-800 uppercase tracking-wide">
-              <span>Membre</span>
-              <span class="text-center">Tontine</span>
-              <span class="text-center">Fond</span>
-              <span class="text-center">Repas</span>
-              <span class="text-center">Réf.</span>
-              <span class="text-center">Cash</span>
-              <span class="text-center">M. Money</span>
+            <div class="overflow-x-auto -mx-4 px-4">
+              <div class="grid grid-cols-[1fr_64px_64px_64px_52px_64px_64px] gap-1.5 text-[10px] font-semibold text-primary-800 uppercase tracking-wide min-w-[500px]">
+                <span>Membre</span>
+                <span class="text-center">Tontine</span>
+                <span class="text-center">Fond</span>
+                <span class="text-center">Repas</span>
+                <span class="text-center">Réf.</span>
+                <span class="text-center">Cash</span>
+                <span class="text-center">M. Money</span>
+              </div>
             </div>
 
-            <div class="space-y-1.5 px-4 pb-1">
+            <div class="space-y-1.5 pb-1">
               @for (m of statutCotisations()!.membres; track m.membreId) {
                 @if (m.cotisationId) {
                   <!-- Toutes les lignes sont éditables, y compris les cotisations déjà
                        PAYEE (correction). On pré-remplit avec les montants existants. -->
-                  <div class="grid grid-cols-[1fr_64px_64px_64px_52px_64px_64px] gap-1.5 items-center">
+                  <div class="overflow-x-auto -mx-4 px-4">
+                    <div class="grid grid-cols-[1fr_64px_64px_64px_52px_64px_64px] gap-1.5 items-center min-w-[500px]">
                     <div class="min-w-0">
                       <p class="text-xs font-medium text-gray-800 truncate">
                         {{ m.prenom }} {{ m.nom }}
@@ -338,6 +341,7 @@
                     <input type="number" min="0" step="1"
                            [(ngModel)]="saisieData[m.cotisationId!].montantMobileMoney"
                            class="text-xs border border-orange-300 rounded px-1.5 py-2 w-full text-center font-medium" />
+                    </div>
                   </div>
                 } @else {
                   <!-- Cotisation pas encore générée pour ce membre sur ce mois -->

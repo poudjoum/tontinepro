@@ -162,6 +162,19 @@
           </div>
         }
 
+        <!-- Récapitulatif des moyens de paiement -->
+        <div class="border-t border-gray-100 pt-2 mt-2">
+          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Moyens de paiement</p>
+          <div class="flex justify-between text-sm">
+            <span class="text-green-700">💵 Cash</span>
+            <span class="font-medium text-green-700">{{ fcfa(r.totalCash) }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-orange-600">📱 Mobile Money</span>
+            <span class="font-medium text-orange-600">{{ fcfa(r.totalMobileMoney) }}</span>
+          </div>
+        </div>
+
         <!-- Cagnotte finale -->
         <div class="flex justify-between items-center bg-green-50 border border-green-200 rounded-xl px-4 py-3 mt-2">
           <span class="text-sm font-semibold text-green-800">Cagnotte nette</span>
