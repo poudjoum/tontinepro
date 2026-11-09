@@ -1,4 +1,5 @@
 import { Component, OnInit, signal, inject, effect, untracked } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AideService } from '../../core/services/aide.service';
@@ -22,7 +23,7 @@ const STATUT_LABEL: Record<string, string> = {
 
 @Component({
   selector: 'app-aides',
-  imports: [RouterLink],
+  imports: [RouterLink, FormsModule],
   templateUrl: './aides.component.html',
 })
 export class AidesComponent implements OnInit {

@@ -315,7 +315,7 @@
                         }
                       </p>
                       <p class="text-[10px] text-gray-400">
-                        Total : {{ ((saisieData[m.cotisationId!]?.montantTontine || 0) + (saisieData[m.cotisationId!]?.montantFondAide || 0) + (saisieData[m.cotisationId!]?.montantRepas || 0)) | number:'1.0-0' }} FCFA
+                        Total : {{ ((saisieData[m.cotisationId!].montantTontine || 0) + (saisieData[m.cotisationId!].montantFondAide || 0) + (saisieData[m.cotisationId!].montantRepas || 0)) | number:'1.0-0' }} FCFA
                       </p>
                     </div>
                     <input type="number" min="0"
