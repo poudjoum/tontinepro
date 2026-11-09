@@ -52,7 +52,7 @@ public class SanctionService {
     }
 
     @Transactional
-    public SanctionResponse marquerPayee(UUID id, String encaisseurEmail) {
+    public SanctionResponse marquerPayee(UUID id, String email) {
         Sanction sanction = sanctionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Sanction introuvable : " + id));
 
@@ -60,9 +60,9 @@ public class SanctionService {
             throw new IllegalArgumentException("Cette sanction est déjà marquée comme payée");
         }
 
-        if (!securityExpressionService.peutEncaisser(encaisseurEmail, sanction.getTontine().getId())) {
+        if (!securityExpressionService.gere(email, sanction.getTontine().getId())) {
             throw new AccessDeniedException(
-                    "L'encaissement des amendes revient au Trésorier de la tontine");
+                    "Seul le Secrétaire ou le Président de la tontine peut marquer une sanction comme payée");
         }
 
         sanction.setPayee(true);

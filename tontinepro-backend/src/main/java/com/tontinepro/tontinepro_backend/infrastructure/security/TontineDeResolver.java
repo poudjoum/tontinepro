@@ -7,6 +7,7 @@ import com.tontinepro.tontinepro_backend.domain.demande.DemandeAdhesionRepositor
 import com.tontinepro.tontinepro_backend.domain.membre.MembreRepository;
 import com.tontinepro.tontinepro_backend.domain.pret.EcheancePretRepository;
 import com.tontinepro.tontinepro_backend.domain.pret.PretRepository;
+import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
 import com.tontinepro.tontinepro_backend.domain.session.SessionTontineRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,7 @@ public class TontineDeResolver {
     private final PretRepository pretRepository;
     private final EcheancePretRepository echeanceRepository;
     private final DemandeAdhesionRepository demandeRepository;
+    private final SanctionRepository sanctionRepository;
 
     public UUID membre(UUID id) {
         if (id == null) return null;
@@ -75,5 +77,10 @@ public class TontineDeResolver {
     public UUID demande(UUID id) {
         if (id == null) return null;
         return demandeRepository.findById(id).map(d -> d.getTontine().getId()).orElse(null);
+    }
+
+    public UUID sanction(UUID id) {
+        if (id == null) return null;
+        return sanctionRepository.findById(id).map(s -> s.getTontine().getId()).orElse(null);
     }
 }
