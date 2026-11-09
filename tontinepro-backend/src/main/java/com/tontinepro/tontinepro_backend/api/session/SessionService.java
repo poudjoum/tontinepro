@@ -8,6 +8,7 @@ import com.tontinepro.tontinepro_backend.domain.sanction.SanctionRepository;
 import com.tontinepro.tontinepro_backend.domain.aide.Aide;
 import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAide;
 import com.tontinepro.tontinepro_backend.domain.aide.ContributionFondsAideRepository;
+import com.tontinepro.tontinepro_backend.domain.aide.FondsAide;
 import com.tontinepro.tontinepro_backend.domain.aide.FondsAideRepository;
 import com.tontinepro.tontinepro_backend.domain.aide.MouvementFondsAide;
 import com.tontinepro.tontinepro_backend.domain.aide.MouvementFondsAideRepository;
@@ -1024,9 +1025,7 @@ public class SessionService {
 
             // Enregistrer les montants par moyen de paiement (cash / mobile money)
             if (pm.montantCash() != null)              cot.setMontantCash(pm.montantCash());
-            else if (pm.montantCash() == null)         cot.setMontantCash(null);
             if (pm.montantMobileMoney() != null)       cot.setMontantMobileMoney(pm.montantMobileMoney());
-            else if (pm.montantMobileMoney() == null)  cot.setMontantMobileMoney(null);
 
             // Valider que cash + mobile_money = total payé (si au moins un montant saisi)
             BigDecimal totalPaye = cot.getMontant().add(safe(cot.getMontantFondAide())).add(safe(cot.getMontantRepas()));
@@ -1053,6 +1052,24 @@ public class SessionService {
                     "Votre cotisation de %02d/%d (%s FCFA) a été saisie par le Secrétaire."
                             .formatted(cot.getMois(), cot.getAnnee(), cot.getMontant()),
                     cot.getId(), "COTISATION");
+        }
+
+        // Mettre à jour le solde du Fond de solidarité avec les fonds collectés
+        if (totalFondAide.signum() > 0) {
+            var fonds = fondsAideRepository.findByTontineId(session.getTontine().getId());
+            if (fonds.isPresent()) {
+                FondsAide fa = fonds.get();
+                fa.setSolde(fa.getSolde().add(totalFondAide));
+                fondsAideRepository.save(fa);
+
+                mouvementFondsAideRepository.save(MouvementFondsAide.builder()
+                        .fondsAide(fa)
+                        .typeMouvement(MouvementFondsAide.TypeMouvement.CONTRIBUTION)
+                        .montant(totalFondAide)
+                        .soldeApres(fa.getSolde())
+                        .description("Collecte séance — session " + session.getNumero())
+                        .build());
+            }
         }
 
         return new SaisieSeanceResult(
