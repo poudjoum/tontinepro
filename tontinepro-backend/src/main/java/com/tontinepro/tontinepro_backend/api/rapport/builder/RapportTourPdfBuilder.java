@@ -110,7 +110,7 @@ public class RapportTourPdfBuilder {
 
         PdfPTable t = new PdfPTable(8);
         t.setWidthPercentage(100f);
-        t.setWidths(new float[]{26f, 12f, 12f, 12f, 12f, 10f, 6f});
+        t.setWidths(new float[]{26f, 10f, 10f, 10f, 10f, 10f, 10f, 4f});
         t.setHeaderRows(1);
         t.setSpacingAfter(8f);
 
