@@ -149,6 +149,8 @@ export interface LigneRapport {
   fond: number;
   repas: number;
   sanctions: number;
+  montantCash: number | null;
+  montantMobileMoney: number | null;
   paye: boolean;
 }
 
@@ -176,6 +178,8 @@ export interface RapportTourResponse {
   totalFond: number;
   totalRepas: number;
   totalSanctions: number;
+  totalCash: number;
+  totalMobileMoney: number;
   potBrut: number;
   fondBeneficiaire: number;
   cagnotteBeneficiaire: number;
