@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════
 #  TontinePro — Script de déploiement / mise à jour
-#  À exécuter sur le serveur 192.168.1.209 en tant que : jumpy
+#  À exécuter sur le serveur 192.168.1.21 en tant que : jumpy
 #
 #  Usage :
 #    cd /opt/tontinepro
@@ -53,6 +53,6 @@ docker image prune -f > /dev/null
 echo ""
 echo "═══════════════════════════════════════════════════"
 echo "  ✅  Déploiement terminé !"
-echo "  🌐  Frontend : http://192.168.1.209"
-echo "  🔧  Backend  : http://192.168.1.209/api/v1"
+echo "  🌐  Frontend : http://192.168.1.21"
+echo "  🔧  Backend  : http://192.168.1.21/api/v1"
 echo "═══════════════════════════════════════════════════"

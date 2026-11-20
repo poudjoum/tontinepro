@@ -2,7 +2,7 @@ version: '3.8'
 
 # ═══════════════════════════════════════════════════════════════════
 #  TontinePro — Stack de production
-#  Serveur cible : 192.168.1.209
+#  Serveur cible : 192.168.1.21
 #
 #  Utilisation :
 #    cp .env.example .env && nano .env   # remplir les secrets

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════
 #  TontinePro — Configuration initiale du serveur Ubuntu 22.04 / 24.04
-#  Serveur : 192.168.1.209
+#  Serveur : 192.168.1.21
 #
 #  Usage (depuis le serveur, en tant que votre utilisateur avec sudo) :
 #    chmod +x setup-server.sh
@@ -23,7 +23,7 @@ DEPLOY_DIR="/opt/tontinepro"
 
 echo ""
 echo "═══════════════════════════════════════════════════"
-echo "  TontinePro — Configuration serveur 192.168.1.209"
+echo "  TontinePro — Configuration serveur 192.168.1.21"
 echo "═══════════════════════════════════════════════════"
 echo "  Utilisateur déploiement : $DEPLOY_USER"
 echo "  Répertoire              : $DEPLOY_DIR"
@@ -129,7 +129,7 @@ echo ""
 echo "  Prochaines étapes :"
 echo ""
 echo "  1. Reconnectez-vous pour activer le groupe docker :"
-echo "     exit && ssh $DEPLOY_USER@192.168.1.209"
+echo "     exit && ssh $DEPLOY_USER@192.168.1.21"
 echo ""
 echo "  2. Clonez le projet (ou copiez docker-compose.prod.yml) :"
 echo "     cd $DEPLOY_DIR"
