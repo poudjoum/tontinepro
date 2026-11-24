@@ -343,7 +343,7 @@ sl.addShape(pptx.ShapeType.roundRect, {
 });
 sl.addText('T', { x: 4.3, y: 0.4, w: 4.2, h: 1.2, fontSize: 60, bold: true, color: WHITE, align: 'center' });
 sl.addText('TontinePro', { x: 4.3, y: 1.5, w: 4.2, h: 0.7, fontSize: 24, bold: true, color: WHITE, align: 'center' });
-sl.addText('tontinepro.tontinepro.uk', { x: 4.3, y: 2.2, w: 4.2, h: 0.5, fontSize: 13, color: 'C7D2FE', align: 'center', underline: true });
+sl.addText('tontinepro.jumpy-tech.uk', { x: 4.3, y: 2.2, w: 4.2, h: 0.5, fontSize: 13, color: 'C7D2FE', align: 'center', underline: true });
 
 sl.addText('Contact & Support', { x: 1, y: 4.8, w: 10.8, h: 0.5, fontSize: 16, bold: true, color: WHITE, align: 'center' });
 sl.addText('Poudjoum Leutcho Gedeon Rodrigue', { x: 1, y: 5.3, w: 10.8, h: 0.45, fontSize: 14, color: 'C7D2FE', align: 'center' });
