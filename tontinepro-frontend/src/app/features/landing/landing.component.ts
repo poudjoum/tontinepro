@@ -15,12 +15,12 @@ export class LandingComponent implements OnInit {
   configured = signal(true);
 
   features = [
-    { icon: '💰', title: 'Cotisations', desc: 'Suivi et paiements mensuels' },
+    { icon: '💰', title: 'Cotisations', desc: 'Qui a payé, qui est en retard' },
     { icon: '🏦', title: 'Épargne', desc: 'Dépôts, retraits, intérêts' },
-    { icon: '📋', title: 'Prêts', desc: 'Demande et remboursement' },
-    { icon: '🤝', title: 'Aides', desc: 'Entraide mutuelle' },
-    { icon: '📊', title: 'Rapports', desc: 'PDF et Excel détaillés' },
-    { icon: '🔔', title: 'Notifications', desc: 'Email et in-app' },
+    { icon: '📋', title: 'Prêts', desc: 'Demandes et remboursements' },
+    { icon: '🤝', title: 'Aides', desc: 'Quand un membre a besoin d’aide' },
+    { icon: '📊', title: 'Rapports', desc: 'En PDF ou Excel, prêts à partager' },
+    { icon: '🔔', title: 'Notifications', desc: 'Par e-mail et dans l’appli' },
   ];
 
   ngOnInit(): void {
