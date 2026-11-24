@@ -41,7 +41,7 @@ public class MembreImportService {
     private final PasswordEncoder         passwordEncoder;
     private final EmailService            emailService;
 
-    @Value("${app.frontend-url:https://tontinepro.tontinepro.uk}")
+    @Value("${app.frontend-url:https://tontinepro.jumpy-tech.uk}")
     private String frontendUrl;
 
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");

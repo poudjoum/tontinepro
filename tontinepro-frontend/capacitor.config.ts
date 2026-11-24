@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   webDir: 'dist/tontinepro-frontend/browser',
 
   server: {
-    // HTTPS via Cloudflare Tunnel (tontinepro.tontinepro.uk.com)
+    // HTTPS via Cloudflare Tunnel (tontinepro.jumpy-tech.uk)
     androidScheme: 'https',
   },
 

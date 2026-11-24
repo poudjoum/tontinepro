@@ -57,7 +57,7 @@ public class AideService {
     /** Nombre de séances de tontine accordées pour recouvrer une aide activée. */
     public static final int SEANCES_RECOUVREMENT = 3;
 
-    @Value("${app.frontend-url:https://tontinepro.tontinepro.uk}")
+    @Value("${app.frontend-url:https://tontinepro.jumpy-tech.uk}")
     private String frontendUrl;
 
     @Transactional
